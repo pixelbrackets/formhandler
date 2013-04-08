@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_IsInDBTable.php 50192 2011-07-27 18:42:39Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_IsInDBTable.php 70471 2013-01-30 09:48:12Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -36,7 +36,8 @@ class Tx_Formhandler_ErrorCheck_IsInDBTable extends Tx_Formhandler_AbstractError
 			$checkField = $this->utilityFuncs->getSingle($this->settings['params'], 'field');
 			$additionalWhere = $this->utilityFuncs->getSingle($this->settings['params'], 'additionalWhere');
 			if (!empty($checkTable) && !empty($checkField)) {
-				$where = $checkField . '=' . $GLOBALS['TYPO3_DB']->fullQuoteStr($this->gp[$this->formFieldName], $checkTable) . ' ' . $additionalWhere;
+				$additionalWhere = $this->utilityFuncs->prepareAndWhereString($additionalWhere);
+				$where = $checkField . '=' . $GLOBALS['TYPO3_DB']->fullQuoteStr($this->gp[$this->formFieldName], $checkTable) . $additionalWhere;
 				$showHidden = intval($this->settings['params']['showHidden']) === 1 ? 1 : 0;
 				$where .= $GLOBALS['TSFE']->sys_page->enableFields($checkTable, $showHidden);
 				$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery($checkField, $checkTable, $where);

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_DB.php 68649 2012-12-10 14:08:38Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_DB.php 70472 2013-01-30 09:51:59Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -225,13 +225,7 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 	protected function doUpdate($uid, $queryFields, $andWhere) {
 		$isSuccess = TRUE;
 		$uid = $GLOBALS['TYPO3_DB']->fullQuoteStr($uid, $this->table);
-		$andWhere = trim($andWhere);
-		if(substr($andWhere, 0, 3) === 'AND') {
-			$andWhere = trim(substr($andWhere, 3));
-		}
-		if(strlen($andWhere) > 0) {
-			$andWhere = ' AND ' . $andWhere;
-		}
+		$andWhere = $this->utilityFuncs->prepareAndWhereString($andWhere);
 		$query = $GLOBALS['TYPO3_DB']->UPDATEquery($this->table, $this->key . '=' . $uid . $andWhere, $queryFields);
 		$this->utilityFuncs->debugMessage('sql_request', array($query));
 		$res = $GLOBALS['TYPO3_DB']->sql_query($query);
@@ -352,6 +346,8 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 							$dateFormat = 'Y-m-d';
 							if($options['special.']['dateFormat']) {
 								$dateFormat = $this->utilityFuncs->getSingle($options['special.'], 'dateFormat');
+							} elseif($options['special.']['format']) {
+								$dateFormat = $this->utilityFuncs->getSingle($options['special.'], 'format');
 							}
 							$fieldValue = $this->utilityFuncs->dateToTimestamp($date, $dateFormat);
 							break;
@@ -364,6 +360,8 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 							$dateFormat = 'Y-m-d H:i:s';
 							if($options['special.']['dateFormat']) {
 								$dateFormat = $this->utilityFuncs->getSingle($options['special.'], 'dateFormat');
+							} elseif($options['special.']['format']) {
+								$dateFormat = $this->utilityFuncs->getSingle($options['special.'], 'format');
 							}
 							$fieldValue = $this->utilityFuncs->dateToTimestamp($date, $dateFormat);
 							break;
@@ -371,6 +369,8 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 							$dateFormat = 'Y-m-d H:i:s';
 							if($options['special.']['dateFormat']) {
 								$dateFormat = $this->utilityFuncs->getSingle($options['special.'], 'dateFormat');
+							} elseif($options['special.']['format']) {
+								$dateFormat = $this->utilityFuncs->getSingle($options['special.'], 'format');
 							}
 							$fieldValue = date($dateFormat, time());
 							break;

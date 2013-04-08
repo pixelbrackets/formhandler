@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractErrorCheck.php 63258 2012-06-08 08:20:48Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractErrorCheck.php 72298 2013-03-06 09:06:14Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -52,7 +52,7 @@ abstract class Tx_Formhandler_AbstractErrorCheck extends Tx_Formhandler_Abstract
 		if (is_array($this->settings['params'])) {
 			$checkFailed .= ';';
 			foreach ($this->settings['params'] as $key => $value) {
-				$checkFailed .= $key . '::' . $value . ';';
+				$checkFailed .= $key . '::' . $this->utilityFuncs->getSingle($this->settings['params'], $key) . ';';
 			}
 			$checkFailed = substr($checkFailed, 0, (strlen($checkFailed) - 1));
 		}

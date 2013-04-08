@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileMaxCount.php 68656 2012-12-10 15:23:29Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileMaxCount.php 70255 2013-01-23 13:58:37Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -80,7 +80,7 @@ class Tx_Formhandler_ErrorCheck_FileMaxCount extends Tx_Formhandler_AbstractErro
 				if(!is_array($info['name'][$this->formFieldName])) {
 					$info['name'][$this->formFieldName] = array($info['name'][$this->formFieldName]);
 				}
-				if (strlen($info['name'][$this->formFieldName][0]) > 0 && count($info['name'][$this->formFieldName]) + count($files[$this->formFieldName]) >= $maxCount) {
+				if (strlen($info['name'][$this->formFieldName][0]) > 0 && count($info['name'][$this->formFieldName]) + count($files[$this->formFieldName]) > $maxCount) {
 					$checkFailed = $this->getCheckFailed();
 				}
 			}
