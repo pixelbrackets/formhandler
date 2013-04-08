@@ -1,16 +1,17 @@
 # TYPO3 Extension "formhandler"
 The swiss army knife for all kinds of mailforms, completely new written using the MVC concept. Result: Flexibility, Flexibility, Flexibility  :-).
 
-## Version 1.4.0
-** BE AWARE: This extension has been marked as insecure by the security team! **.
+## Version 1.4.1
+
 
 
 
 <table>
-	<tr><td>Version</td><td>1.4.0 stable</td></tr>
-	<tr><td>Release date</td><td>02. September 2012</td></tr>
+	<tr><td>Version</td><td>1.4.1 stable</td></tr>
+	<tr><td>Release date</td><td>29. October 2012</td></tr>
 	<tr><td>Author</td><td>Dev-Team Typoheads</td></tr>
-	<tr><td>Comment</td><td>Release notes: http://tinyurl.com/formhandler-140</td></tr>
+	<tr><td>Comment</td><td>Security Fix, PLEASE UPDATE. For details read:
+http://typo3.org/teams/security/security-bulletins/typo3-extensions/typo3-ext-sa-2012-012/ hh</td></tr>
 </table>
 
 ## !! Attention !!
