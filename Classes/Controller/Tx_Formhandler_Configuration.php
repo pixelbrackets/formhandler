@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Configuration.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Configuration.php 29104 2010-01-20 14:15:50Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -46,6 +46,9 @@ class Tx_Formhandler_Configuration implements ArrayAccess {
 	 */
 	public function __construct() {
 		$this->setup = $GLOBALS['TSFE']->tmpl->setup['plugin.'][$this->getPrefixedPackageKey() . '.'];
+		if(is_array(Tx_Formhandler_Globals::$overrideSettings)) {
+			$this->setup = t3lib_div::array_merge_recursive_overrule($this->setup, Tx_Formhandler_Globals::$overrideSettings);
+		}
 	}
 
 	/**
