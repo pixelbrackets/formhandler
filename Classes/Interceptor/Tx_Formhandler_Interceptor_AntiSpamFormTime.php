@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_AntiSpamFormTime.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_Interceptor_AntiSpamFormTime.php 23789 2009-08-31 10:13:44Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -51,7 +51,7 @@ class Tx_Formhandler_Interceptor_AntiSpamFormTime extends Tx_Formhandler_Abstrac
 		if($isSpam) {
 			$this->log();
 			if($this->settings['redirectPage']) {
-				$this->doRedirect($this->settings['redirectPage']);
+				Tx_Formhandler_Staticfuncs::doRedirect($this->settings['redirectPage'], $this->settings['correctRedirectUrl']);
 			} else {
 				$view = $this->componentManager->getComponent('Tx_Formhandler_View_AntiSpam');
 				$view->setLangFile($this->langFile);
@@ -60,7 +60,7 @@ class Tx_Formhandler_Interceptor_AntiSpamFormTime extends Tx_Formhandler_Abstrac
 				$templateCode = $this->getTemplate();
 				$view->setTemplate($templateCode, 'ANTISPAM');
 				if(!$view->hasTemplate()) {
-					Tx_Formhandler_StaticFuncs::throwException('SPAM!!!!!!');
+					Tx_Formhandler_StaticFuncs::throwException('spam_detected');
 					return 'Lousy spammer!';
 				}
 				
@@ -128,41 +128,5 @@ class Tx_Formhandler_Interceptor_AntiSpamFormTime extends Tx_Formhandler_Abstrac
 		$logger = $this->componentManager->getComponent('Tx_Formhandler_Logger_DB');
 		$logger->log($this->gp, array('markAsSpam' => 1));
 	}
-	
-	/**
-	 * Redirects to a specified page or URL.
-	 *
-	 * @return void
-	 */
-	protected function doRedirect($redirect) {
-		$url = '';
-
-		if(!isset($redirect)) {
-			return;
-		}
-
-		//if redirect_page was page id
-		if (is_numeric($redirect)) {
-
-			// these parameters have to be added to the redirect url
-			$addparams = array();
-			if (t3lib_div::_GP('L')) {
-				$addparams['L'] = t3lib_div::_GP('L');
-			}
-				
-			$url = $this->cObj->getTypoLink_URL($redirect, '', $addparams);
-				
-			//else it may be a full URL
-		} else {
-			$url = $redirect;
-		}
-
-		
-		if($url) {
-			header('Location: ' . t3lib_div::locationHeaderUrl($url));
-		}
-		exit();
-	}
-
 }
 ?>

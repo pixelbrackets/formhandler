@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Redirect.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_Finisher_Redirect.php 23289 2009-08-12 11:54:05Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -51,30 +51,7 @@ class Tx_Formhandler_Finisher_Redirect extends Tx_Formhandler_AbstractFinisher {
 			return;
 		}
 
-		//if redirect_page was page id
-		if (is_numeric($emailRedirect)) {
-
-			// these parameters have to be added to the redirect url
-			$addparams = array();
-			if (t3lib_div::_GP('L')) {
-				$addparams['L'] = t3lib_div::_GP('L');
-			}
-				
-			$url = $this->cObj->getTypoLink_URL($emailRedirect, '', $addparams);
-				
-			//else it may be a full URL
-		} else {
-			$url = $emailRedirect;
-		}
-
-		//correct the URL by replacing &amp;
-		if ($this->settings['correctRedirectUrl']) {
-			$url = str_replace('&amp;', '&', $url);
-		}
-
-		if($url) {
-			header('Location: ' . t3lib_div::locationHeaderUrl($url));
-		}
+		Tx_Formhandler_Staticfuncs::doRedirect($emailRedirect, $this->settings['correctRedirectUrl']);
 		exit();
 	}
 
