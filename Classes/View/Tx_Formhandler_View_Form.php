@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Form.php 36528 2010-08-09 13:04:41Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Form.php 38515 2010-09-23 11:59:33Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -477,6 +477,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		
 		$path = $this->pi_getPageLink($GLOBALS['TSFE']->id, '', $parameters);
 		$path = str_replace('&', '&amp;', $path);
+		$path = htmlspecialchars($path);
 		$markers = array();
 		$markers['###REL_URL###'] = $path;
 		$markers['###TIMESTAMP###'] = time();
@@ -491,7 +492,6 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 			$name = Tx_Formhandler_Globals::$formValuesPrefix . '[submitted]';
 		}
 		$markers['###HIDDEN_FIELDS###'] = '
-			<input type="hidden" name="no_cache" value="1" />
 			<input type="hidden" name="id" value="' . $GLOBALS['TSFE']->id . '" />
 			<input type="hidden" name="' . $name . '" value="1" />
 		';
@@ -1191,7 +1191,11 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 			if ($i == $currentStep) {
 				$class =  'class="' . $classprefix . '_currentstep"';
 			}
-			$content.= '<span ' . $class . ' >' . $i . '</span>';
+			$stepName = trim($GLOBALS['TSFE']->sL('LLL:' . $langFile . ':step-' . $i));
+			if(!$stepName) {
+				$stepName = $i;
+			}
+			$content.= '<span ' . $class . ' >' . $stepName . '</span>';
 		}
 		$content = '<span class="' . $classprefix . '_steps' . '" style="">' . $content . '</span>';
 

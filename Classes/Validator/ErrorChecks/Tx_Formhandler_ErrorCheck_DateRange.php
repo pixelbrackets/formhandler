@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_DateRange.php 36522 2010-08-09 08:58:58Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_DateRange.php 37695 2010-09-06 07:16:30Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -38,9 +38,6 @@ class Tx_Formhandler_ErrorCheck_DateRange extends Tx_Formhandler_ErrorCheck_Date
 			$min = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'min');
 			$max = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'max');
 			$pattern = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'pattern');
-			print $min;
-			print "<br />";
-			print $max;
 			preg_match('/^[d|m|y]*(.)[d|m|y]*/i', $pattern, $res);
 			$sep = $res[1];
 	

@@ -302,12 +302,8 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 		if(!$detailId) {
 			$where = '1=1';
 		} elseif(!is_array($detailId)) {
-			
-			/*
-			 * if there is only one record to export, initialize an array with the one uid
-			 * to ensure that foreach loops will not crash
-			 */
-			$detailId = array($detailId);
+			$where = 'uid=' . $detailId;
+		} else {
 			$where = 'uid IN (' . implode(',', $detailId) . ')';
 		}
 
@@ -379,9 +375,19 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 						}
 					}
 				}
+				
+				$tsconfig = t3lib_BEfunc::getModTSconfig($this->id,'tx_formhandler_mod1'); 
+				$configParams = array();
 
-				//if fields were chosen in the selection view, perform the export
-				if(isset($params['exportParams'])) {
+				// check if TSconfig filter is set
+				if ($tsconfig['properties']['config.']['csv'] != "") {
+					$configParams = t3lib_div::trimExplode(',', $tsconfig['properties']['config.']['csv'], 1);
+					$generator = $this->componentManager->getComponent('Tx_Formhandler_Generator_CSV');
+					$generator->generateModuleCSV($renderRecords, $configParams);	
+				} elseif(isset($params['exportParams'])) {
+					
+					//if fields were chosen in the selection view, perform the export
+					
 					$generator = $this->componentManager->getComponent('Tx_Formhandler_Generator_CSV');
 					$generator->generateModuleCSV($renderRecords, $params['exportParams']);
 
@@ -595,7 +601,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 					$formatMarkers['###HIDDEN_FIELDS###'] .= '<input type="hidden" name="formhandler[markedUids][]" value="' . $id . '" />';
 				}
 				$formatMarkers['###KEY###'] = $key;
-				$formatMarkers['###UID###'] = 0;
+				$formatMarkers['###UID###'] = $this->id;
 				$formatMarkers['###LLL:export###'] = $LANG->getLL('export');
 				$formatMarkers['###FORMAT###'] = implode(',', array_keys($format));
 				$markers['###FORMATS###'] .= Tx_Formhandler_StaticFuncs::substituteMarkerArray($code, $formatMarkers);
@@ -605,9 +611,13 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 		$code = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###SINGLE_FORMAT###');
 		$formatMarkers = array();
 		$formatMarkers['###URL###'] = $_SERVER['PHP_SELF'];
-		$formatMarkers['###HIDDEN_FIELDS###'] = '';
+		
+		//add hidden fields for all selected records to export
+		foreach($detailId as $id) {
+			$formatMarkers['###HIDDEN_FIELDS###'] .= '<input type="hidden" name="formhandler[markedUids][]" value="' . $id . '" />';
+		}
 		$formatMarkers['###KEY###'] = '*';
-		$formatMarkers['###UID###'] = 0;
+		$formatMarkers['###UID###'] = $this->id;
 		$formatMarkers['###LLL:export###'] = $LANG->getLL('export_all');
 		$formatMarkers['###FORMAT###'] = '';
 		$markers['###FORMATS###'] .= Tx_Formhandler_StaticFuncs::substituteMarkerArray($code, $formatMarkers);

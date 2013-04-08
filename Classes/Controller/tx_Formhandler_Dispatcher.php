@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Dispatcher.php 33742 2010-05-31 13:22:20Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Dispatcher.php 37891 2010-09-09 18:56:04Z fabriziobranca $
  *                                                                        */
 
 require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_GimmeFive_Component_Manager.php');
@@ -27,6 +27,22 @@ require_once(PATH_tslib.'class.tslib_pibase.php');
  * @subpackage	Controller
  */
 class Tx_Formhandler_Dispatcher extends tslib_pibase {
+	
+	/**
+	 * Compontent Manager
+	 * 
+	 * @access protected
+	 * @var Tx_GimmeFive_Component_Manager
+	 */
+	protected $componentManager;
+	
+	/**
+	 * xajax
+	 * 
+	 * @access protected
+	 * @var tx_xajax
+	 */
+	protected $xajax;
 
 	/**
 	 * Adds JavaScript for xajax and registers callable methods.
@@ -37,8 +53,6 @@ class Tx_Formhandler_Dispatcher extends tslib_pibase {
 	protected function handleAjax() {
 		if(t3lib_extMgm::isLoaded('xajax', 0) && !class_exists('tx_xajax') && !$this->xajax) {
 			require_once(t3lib_extMgm::extPath('xajax') . 'class.tx_xajax.php');
-				
-				
 		}
 		if (!$this->xajax && class_exists('tx_xajax')) {
 			$view = $this->componentManager->getComponent('Tx_Formhandler_View_Form');
