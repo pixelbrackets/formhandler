@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_SubmittedOK.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_SubmittedOK.php 49599 2011-07-07 14:34:00Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -34,24 +34,18 @@ class Tx_Formhandler_View_SubmittedOK extends Tx_Formhandler_View_Form {
 	 */
 	protected function fillDefaultMarkers() {
 		parent::fillDefaultMarkers();
-		if (Tx_Formhandler_Globals::$formValuesPrefix) {
-			$params[Tx_Formhandler_Globals::$formValuesPrefix] = $this->gp;
+		$params = array();
+		if ($this->globals->getFormValuesPrefix()) {
+			$params[$this->globals->getFormValuesPrefix()] = $this->gp;
 		} else {
 			$params = $this->gp;
 		}
-		$params['type'] = 98;
-		$label = Tx_Formhandler_StaticFuncs::getTranslatedMessage($this->langFiles, 'print');
-		if (strlen($label) == 0) {
-			$label = 'print';
-		}
-		$markers['###PRINT_LINK###'] = $this->cObj->getTypolink($label, $GLOBALS['TSFE']->id, $params);
-		unset($params['type']);
 		if ($this->componentSettings['actions.']) {
 			foreach ($this->componentSettings['actions.'] as $action=>$options) {
 				$sanitizedAction = str_replace('.', '', $action);
 				$class = $options['class'];
 				if ($class) {
-					$class = Tx_Formhandler_StaticFuncs::prepareClassName($class);
+					$class = $this->utilityFuncs->prepareClassName($class);
 					$generator = $this->componentManager->getComponent($class);
 					$generator->init($this->gp, $options['config.']);
 					$markers['###' . strtoupper($sanitizedAction) . '_LINK###'] = $generator->getLink($params);

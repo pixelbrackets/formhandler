@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 46493 2011-04-13 16:42:01Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 49145 2011-06-27 13:15:48Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -39,7 +39,7 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 			//user set custom rules via cObject
 			$cObjSettings = $globalSetting['removeChars.'];
 			if (is_array($cObjSettings)) {
-				$list = Tx_Formhandler_StaticFuncs::getSingle($globalSetting, 'removeChars');
+				$list = $this->utilityFuncs->getSingle($globalSetting, 'removeChars');
 
 				//user set custom separator
 				if ($globalSetting['separator']) {
@@ -90,7 +90,7 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 					//user set custom rules via cObject
 					$cObjSettings = $fieldSetting['removeChars.'];
 					if (is_array($cObjSettings)) {
-						$list = Tx_Formhandler_StaticFuncs::getSingle($fieldSetting, 'removeChars');
+						$list = $this->utilityFuncs->getSingle($fieldSetting, 'removeChars');
 
 						//user set custom separator
 						if ($fieldSetting['separator']) {
@@ -178,7 +178,7 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 		parent::init($gp, $settings);
 		$this->doNotSanitizeFields = array();
 		if($this->settings['doNotSanitizeFields']) {
-			$this->doNotSanitizeFields = t3lib_div::trimExplode(',', Tx_Formhandler_StaticFuncs::getSingle($this->settings, 'doNotSanitizeFields'));
+			$this->doNotSanitizeFields = t3lib_div::trimExplode(',', $this->utilityFuncs->getSingle($this->settings, 'doNotSanitizeFields'));
 		}
 	}
 

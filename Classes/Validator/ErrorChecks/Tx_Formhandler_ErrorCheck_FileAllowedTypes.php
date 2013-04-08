@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileAllowedTypes.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileAllowedTypes.php 50875 2011-08-10 09:21:19Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -23,26 +23,23 @@
  */
 class Tx_Formhandler_ErrorCheck_FileAllowedTypes extends Tx_Formhandler_AbstractErrorCheck {
 
-	/**
-	 * Validates that an uploaded file via specified field matches one of the given file types
-	 *
-	 * @param array &$check The TypoScript settings for this error check
-	 * @param string $name The field name
-	 * @param array &$gp The current GET/POST parameters
-	 * @return string The error string
-	 */
-	public function check(&$check, $name, &$gp) {
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+		$this->mandatoryParameters = array('allowedTypes');
+	}
+
+	public function check() {
 		$checkFailed = '';
-		$allowed = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'allowedTypes');
+		$allowed = $this->utilityFuncs->getSingle($this->settings['params'], 'allowedTypes');
 		foreach ($_FILES as $sthg => &$files) {
-			if (strlen($files['name'][$name]) > 0) {
+			if (strlen($files['name'][$this->formFieldName]) > 0) {
 				if ($allowed) {
 					$types = t3lib_div::trimExplode(',', $allowed);
-					$fileext = substr($files['name'][$name], strrpos($files['name'][$name], '.') + 1);
+					$fileext = substr($files['name'][$this->formFieldName], strrpos($files['name'][$this->formFieldName], '.') + 1);
 					$fileext = strtolower($fileext);
 					if (!in_array($fileext, $types)) {
 						unset($files);
-						$checkFailed = $this->getCheckFailed($check);
+						$checkFailed = $this->getCheckFailed();
 					}
 				}
 			}

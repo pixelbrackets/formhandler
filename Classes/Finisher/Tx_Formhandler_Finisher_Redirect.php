@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Redirect.php 46243 2011-04-05 15:17:49Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Redirect.php 49145 2011-06-27 13:15:48Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -39,12 +39,12 @@ class Tx_Formhandler_Finisher_Redirect extends Tx_Formhandler_AbstractFinisher {
 	public function process() {
 
 		//read redirect page
-		$redirectPage = Tx_Formhandler_StaticFuncs::getSingle($this->settings, 'redirectPage');
+		$redirectPage = $this->utilityFuncs->getSingle($this->settings, 'redirectPage');
 		if (!isset($redirectPage)) {
 			return $this->gp;
 		}
-		Tx_Formhandler_Globals::$session->reset();
-		Tx_Formhandler_Staticfuncs::doRedirect($redirectPage, $this->settings['correctRedirectUrl'], $this->settings['additionalParams.']);
+		$this->globals->getSession()->reset();
+		$this->utilityFuncs->doRedirect($redirectPage, $this->settings['correctRedirectUrl'], $this->settings['additionalParams.']);
 		exit();
 	}
 
@@ -58,7 +58,7 @@ class Tx_Formhandler_Finisher_Redirect extends Tx_Formhandler_AbstractFinisher {
 	public function init($gp, $tsConfig) {
 		$this->gp = $gp;
 		$this->settings = $tsConfig;
-		$redirect = Tx_Formhandler_StaticFuncs::pi_getFFvalue($this->cObj->data['pi_flexform'], 'redirect_page', 'sMISC');
+		$redirect = $this->utilityFuncs->pi_getFFvalue($this->cObj->data['pi_flexform'], 'redirect_page', 'sMISC');
 		if ($redirect) {
 			$this->settings['redirectPage'] = $redirect;
 		}

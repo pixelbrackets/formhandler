@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Validator_Default.php 43837 2011-02-18 15:46:46Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Validator_Default.php 50760 2011-08-08 13:40:04Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -44,7 +44,6 @@
 class Tx_Formhandler_Validator_Default extends Tx_Formhandler_AbstractValidator {
 
 	protected $restrictErrorChecks = array();
-	
 	protected $disableErrorCheckFields = array();
 
 	/**
@@ -57,7 +56,7 @@ class Tx_Formhandler_Validator_Default extends Tx_Formhandler_AbstractValidator 
 	public function init($gp, $tsConfig) {
 		$this->settings = $tsConfig;
 
-		$flexformValue = Tx_Formhandler_StaticFuncs::pi_getFFvalue($this->cObj->data['pi_flexform'], 'required_fields', 'sMISC');
+		$flexformValue = $this->utilityFuncs->pi_getFFvalue($this->cObj->data['pi_flexform'], 'required_fields', 'sMISC');
 		if($flexformValue) {
 			$fields = t3lib_div::trimExplode(',', $flexformValue);
 			foreach($fields as $field) {
@@ -89,19 +88,19 @@ class Tx_Formhandler_Validator_Default extends Tx_Formhandler_AbstractValidator 
 		if(isset($this->settings['disableErrorCheckFields'])) {
 			$this->disableErrorCheckFields = t3lib_div::trimExplode(',', $this->settings['disableErrorCheckFields']);
 		}
-		
+
 		if(isset($this->settings['restrictErrorChecks'])) {
 			$this->restrictErrorChecks = t3lib_div::trimExplode(',', $this->settings['restrictErrorChecks']);
 		}
-		
+
 		if (!in_array('all', $this->disableErrorCheckFields)) {
 			$errors = $this->validateRecursive($errors, $this->gp, (array) $this->settings['fieldConf.']);
 		}
-		
+
 		if ($this->settings['messageLimit'] > 0 || is_array($this->settings['messageLimit.'])) {
 			$limit = (int) $this->settings['messageLimit'];
 			$limits = (array) $this->settings['messageLimit.'];
-			
+
 			foreach ($errors as $field => $messages) {
 				if (isset($limits[$field]) && $limits[$field] > 0) {
 					$errors[$field] = array_slice($messages, - $limits[$field]);
@@ -110,7 +109,7 @@ class Tx_Formhandler_Validator_Default extends Tx_Formhandler_AbstractValidator 
 				}
 			}
 		}
-		
+
 		return empty($errors);
 	}
 	
@@ -171,14 +170,14 @@ class Tx_Formhandler_Validator_Default extends Tx_Formhandler_AbstractValidator 
 				// Nested field-confs - do recursion:
 				$errors = $this->validateRecursive($errors, (array) $gp[$fieldName], $tempSettings, $errorFieldName);
 			}
-			
+
 			if (!is_array($fieldSettings['errorCheck.'])) {
 				continue;
 			}
-			
+
 			$counter = 0;
 			$errorChecks = array();
-			
+
 			//set required to first position if set
 			foreach($fieldSettings['errorCheck.'] as $key => $check) {
 				if(!strstr($key, '.')) {
@@ -201,26 +200,32 @@ class Tx_Formhandler_Validator_Default extends Tx_Formhandler_AbstractValidator 
 				}
 			}
 
-			
-			$checkFailed = '';		
+			$checkFailed = '';
+
 				//foreach error checks
 			foreach($errorChecks as $check) {
 				$classNameFix = ucfirst($check['check']);
 				$errorCheckObject = $this->componentManager->getComponent('Tx_Formhandler_ErrorCheck_' . $classNameFix);
 				if(!$errorCheckObject) {
-					Tx_Formhandler_StaticFuncs::debugMessage('check_not_found', array('Tx_Formhandler_ErrorCheck_' . $classNameFix), 2);
+					$this->utilityFuncs->debugMessage('check_not_found', array('Tx_Formhandler_ErrorCheck_' . $classNameFix), 2);
 				}
 				if(empty($this->restrictErrorChecks) || in_array($check['check'], $this->restrictErrorChecks)) {
-					Tx_Formhandler_StaticFuncs::debugMessage('calling_class', array('Tx_Formhandler_ErrorCheck_' . $classNameFix));
-					$checkFailed = $errorCheckObject->check($check, $fieldName, $gp);
-					if(strlen($checkFailed) > 0) {
-						if(!is_array($errors[$errorFieldName])) {
-							$errors[$errorFieldName] = array();
+					$this->utilityFuncs->debugMessage('calling_class', array('Tx_Formhandler_ErrorCheck_' . $classNameFix));
+					$errorCheckObject->init($this->gp, $check);
+					$errorCheckObject->setFormFieldName($fieldName);
+					if($errorCheckObject->validateConfig()) {
+						$checkFailed = $errorCheckObject->check();
+						if(strlen($checkFailed) > 0) {
+							if(!is_array($errors[$errorFieldName])) {
+								$errors[$errorFieldName] = array();
+							}
+							$errors[$errorFieldName][] = $checkFailed;
 						}
-						$errors[$errorFieldName][] = $checkFailed;
+					} else {
+						$this->utilityFuncs->throwException('Configuration is not valid for class "Tx_Formhandler_ErrorCheck_' . $classNameFix . '"!');
 					}
 				} else {
-					Tx_Formhandler_StaticFuncs::debugMessage('check_skipped', array($check['check']));
+					$this->utilityFuncs->debugMessage('check_skipped', array($check['check']));
 				}
 			}
 		}

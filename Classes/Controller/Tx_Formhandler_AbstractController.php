@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractController.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractController.php 50810 2011-08-09 15:42:20Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -22,7 +22,7 @@
  * @subpackage	Controller
  * @abstract
  */
-abstract class Tx_Formhandler_AbstractController implements Tx_Formhandler_ControllerInterface {
+abstract class Tx_Formhandler_AbstractController extends Tx_Formhandler_AbstractClass implements Tx_Formhandler_ControllerInterface {
 
 	/**
 	 * The content returned by the controller
@@ -145,7 +145,7 @@ abstract class Tx_Formhandler_AbstractController implements Tx_Formhandler_Contr
 		$settings = $this->configuration->getSettings();
 		if ($this->predefined && is_array($settings['predef.'][$this->predefined])) {
 			$predefSettings = $settings['predef.'][$this->predefined];
-			unset($settings['predef.'][$this->predefined]);
+			unset($settings['predef.']);
 			$settings = t3lib_div::array_merge_recursive_overrule($settings, $predefSettings);
 		}
 		return $settings;

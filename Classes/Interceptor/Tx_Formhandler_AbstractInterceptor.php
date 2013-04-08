@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractInterceptor.php 43837 2011-02-18 15:46:46Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractInterceptor.php 49145 2011-06-27 13:15:48Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -29,8 +29,8 @@ abstract class Tx_Formhandler_AbstractInterceptor extends Tx_Formhandler_Abstrac
 		if (isset($classesArray) && is_array($classesArray)) {
 			foreach ($classesArray as $idx => $tsConfig) {
 				if (is_array($tsConfig) && isset($tsConfig['class']) && !empty($tsConfig['class']) && intval($tsConfig['disable']) !== 1) {
-					$className = Tx_Formhandler_StaticFuncs::prepareClassName($tsConfig['class']);
-					Tx_Formhandler_StaticFuncs::Message('calling_class', array($className));
+					$className = $this->utilityFuncs->prepareClassName($tsConfig['class']);
+					$this->utilityFuncs->Message('calling_class', array($className));
 					$obj = $this->componentManager->getComponent($className);
 					if ($markAsSpam) {
 						$tsConfig['config.']['markAsSpam'] = 1;
@@ -38,7 +38,7 @@ abstract class Tx_Formhandler_AbstractInterceptor extends Tx_Formhandler_Abstrac
 					$obj->init($this->gp, $tsConfig['config.']);
 					$obj->process();
 				} else {
-					Tx_Formhandler_StaticFuncs::throwException('classesarray_error');
+					$this->utilityFuncs->throwException('classesarray_error');
 				}
 			}
 		}

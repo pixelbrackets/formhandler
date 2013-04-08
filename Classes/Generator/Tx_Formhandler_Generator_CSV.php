@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_CSV.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Generator_CSV.php 49526 2011-07-06 15:58:43Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -59,9 +59,8 @@ class Tx_Formhandler_Generator_CSV {
 	 * @see Tx_Formhandler_Controller_Backend::generateCSV()
 	 * @return void
 	 */
-	public function generateModuleCSV($records, $exportParams = array()) {
+	public function generateModuleCSV($records, $exportParams = array(), $delimiter = ',', $enclosure = '"', $encoding = 'UTF-8') {
 
-		
 		$data = array();
 		$dataSorted = array();
 
@@ -105,6 +104,9 @@ class Tx_Formhandler_Generator_CSV {
 
 		// create new parseCSV object.
 		$csv = new parseCSV();
+		$csv->delimiter = $csv->output_delimiter = $delimiter;
+		$csv->enclosure = $enclosure;
+		$csv->output_encoding = $encoding;
 		$csv->output('formhandler.csv', $data, $exportParams);
 		die();
 	}

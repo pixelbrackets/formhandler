@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileMinCount.php 46243 2011-04-05 15:17:49Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileMinCount.php 50875 2011-08-10 09:21:19Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -23,30 +23,27 @@
  */
 class Tx_Formhandler_ErrorCheck_FileMinCount extends Tx_Formhandler_AbstractErrorCheck {
 
-	/**
-	 * Validates that at least x files get uploaded via the specified upload field.
-	 *
-	 * @param array &$check The TypoScript settings for this error check
-	 * @param string $name The field name
-	 * @param array &$gp The current GET/POST parameters
-	 * @return string The error string
-	 */
-	public function check(&$check, $name, &$gp) {
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+		$this->mandatoryParameters = array('minCount');
+	}
+
+	public function check() {
 		$checkFailed = '';
 
-		$files = Tx_Formhandler_Globals::$session->get('files');
-		$settings = Tx_Formhandler_Globals::$session->get('settings');
-		$currentStep = Tx_Formhandler_Globals::$session->get('currentStep');
-		$lastStep = Tx_Formhandler_Globals::$session->get('lastStep');
-		$minCount = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'minCount');
-		if (is_array($files[$name]) &&
+		$files = $this->globals->getSession()->get('files');
+		$settings = $this->globals->getSession()->get('settings');
+		$currentStep = $this->globals->getSession()->get('currentStep');
+		$lastStep = $this->globals->getSession()->get('lastStep');
+		$minCount = $this->utilityFuncs->getSingle($this->settings['params'], 'minCount');
+		if (is_array($files[$this->formFieldName]) &&
 			$currentStep > $lastStep) {
 
 			foreach ($_FILES as $idx => $info) {
-				if (strlen($info['name'][$name]) > 0 && count($files[$name]) < ($minCount - 1)) {
-					$checkFailed = $this->getCheckFailed($check);
-				} elseif (strlen($info['name'][$name]) === 0 && count($files[$name]) < $minCount) {
-					$checkFailed = $this->getCheckFailed($check);
+				if (strlen($info['name'][$this->formFieldName]) > 0 && count($files[$this->formFieldName]) < ($minCount - 1)) {
+					$checkFailed = $this->getCheckFailed();
+				} elseif (strlen($info['name'][$this->formFieldName]) === 0 && count($files[$this->formFieldName]) < $minCount) {
+					$checkFailed = $this->getCheckFailed();
 				}
 			}
 		}

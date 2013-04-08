@@ -82,13 +82,13 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 	 * @author Reinhard Führicht <rf@typoheads.at>
 	 * @return void
 	 */
-	public function __construct(Tx_Formhandler_Component_Manager $componentManager, Tx_Formhandler_Configuration $configuration) {
+	public function __construct(Tx_Formhandler_Component_Manager $componentManager, Tx_Formhandler_Configuration $configuration, Tx_Formhandler_UtilityFuncs $utilityFuncs) {
 		$this->componentManager = $componentManager;
 		$this->configuration = $configuration;
 		$this->templatePath = t3lib_extMgm::extPath('formhandler') . 'Resources/HTML/backend/';
 		$this->templateFile = $this->templatePath . 'template.html';
 		$this->templateCode = t3lib_div::getURL($this->templateFile);
-
+		$this->utilityFuncs = $utilityFuncs;
 	}
 	
 	public function setId($id) {
@@ -127,7 +127,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 
 		//init gp params
 		$params = t3lib_div::_GP('formhandler');
-		
+
 		if(isset($params['markedUids']) && is_array($params['markedUids'])) {
 			foreach($params['markedUids'] as &$uidValue) {
 				$uidValue = intval($uidValue);
@@ -137,7 +137,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 		if(isset($params['detailId'])) {
 			$params['detailId'] = intval($params['detailId']);
 		}
-		
+
 		//should delete records
 		if ($params['delete'] && isset($params['markedUids']) && is_array($params['markedUids'])) {
 
@@ -322,7 +322,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 		//select the records to export
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery('uid,pid,crdate,ip,params,key_hash', $this->logTable, $where);
 
-		//if record were found
+		//if records were found
 		if ($res && $GLOBALS['TYPO3_DB']->sql_num_rows($res) > 0) {
 			$records = array();
 			$count = 0;
@@ -353,13 +353,24 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 				if ($tsconfig['properties']['config.']['csv'] != "") {
 					$configParams = t3lib_div::trimExplode(',', $tsconfig['properties']['config.']['csv'], 1);
 					$generator = $this->componentManager->getComponent('Tx_Formhandler_Generator_CSV');
-					$generator->generateModuleCSV($records, $configParams);	
+					$generator->generateModuleCSV(
+						$records,
+						$configParams,
+						$tsconfig['properties']['config.']['csv.']['delimiter'],
+						$tsconfig['properties']['config.']['csv.']['enclosure'],
+						$tsconfig['properties']['config.']['csv.']['encoding']
+					);
 				} elseif (isset($params['exportParams'])) {
 					
 					//if fields were chosen in the selection view, perform the export
-					
 					$generator = $this->componentManager->getComponent('Tx_Formhandler_Generator_CSV');
-					$generator->generateModuleCSV($records, $params['exportParams']);
+					$generator->generateModuleCSV(
+						$records,
+						$params['exportParams'],
+						$tsconfig['properties']['config.']['csv.']['delimiter'],
+						$tsconfig['properties']['config.']['csv.']['enclosure'],
+						$tsconfig['properties']['config.']['csv.']['encoding']
+					);
 
 					//no fields chosen, show selection view.
 				} else {
@@ -442,7 +453,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 
 		//init gp params
 		$gp = t3lib_div::_GP('formhandler');
-		$selectorCode = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###EXPORT_FIELDS_SELECTOR###');
+		$selectorCode = $this->utilityFuncs->getSubpart($this->templateCode, '###EXPORT_FIELDS_SELECTOR###');
 		
 		$markers = array();
 		$markers['###LLL:select_export_fields###'] = $LANG->getLL('select_export_fields');
@@ -482,7 +493,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 		$markers['###UID###'] = $this->id;
 		$markers['###LLL:export###'] = $LANG->getLL('export');
 		$returnCode = $this->getSelectionJS();
-		$returnCode .= Tx_Formhandler_StaticFuncs::substituteMarkerArray($selectorCode, $markers);
+		$returnCode .= $this->utilityFuncs->substituteMarkerArray($selectorCode, $markers);
 		
 		return $returnCode; 
 	}
@@ -505,7 +516,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 
 		//init gp params
 		$gp = t3lib_div::_GP('formhandler');
-		$selectorCode = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###EXPORT_FIELDS_SELECTOR###');
+		$selectorCode = $this->utilityFuncs->getSubpart($this->templateCode, '###EXPORT_FIELDS_SELECTOR###');
 		
 		$markers = array();
 		$markers['###LLL:select_export_fields###'] = $LANG->getLL('select_export_fields');
@@ -548,7 +559,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 		$markers['###UID###'] = $this->id;
 		$markers['###LLL:export###'] = $LANG->getLL('export');
 		$returnCode = $this->getSelectionJS();
-		$returnCode .= Tx_Formhandler_StaticFuncs::substituteMarkerArray($selectorCode, $markers);
+		$returnCode .= $this->utilityFuncs->substituteMarkerArray($selectorCode, $markers);
 		
 		return $returnCode; 
 	}
@@ -562,11 +573,11 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 	protected function getSelectionJS() {
 		global $LANG;
 		$content = "";		
-		$code = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###JS_CODE###');	
+		$code = $this->utilityFuncs->getSubpart($this->templateCode, '###JS_CODE###');	
 		$markers = array();
 		$markers['###HOW_MUCH_JS###'] = ($this->pageBrowser) ? intval($this->pageBrowser->getMaxResPerPage()) : 0;
 		$markers['###LLL:delete_question###'] = $LANG->getLL('delete_question');
-		$content = Tx_Formhandler_StaticFuncs::substituteMarkerArray($code, $markers);
+		$content = $this->utilityFuncs->substituteMarkerArray($code, $markers);
 		return $content;
 	}
 
@@ -589,7 +600,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 			$detailId = array($detailId);
 		}
 
-		$selectorCode = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###FORMATS_SELECTOR###');
+		$selectorCode = $this->utilityFuncs->getSubpart($this->templateCode, '###FORMATS_SELECTOR###');
 		
 		$foundFormats = 0;
 		
@@ -601,7 +612,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 			//if format is valid
 			if (isset($format) && is_array($format)) {
 				$foundFormats++;
-				$code = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###SINGLE_FORMAT###');
+				$code = $this->utilityFuncs->getSubpart($this->templateCode, '###SINGLE_FORMAT###');
 				$formatMarkers['###URL###'] = $_SERVER['PHP_SELF'];
 
 				$formatMarkers['###HIDDEN_FIELDS###'] = '';
@@ -613,11 +624,11 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 				$formatMarkers['###UID###'] = $this->id;
 				$formatMarkers['###LLL:export###'] = $LANG->getLL('export');
 				$formatMarkers['###FORMAT###'] = implode(',', array_keys($format));
-				$markers['###FORMATS###'] .= Tx_Formhandler_StaticFuncs::substituteMarkerArray($code, $formatMarkers);
+				$markers['###FORMATS###'] .= $this->utilityFuncs->substituteMarkerArray($code, $formatMarkers);
 			}
 			
 		}
-		$code = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###SINGLE_FORMAT###');
+		$code = $this->utilityFuncs->getSubpart($this->templateCode, '###SINGLE_FORMAT###');
 		$formatMarkers = array();
 		$formatMarkers['###URL###'] = $_SERVER['PHP_SELF'];
 		
@@ -629,13 +640,13 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 		$formatMarkers['###UID###'] = $this->id;
 		$formatMarkers['###LLL:export###'] = $LANG->getLL('export_all');
 		$formatMarkers['###FORMAT###'] = '';
-		$markers['###FORMATS###'] .= Tx_Formhandler_StaticFuncs::substituteMarkerArray($code, $formatMarkers);
+		$markers['###FORMATS###'] .= $this->utilityFuncs->substituteMarkerArray($code, $formatMarkers);
 		
 		$markers['###UID###'] = $this->id;
 		$markers['###LLL:formats_found###'] = sprintf($LANG->getLL('formats_found'), $foundFormats);
 		$markers['###BACK_URL###'] = $_SERVER['PHP_SELF'];
 		$markers['###LLL:back###'] = $LANG->getLL('back');
-		return Tx_Formhandler_StaticFuncs::substituteMarkerArray($selectorCode, $markers);
+		return $this->utilityFuncs->substituteMarkerArray($selectorCode, $markers);
 	}
 
 	/**
@@ -656,7 +667,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 		if ($res && $GLOBALS['TYPO3_DB']->sql_num_rows($res) > 0) {
 			$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
 			$GLOBALS['TYPO3_DB']->sql_free_result($res);
-			$viewCode = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###DETAIL_VIEW###');
+			$viewCode = $this->utilityFuncs->getSubpart($this->templateCode, '###DETAIL_VIEW###');
 
 			//unserialize params
 			$params = unserialize($row['params']);
@@ -696,7 +707,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 			$markers['###EXPORT_LINKS###'] = '<a href="' . $_SERVER['PHP_SELF'] . '?formhandler[detailId]=' . $row['uid'] . '&formhandler[renderMethod]=pdf">' . $LANG->getLL('pdf') . '</a>
 						/<a href="' . $_SERVER['PHP_SELF'] . '?formhandler[detailId]=' . $row['uid'] . '&formhandler[renderMethod]=csv">' . $LANG->getLL('csv') . '</a>';
 			$markers['###BACK_LINK###'] = '<a href="' . $_SERVER['PHP_SELF'] . '">' . $LANG->getLL('back') . '</a>';
-			$content = Tx_Formhandler_StaticFuncs::substituteMarkerArray($viewCode, $markers);
+			$content = $this->utilityFuncs->substituteMarkerArray($viewCode, $markers);
 			$content = $this->addCSS($content);
 			return $content;
 		}
@@ -710,10 +721,10 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 	 */
 	protected function getErrorMessage() {
 		global $LANG;
-		$code = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###NO_TABLE_ERROR###');
+		$code = $this->utilityFuncs->getSubpart($this->templateCode, '###NO_TABLE_ERROR###');
 		$markers = array();
 		$markers['###LLL:noLogTable###'] = $LANG->getLL('noLogTable');
-		return Tx_Formhandler_StaticFuncs::substituteMarkerArray($code, $markers);
+		return $this->utilityFuncs->substituteMarkerArray($code, $markers);
 	}
 
 	/**
@@ -810,13 +821,13 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 
 		//only records submitted after given timestamp
 		if (strlen(trim($params['startdateFilter'])) > 0) {
-			$tstamp = Tx_Formhandler_StaticFuncs::dateToTimestamp($params['startdateFilter']);
+			$tstamp = $this->utilityFuncs->dateToTimestamp($params['startdateFilter']);
 			$where[] = 'crdate >= ' . $tstamp;
 		}
 
 		//only records submitted before given timestamp
 		if (strlen(trim($params['enddateFilter'])) > 0) {
-			$tstamp = Tx_Formhandler_StaticFuncs::dateToTimestamp($params['enddateFilter'], TRUE);
+			$tstamp = $this->utilityFuncs->dateToTimestamp($params['enddateFilter'], TRUE);
 			$where[] = 'crdate <= ' . $tstamp;
 		}
 
@@ -840,7 +851,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 
 		$filter = '';
 		$filter .= $this->getSelectionJS();
-		$filter .= Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###FILTER_FORM###');
+		$filter .= $this->utilityFuncs->getSubpart($this->templateCode, '###FILTER_FORM###');
 
 		$markers = array();
 		$markers['###URL###'] = 			$_SERVER['PHP_SELF'];
@@ -873,7 +884,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 		$filter .= $this->getCalendarJS();
 
 
-		return Tx_Formhandler_StaticFuncs::substituteMarkerArray($filter, $markers);
+		return $this->utilityFuncs->substituteMarkerArray($filter, $markers);
 	}
 
 	/**
@@ -900,7 +911,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 	 * @author Reinhard Führicht <rf@typoheads.at>
 	 */
 	protected function getCalendarJS() {
-		return Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###CALENDAR_JS###');
+		return $this->utilityFuncs->getSubpart($this->templateCode, '###CALENDAR_JS###');
 	}
 
 	/**
@@ -912,23 +923,23 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 	 */
 	protected function getFunctionArea() {
 		global $LANG;
-		$code = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###FUNCTION_AREA###');
+		$code = $this->utilityFuncs->getSubpart($this->templateCode, '###FUNCTION_AREA###');
 		$markers = array();
 		$markers['###URL###'] = $_SERVER['PHP_SELF'];
 		
-		$markers['###EXPORT_FIELDS_MARKER###'] = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###EXPORT_FIELDS###');
+		$markers['###EXPORT_FIELDS_MARKER###'] = $this->utilityFuncs->getSubpart($this->templateCode, '###EXPORT_FIELDS###');
 		
-		$markers['###DELETE_FIELDS_MARKER###'] = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###DELETE_FIELDS###');
+		$markers['###DELETE_FIELDS_MARKER###'] = $this->utilityFuncs->getSubpart($this->templateCode, '###DELETE_FIELDS###');
 		$markers['###SELECTION_BOX_MARKER###'] = $this->getSelectionBox();
 		
 		$markers['###WHICH_ENTRIES_MARKER###'] = $this->pageBrowser->getResultBox()->fromRec . $this->pageBrowser->getResultBox()->toRec . $this->pageBrowser->getResultBox()->totalRec;
 		$markers['###WHICH_PAGES_MARKER###'] = $this->pageBrowser->getResultBox()->curPage . ' ' . $this->pageBrowser->getResultBox()->totalPage;
  		
- 		$content = Tx_Formhandler_StaticFuncs::substituteMarkerArray($code, $markers);
+ 		$content = $this->utilityFuncs->substituteMarkerArray($code, $markers);
  		$markers = array();
  		$markers['###UID###'] = $this->id;
 		$markers['###LLL:delete_selected###'] = $LANG->getLL('delete_selected');
-		return Tx_Formhandler_StaticFuncs::substituteMarkerArray($content, $markers);
+		return $this->utilityFuncs->substituteMarkerArray($content, $markers);
 	}
 
 	/**
@@ -939,11 +950,11 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 	 */
 	protected function getSelectionBox() {
 		global $LANG;
-		$code = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###SELECTION_BOX###');
+		$code = $this->utilityFuncs->getSubpart($this->templateCode, '###SELECTION_BOX###');
 		$markers = array();
 		$markers['###LLL:select_all###'] = $LANG->getLL('select_all');
 		$markers['###LLL:deselect_all###'] = $LANG->getLL('deselect_all');
-		return Tx_Formhandler_StaticFuncs::substituteMarkerArray($code, $markers);
+		return $this->utilityFuncs->substituteMarkerArray($code, $markers);
 	}
 
 	/**
@@ -970,7 +981,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 
 		
 		$table .= $this->getFunctionArea();
-		$tableCode = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###LIST_TABLE###');
+		$tableCode = $this->utilityFuncs->getSubpart($this->templateCode, '###LIST_TABLE###');
 
 		$tableMarkers = array();
 		$tableMarkers['###LLL:PAGE_ID###'] = $LANG->getLL('page_id');
@@ -992,7 +1003,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 			if ($record['is_spam'] == 1) {
 				$style = 'style="background-color:#dd7777"';
 			}
-			$rowCode = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###LIST_TABLE_ROW###');
+			$rowCode = $this->utilityFuncs->getSubpart($this->templateCode, '###LIST_TABLE_ROW###');
 			$markers = array();
 			$markers['###UID###'] = $this->id;
 			$markers['###ROW_STYLE###'] = $style;
@@ -1009,7 +1020,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 			$checkbox .= '/>';
 			$markers['###CHECKBOX###'] = $checkbox;
 			$count++;
-			$tableMarkers['###ROWS###'] .= Tx_Formhandler_StaticFuncs::substituteMarkerArray($rowCode, $markers);
+			$tableMarkers['###ROWS###'] .= $this->utilityFuncs->substituteMarkerArray($rowCode, $markers);
 		}
 		
 		// add pagination
@@ -1017,14 +1028,14 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 		$tableMarkers['###WHICH_PAGEBROWSER###'] = $this->pageBrowser->displayBrowseBox();
 
 		//add Export as option
-		$table .= Tx_Formhandler_StaticFuncs::substituteMarkerArray($tableCode, $tableMarkers);
-		$table .= Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###EXPORT_FIELDS###');
+		$table .= $this->utilityFuncs->substituteMarkerArray($tableCode, $tableMarkers);
+		$table .= $this->utilityFuncs->getSubpart($this->templateCode, '###EXPORT_FIELDS###');
 		
 		$markers = array();
 		$markers['###UID###'] = $this->id;
-		$table = Tx_Formhandler_StaticFuncs::substituteMarkerArray($table, $markers);
+		$table = $this->utilityFuncs->substituteMarkerArray($table, $markers);
 		$table = $this->addCSS($table);
-		return Tx_Formhandler_StaticFuncs::removeUnfilledMarkers($table);
+		return $this->utilityFuncs->removeUnfilledMarkers($table);
 	}
 
 	/**
