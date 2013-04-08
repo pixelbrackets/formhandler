@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_StoreGP.php 32489 2010-04-22 15:09:24Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_StoreGP.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -61,6 +61,7 @@ class Tx_Formhandler_Finisher_StoreGP extends Tx_Formhandler_AbstractFinisher {
 	 * @return void
 	 */
 	protected function updateSession() {
+
 		//reset session
 		Tx_Formhandler_Session::set('values', array());
 		
@@ -68,10 +69,9 @@ class Tx_Formhandler_Finisher_StoreGP extends Tx_Formhandler_AbstractFinisher {
 		
 		//set the variables in session
 		//no need to seperate steps in finishers, so simply store to step 1
-		foreach($this->gp as $key => $value) {
+		foreach ($this->gp as $key => $value) {
 			$newValues[1][$key] = $value;
 		}
-		
 		Tx_Formhandler_Session::set('values', $newValues);
 	}
 

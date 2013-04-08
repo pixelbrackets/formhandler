@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Logger_DB.php 33412 2010-05-24 12:09:53Z erep $
+ * $Id: Tx_Formhandler_Logger_DB.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -34,7 +34,7 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 		$table = "tx_formhandler_log";
 
 		$fields['ip'] = t3lib_div::getIndpEnv('REMOTE_ADDR');
-		if(isset($this->settings['disableIPlog']) && intval($this->settings['disableIPlog']) == 1) {
+		if (isset($this->settings['disableIPlog']) && intval($this->settings['disableIPlog']) == 1) {
 			$fields['ip'] = NULL;
 		}
 		$fields['tstamp'] = time();
@@ -46,26 +46,23 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 		$hash = md5(serialize($keys));
 		$fields['params'] = $serialized;
 		$fields['key_hash'] = $hash;
-		
-		if(intval($this->settings['markAsSpam']) == 1) {
+
+		if (intval($this->settings['markAsSpam']) == 1) {
 			$fields['is_spam'] = 1;
 		}
-
-		#$fields = $GLOBALS['TYPO3_DB']->fullQuoteArray($fields,$table);
 
 		//query the database
 		$res = $GLOBALS['TYPO3_DB']->exec_INSERTquery($table, $fields);
 		$insertedUID = $GLOBALS['TYPO3_DB']->sql_insert_id();
-		$lastId = Tx_Formhandler_Session::set('inserted_uid', $insertedUID);
-
-		if(!$this->settings['nodebug']) {
+		Tx_Formhandler_Session::set('inserted_uid', $insertedUID);
+		Tx_Formhandler_Session::set('inserted_tstamp', $fields['tstamp']);
+		Tx_Formhandler_Session::set('key_hash', $hash);
+		if (!$this->settings['nodebug']) {
 			Tx_Formhandler_StaticFuncs::debugMessage('logging', $table, implode(',', $fields));
-			if(strlen($GLOBALS['TYPO3_DB']->sql_error()) > 0) {
+			if (strlen($GLOBALS['TYPO3_DB']->sql_error()) > 0) {
 				Tx_Formhandler_StaticFuncs::debugMessage('error', $GLOBALS['TYPO3_DB']->sql_error());
 			}
-				
 		}
-
 	}
 
 }

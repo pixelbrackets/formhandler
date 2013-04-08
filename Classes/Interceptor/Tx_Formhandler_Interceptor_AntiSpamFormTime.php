@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_AntiSpamFormTime.php 28812 2010-01-13 16:58:00Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_AntiSpamFormTime.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -44,9 +44,9 @@ class Tx_Formhandler_Interceptor_AntiSpamFormTime extends Tx_Formhandler_Abstrac
 	 */
 	public function process() {
 		$isSpam = $this->doCheck();
-		if($isSpam) {
+		if ($isSpam) {
 			$this->log(TRUE);
-			if($this->settings['redirectPage']) {
+			if ($this->settings['redirectPage']) {
 				Tx_Formhandler_Staticfuncs::doRedirect($this->settings['redirectPage'], $this->settings['correctRedirectUrl']);
 				return 'Lousy spammer!';
 			} else {
@@ -56,48 +56,41 @@ class Tx_Formhandler_Interceptor_AntiSpamFormTime extends Tx_Formhandler_Abstrac
 				
 				$templateCode = Tx_Formhandler_Globals::$templateCode;
 				$view->setTemplate($templateCode, 'ANTISPAM');
-				if(!$view->hasTemplate()) {
+				if (!$view->hasTemplate()) {
 					Tx_Formhandler_StaticFuncs::throwException('spam_detected');
 					return 'Lousy spammer!';
 				}
-				
 				return $view->render($this->gp, array());
-				
-				
-				
 			}
 		}
-		
 		return $this->gp;
 	}
-	
+
 	/**
 	 * Performs checks if the submitted form should be treated as Spam.
 	 *
 	 * @return boolean
 	 */
 	protected function doCheck() {
-		
 		$value = $this->settings['minTime.']['value'];
 		$unit = $this->settings['minTime.']['unit'];
 		$minTime = Tx_Formhandler_StaticFuncs::convertToSeconds($value, $unit);
-		
-		
+
 		$value = $this->settings['maxTime.']['value'];
 		$unit = $this->settings['maxTime.']['unit'];
 		$maxTime = Tx_Formhandler_StaticFuncs::convertToSeconds($value, $unit);
 		$spam = FALSE;
-		if (	!isset($this->gp['formtime']) || 
-				!is_numeric($this->gp['formtime'])) {
-					
+		if (!isset($this->gp['formtime']) || 
+			!is_numeric($this->gp['formtime'])) {
+
 			$spam = TRUE;
-		} elseif($minTime && time() - intval($this->gp['formtime']) < $minTime) {
+		} elseif ($minTime && time() - intval($this->gp['formtime']) < $minTime) {
 			$spam = TRUE;
-		} elseif($maxTime && time() - intval($this->gp['formtime']) > $maxTime) {
+		} elseif ($maxTime && time() - intval($this->gp['formtime']) > $maxTime) {
 			$spam = TRUE;
 		}
 		return $spam;
 	}
-	
+
 }
 ?>
