@@ -11,20 +11,20 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_IsInDBTable.php 35714 2010-07-15 15:58:54Z fabien_u $
+ * $Id: Tx_Formhandler_ErrorCheck_ContainsOne.php 30986 2010-03-10 18:34:49Z reinhardfuehricht $
  *                                                                        */
 
 /**
- * Validates that a specified field's value is found in a specified db table
+ * Validates that a specified field contains only the specified words/characters
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
  * @package	Tx_Formhandler
  * @subpackage	ErrorChecks
  */
-class Tx_Formhandler_ErrorCheck_IsInDBTable extends Tx_Formhandler_AbstractErrorCheck {
+class Tx_Formhandler_ErrorCheck_ContainsOnly extends Tx_Formhandler_AbstractErrorCheck {
 
 	/**
-	 * Validates that a specified field's value is found in a specified db table
+	 * Validates that a specified field contains at least one of the specified words
 	 *
 	 * @param array &$check The TypoScript settings for this error check
 	 * @param string $name The field name
@@ -33,20 +33,26 @@ class Tx_Formhandler_ErrorCheck_IsInDBTable extends Tx_Formhandler_AbstractError
 	 */
 	public function check(&$check, $name, &$gp) {
 		$checkFailed = '';
+		$formValue = trim($gp[$name]);
 		
-		if(isset($gp[$name]) && strlen(trim($gp[$name])) > 0) {
-			$checkTable = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'table');
-			$checkField = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'field');
-			$additionalWhere = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'additionalWhere');
-			if (!empty($checkTable) && !empty($checkField)) {
-				$where = $checkField . '=' . $GLOBALS['TYPO3_DB']->fullQuoteStr($gp[$name], $checkTable) . ' ' . $additionalWhere;
-				$showHidden = $check['params']['showHidden'] == 1 ? 1 : 0;
-				$where .= $GLOBALS['TSFE']->sys_page->enableFields($checkTable, $showHidden);
-				$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery($checkField, $checkTable, $where);
-				if ($res && !$GLOBALS['TYPO3_DB']->sql_num_rows($res)) {
-					$checkFailed = $this->getCheckFailed($check);
+		if(strlen($formValue) > 0) {
+			$checkValue = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'words');
+			if(!is_array($checkValue)) {
+				$checkValue = t3lib_div::trimExplode(',', $checkValue);
+			}
+			$error = FALSE;
+			$array = preg_split('//', $formValue, -1, PREG_SPLIT_NO_EMPTY);
+			foreach($array as $char) {
+				if(!in_array($char, $checkValue)) {
+					$error = TRUE;
 				}
-				$GLOBALS['TYPO3_DB']->sql_free_result($res);
+			}
+			if($error) {
+					
+				//remove userfunc settings and only store comma seperated words
+				$check['params']['words'] = implode(',', $checkValue);
+				unset($check['params']['words.']);
+				$checkFailed = $this->getCheckFailed($check);
 			}
 		}
 		return $checkFailed;

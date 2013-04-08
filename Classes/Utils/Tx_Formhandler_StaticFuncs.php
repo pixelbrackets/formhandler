@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_StaticFuncs.php 30986 2010-03-10 18:34:49Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_StaticFuncs.php 32489 2010-04-22 15:09:24Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -230,13 +230,13 @@ class Tx_Formhandler_StaticFuncs {
 		$url = Tx_Formhandler_Globals::$cObj->getTypoLink_URL($redirect, $addparams);
 
 		//correct the URL by replacing &amp;
-		session_start();
 		if ($correctRedirectUrl) {
 			$url = str_replace('&amp;', '&', $url);
 		}
 
 		if($url) {
-			header("Location: ".t3lib_div::locationHeaderUrl($url));
+			header("Status: 200");
+			header("Location: " . t3lib_div::locationHeaderUrl($url));
 		}
 	}
 
@@ -498,7 +498,7 @@ class Tx_Formhandler_StaticFuncs {
 	 * @static
 	 */
 	static public function debugMessage($key) {
-		session_start();
+
 		$isDebug = Tx_Formhandler_Session::get('debug');
 		if($isDebug) {
 			$message = Tx_Formhandler_Messages::getDebugMessage($key);

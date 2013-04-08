@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_PDF.php 27810 2009-12-17 18:36:31Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_PDF.php 32489 2010-04-22 15:09:24Z reinhardfuehricht $
  *          
  *                                                                        
  *                                                                       */
@@ -34,7 +34,6 @@ class Tx_Formhandler_View_PDF extends Tx_Formhandler_View_Form {
 	 */
 	public function render($gp, $errors) {
 		$this->gp = $gp;
-		session_start();
 		$this->settings = $this->parseSettings();
 		
 		$this->sanitizeMarkers();

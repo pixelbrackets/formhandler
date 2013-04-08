@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileAllowedTypes.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileAllowedTypes.php 36522 2010-08-09 08:58:58Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -33,7 +33,7 @@ class Tx_Formhandler_ErrorCheck_FileAllowedTypes extends Tx_Formhandler_Abstract
 	 */
 	public function check(&$check, $name, &$gp) {
 		$checkFailed = '';
-		$allowed = $check['params']['allowedTypes'];
+		$allowed = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'allowedTypes');
 		foreach($_FILES as $sthg => &$files) {
 			if(strlen($files['name'][$name]) > 0) {
 				if($allowed) {

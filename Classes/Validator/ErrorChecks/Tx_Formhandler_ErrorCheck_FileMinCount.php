@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileMinCount.php 30971 2010-03-10 17:39:58Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileMinCount.php 36522 2010-08-09 08:58:58Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -36,9 +36,11 @@ class Tx_Formhandler_ErrorCheck_FileMinCount extends Tx_Formhandler_AbstractErro
 
 		$files = Tx_Formhandler_Session::get('files');
 		$settings = Tx_Formhandler_Session::get('settings');
-		$minCount = $check['params']['minCount'];
+		$currentStep = Tx_Formhandler_Session::get('currentStep');
+		$lastStep = Tx_Formhandler_Session::get('lastStep');
+		$minCount = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'minCount');
 		if (is_array($files[$name]) &&
-			$settings['currentStep'] > $settings['lastStep']) {
+			$currentStep > $lastStep) {
 			
 			foreach($_FILES as $idx => $info) {
 				if(strlen($info['name'][$name]) > 0 && count($files[$name]) < ($minCount - 1)) {

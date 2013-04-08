@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileMaxCount.php 30971 2010-03-10 17:39:58Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileMaxCount.php 36522 2010-08-09 08:58:58Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -36,14 +36,16 @@ class Tx_Formhandler_ErrorCheck_FileMaxCount extends Tx_Formhandler_AbstractErro
 
 		$files = Tx_Formhandler_Session::get('files');
 		$settings = Tx_Formhandler_Session::get('settings');
-		$maxCount = $check['params']['maxCount'];
+		$currentStep = Tx_Formhandler_Session::get('currentStep');
+		$lastStep = Tx_Formhandler_Session::get('lastStep');
+		$maxCount = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'maxCount');
 		if(	is_array($files[$name]) &&
 			count($files[$name]) >= $maxCount &&
-			$settings['currentStep'] == $settings['lastStep']) {
+			$currentStep == $lastStep) {
 
 			$checkFailed = $this->getCheckFailed($check);
 		} elseif (is_array($files[$name]) &&
-			$settings['currentStep'] > $settings['lastStep']) {
+			$currentStep > $lastStep) {
 
 			foreach($_FILES as $idx=>$info) {
 				if(strlen($info['name'][$name]) > 0 && count($files[$name]) >= $maxCount) {

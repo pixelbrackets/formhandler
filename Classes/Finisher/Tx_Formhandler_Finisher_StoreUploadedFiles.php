@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_StoreUploadedFiles.php 30981 2010-03-10 18:06:41Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_StoreUploadedFiles.php 34197 2010-06-11 13:52:49Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -78,8 +78,6 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 		$newFolder = $this->settings['finishedUploadFolder'];
 		$newFolder = Tx_Formhandler_StaticFuncs::sanitizePath($newFolder);
 		$uploadPath = Tx_Formhandler_StaticFuncs::getDocumentRoot() . $newFolder;
-	
-		session_start();
 		$sessionFiles = Tx_Formhandler_Session::get('files');
 		if(is_array($sessionFiles) && !empty($sessionFiles) && strlen($newFolder) > 0 ) {
 			foreach($sessionFiles as $field => $files) {
@@ -147,7 +145,7 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 				}
 			}
 		}
-		//remove ',' from filename, would be handled as file seperator 
+		//remove ',' from filename, would be handled as file separator 
 		$newFilename = str_replace(',', '', $newFilename);
 
 		$newFilename .= $fileext;

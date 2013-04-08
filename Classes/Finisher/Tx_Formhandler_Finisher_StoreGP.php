@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_StoreGP.php 30971 2010-03-10 17:39:58Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_StoreGP.php 32489 2010-04-22 15:09:24Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -56,13 +56,11 @@ class Tx_Formhandler_Finisher_StoreGP extends Tx_Formhandler_AbstractFinisher {
 
 	/**
 	 * Stores $this->gp parameters in SESSION
-	 * actually only needed for finisher_confirmation
+	 * actually only needed for finisher_submittedok
 	 *
 	 * @return void
 	 */
 	protected function updateSession() {
-		session_start();
-
 		//reset session
 		Tx_Formhandler_Session::set('values', array());
 		

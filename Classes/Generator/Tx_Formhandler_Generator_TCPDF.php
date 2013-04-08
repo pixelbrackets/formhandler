@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_TCPDF.php 30986 2010-03-10 18:34:49Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Generator_TCPDF.php 36376 2010-08-05 09:19:56Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -160,7 +160,7 @@ class Tx_Formhandler_Generator_TCPDF {
 		}
 		
 		$this->pdf->Output('formhandler.pdf','D');
-		
+		exit;
 
 	}
 

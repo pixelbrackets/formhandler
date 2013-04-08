@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 30986 2010-03-10 18:34:49Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 34197 2010-06-11 13:52:49Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -42,9 +42,9 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 			if(is_array($cObjSettings)) {
 				$list = Tx_Formhandler_StaticFuncs::getSingle($globalSetting, 'removeChars');
 				
-				//user set custom seperator
-				if($globalSetting['seperator']) {
-					$sep = $globalSetting['seperator'];
+				//user set custom separator
+				if($globalSetting['separator']) {
+					$sep = $globalSetting['separator'];
 				}
 				
 			} else {
@@ -97,9 +97,9 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 					if(is_array($cObjSettings)) {
 						$list = Tx_Formhandler_StaticFuncs::getSingle($fieldSetting, 'removeChars');
 						
-						//user set custom seperator
-						if($fieldSetting['seperator']) {
-							$sep = $fieldSetting['seperator'];
+						//user set custom separator
+						if($fieldSetting['separator']) {
+							$sep = $fieldSetting['separator'];
 						}
 						
 					} else {
