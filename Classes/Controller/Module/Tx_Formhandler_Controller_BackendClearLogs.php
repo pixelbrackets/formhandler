@@ -97,7 +97,8 @@ class Tx_Formhandler_Controller_BackendClearLogs extends Tx_Formhandler_Abstract
 	 * @return void
 	 */
 	protected function clearTables($tablesArray) {
-		foreach ($tablesArray as $table) {
+		$table = array_pop($tablesArray);
+		if($table === 'tx_formhandler_log') {
 			$GLOBALS['TYPO3_DB']->sql_query('TRUNCATE ' . $table);
 		}
 	}
