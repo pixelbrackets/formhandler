@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Form.php 53508 2011-10-28 10:10:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Form.php 56223 2012-01-11 18:28:15Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -118,7 +118,10 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 
 		//remove markers that were not substituted
 		$content = $this->utilityFuncs->removeUnfilledMarkers($this->template);
-		return $this->pi_wrapInBaseClass($content);
+		if(intval($this->settings['disableWrapInBaseClass']) !== 1) {
+			$content = $this->pi_wrapInBaseClass($content);
+		}
+		return $content;
 	}
 
 	/**
@@ -474,6 +477,12 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		$parameters = t3lib_div::_GET();
 		if (isset($parameters['id'])) {
 			unset($parameters['id']);
+		}
+		if (isset($parameters['eID'])) {
+			unset($parameters['eID']);
+		}
+		if (isset($parameters['randomID'])) {
+			unset($parameters['randomID']);
 		}
 
 		$path = $this->pi_getPageLink($GLOBALS['TSFE']->id, '', $parameters);

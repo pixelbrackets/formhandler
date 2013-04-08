@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 49145 2011-06-27 13:15:48Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 55219 2011-12-01 16:23:49Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -29,7 +29,7 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 	 * @return array The probably modified GET/POST parameters
 	 */
 	public function process() {
-		$this->removeChars = array('<', '>', '"', "'");
+		$this->removeChars = array();
 
 		//search for a global setting for character removal
 		$globalSetting = $this->settings['fieldConf.']['global.'];

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_UtilityFuncs.php 53508 2011-10-28 10:10:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_UtilityFuncs.php 56223 2012-01-11 18:28:15Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -274,8 +274,14 @@ class Tx_Formhandler_UtilityFuncs {
 		}
 
 		if ($url) {
-			header('Status: 301 Moved Permanently');
-			header('Location: ' . t3lib_div::locationHeaderUrl($url));
+			if(!$this->globals->isAjaxMode()) {
+				header('Status: 301 Moved Permanently');
+				header('Location: ' . t3lib_div::locationHeaderUrl($url));
+			} else {
+				print '{' . json_encode('redirect') . ':' . json_encode(t3lib_div::locationHeaderUrl($url)) . '}';
+				exit;
+			}
+			
 		}
 	}
 

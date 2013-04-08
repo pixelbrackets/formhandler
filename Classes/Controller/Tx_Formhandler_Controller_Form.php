@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Controller_Form.php 53507 2011-10-28 09:46:49Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Controller_Form.php 56223 2012-01-11 18:28:15Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -745,7 +745,6 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 				}
 			}
 		}
-
 		$this->globals->getSession()->set('values', $data);
 	}
 
@@ -1016,6 +1015,9 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 
 		$this->utilityFuncs->debugMessage('using_prefix', array($this->formValuesPrefix));
 
+		
+		$this->globals->getSession()->set('predef', $this->globals->getPredef());
+		
 		//init view
 		$viewClass = $this->settings['view'];
 		if (!$viewClass) {
