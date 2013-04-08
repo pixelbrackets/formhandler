@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 24857 2009-09-28 09:36:08Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 27318 2009-12-04 10:05:24Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -54,7 +54,7 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 		foreach ($values as $key => $value) {
 			if(is_array($value)) {
 				$sanitizedArray[$key] = $this->sanitizeValues($value);
-			} elseif(!empty($value)) {
+			} elseif(strlen(trim($value)) > 0)  {
 				
 				$value = str_replace("\t", '', $value);
 				$isUTF8 = true;
@@ -71,6 +71,8 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 				if(!$isUTF8) {
 					$value = utf8_decode($value);
 				}
+				$sanitizedArray[$key] = $value;
+			} else {
 				$sanitizedArray[$key] = $value;
 			}
 		}

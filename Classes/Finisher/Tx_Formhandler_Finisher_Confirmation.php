@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Confirmation.php 25987 2009-10-29 13:09:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Confirmation.php 27790 2009-12-17 09:28:42Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -50,6 +50,7 @@ class Tx_Formhandler_Finisher_Confirmation extends Tx_Formhandler_AbstractFinish
 		
 		$action = $this->gp['action'];
 		if($action) {
+			
 			$this->processAction($action);
 		}
 
@@ -69,6 +70,7 @@ class Tx_Formhandler_Finisher_Confirmation extends Tx_Formhandler_AbstractFinish
 		}
 		
 		$view->setSettings($_SESSION['formhandlerSettings']['settings']);
+		$view->setComponentSettings($this->settings);
 		return $view->render($this->gp, array());
 	}
 	

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_BetweenItems.php 24681 2009-09-22 09:22:10Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_BetweenItems.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
  *                                                                        */
 
 /**

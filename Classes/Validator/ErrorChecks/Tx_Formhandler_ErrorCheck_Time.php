@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_Time.php 25428 2009-10-16 08:04:37Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_Time.php 28822 2010-01-14 08:33:45Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -36,7 +36,7 @@ class Tx_Formhandler_ErrorCheck_Time extends Tx_Formhandler_AbstractErrorCheck {
 		
 		if(isset($gp[$name]) && !empty($gp[$name])) {
 			$pattern = $check['params']['pattern'];
-			eregi('^[h|m]*(.)[h|m]*', $pattern, $res);
+			preg_match('/^[h|m]*(.)[h|m]*/i', $pattern, $res);
 			$sep = $res[1];
 			$timeCheck = t3lib_div::trimExplode($sep, $gp[$name]);
 			if (is_array($timeCheck)) {

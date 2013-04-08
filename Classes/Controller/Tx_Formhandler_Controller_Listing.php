@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Controller_Listing.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_Controller_Listing.php 28348 2010-01-04 14:25:29Z erep $
  *                                                                        */
 
 /**
@@ -217,7 +217,7 @@ class Tx_Formhandler_Controller_Listing extends Tx_Formhandler_AbstractControlle
 	 * @author	Reinhard Führicht <rf@typoheads.at>
 	 */
 	protected function initializeController($value = '') {
-		$this->piVars = t3lib_div::GParrayMerged($this->configuration->getPrefixedPackageKey());
+		//$this->piVars = t3lib_div::GParrayMerged($this->configuration->getPrefixedPackageKey());
 	}
 
 }

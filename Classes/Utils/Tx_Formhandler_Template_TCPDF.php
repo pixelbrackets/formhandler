@@ -1,6 +1,6 @@
 <?php
 
-/* $Id: Tx_Formhandler_Template_TCPDF.php 22614 2009-07-21 20:43:47Z fabien_u $ */
+/* $Id: Tx_Formhandler_Template_TCPDF.php 27923 2009-12-21 19:18:39Z reinhardfuehricht $ */
 
 if (TYPO3_MODE=="BE")   {
 	require_once("../../../Resources/PHP/tcpdf/tcpdf.php");
@@ -49,8 +49,7 @@ class Tx_Formhandler_Template_TCPDF extends TCPDF {
 		//Position at 1.5 cm from bottom
 		$this->SetY(-15);
 	  
-		//Arial italic 8
-		$this->SetFont('Freesans', 'I', 8);
+		$this->SetFont('Helvetica', 'I', 8);
 	    
 		$text = $this->getLL('footer_text');
 		$text = sprintf($text,date('d.m.Y H:i:s', time()));
