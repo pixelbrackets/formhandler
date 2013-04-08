@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Form.php 52407 2011-09-23 09:06:04Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Form.php 53508 2011-10-28 10:10:07Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -37,7 +37,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 
 		//set template
 		$this->template = $this->subparts['template'];
-		if(!$this->template) {
+		if(strlen($this->template) === 0) {
 			$this->utilityFuncs->throwException('no_template_file');
 		}
 
@@ -91,6 +91,9 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 
 		//substitute ISSET markers
 		$this->substituteIssetSubparts();
+		
+		//substitute IF markers
+		$this->substituteIfSubparts();
 
 		//fill default markers
 		$this->fillDefaultMarkers();
@@ -104,14 +107,14 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		//fill selected_[fieldname]_value markers and checked_[fieldname]_value markers
 		$this->fillSelectedMarkers();
 
-		//fill LLL:[language_key] markers again to make language markers in other markers possible
-		$this->fillLangMarkers();
-
 		//fill error_[fieldname] markers
 		if (!empty($errors)) {
 			$this->fillIsErrorMarkers($errors);
 			$this->fillErrorMarkers($errors);
 		}
+
+		//fill LLL:[language_key] markers again to make language markers in other markers possible
+		$this->fillLangMarkers();
 
 		//remove markers that were not substituted
 		$content = $this->utilityFuncs->removeUnfilledMarkers($this->template);
@@ -327,6 +330,97 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 	}
 
 	/**
+	 * Use or remove subparts with IF_[fieldname]=[value] patterns
+	 *
+	 * @author  Arno Dudek <webmaster@adgrafik.at>
+	 * @return	string		substituted HTML content
+	 */
+	protected function substituteIfSubparts() {
+		$write = TRUE;
+		$out = array();
+		foreach(explode(chr(10), $this->template) as $line){
+ 
+			// works only on it's own line
+			$pattern = '/###if_+([^#]*)_*###/i';
+
+			// set for odd IF_xyz, else reset
+			if(preg_match($pattern, $line, $matches)) {
+				if(!$flags[$matches[0]] && strtolower($matches[1]) != 'end') { // set
+					$flags[$matches[0]] = TRUE;
+
+					$conditions = preg_split('/\s*(\|\||&&)\s*/i', $matches[1], -1, PREG_SPLIT_DELIM_CAPTURE);
+					$operator = NULL;
+					foreach($conditions as $condition) {
+
+						$valueConditions = preg_split('/\s*(!=|\^=|\$=|~=|=|<|>)\s*/', $condition, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+						$conditionOperator = trim($valueConditions[1]);
+						$fieldName = trim($valueConditions[0]);
+
+						$conditionResult = FALSE;
+						switch($conditionOperator) {
+							case '!=':
+								$conditionResult = $this->globals->getCObj()->getGlobal($fieldName, $this->gp) != $valueConditions[2];
+								break;
+							case '^=':
+								$conditionResult = strpos($this->globals->getCObj()->getGlobal($fieldName, $this->gp), $valueConditions[2]) === 0;
+								break;
+							case '$=':
+								$gpValue = $this->globals->getCObj()->getGlobal($fieldName, $this->gp); 
+								$checkValue = substr($valueConditions[2], -strlen($gpValue));
+								$conditionResult = (strcmp($checkValue, $gpValue) === 0);
+								break;
+							case '~=':
+								$conditionResult = strpos($valueConditions[2], $this->globals->getCObj()->getGlobal($fieldName, $this->gp)) !== FALSE;
+								break;
+							case '=':
+								$conditionResult = $this->globals->getCObj()->getGlobal($fieldName, $this->gp) == $valueConditions[2];
+								break;
+							case '>':
+								$value = $this->globals->getCObj()->getGlobal($fieldName, $this->gp);
+								if(is_numeric($value)) {
+									$conditionResult = floatval($value) > floatval($valueConditions[2]);
+								}
+								break;
+							case '<':
+								$value = $this->globals->getCObj()->getGlobal($fieldName, $this->gp);
+								if(is_numeric($value)) {
+									$conditionResult = floatval($value) < floatval($valueConditions[2]);
+								}
+								break;
+							case '>=':
+								$value = $this->globals->getCObj()->getGlobal($fieldName, $this->gp);
+								if(is_numeric($value)) {
+									$conditionResult = floatval($value) >= floatval($valueConditions[2]);
+								}
+								break;
+							case '<=':
+								$value = $this->globals->getCObj()->getGlobal($fieldName, $this->gp);
+								if(is_numeric($value)) {
+									$conditionResult = floatval($value) <= floatval($valueConditions[2]);
+								}
+								break;
+							default:
+								$conditionResult = strlen(trim($this->globals->getCObj()->getGlobal($fieldName, $this->gp))) > 0;
+						}
+					}
+
+					$write = (boolean) $conditionResult;
+				} else if($flags[$matches[0]] || strtolower($matches[1]) == 'end') { // close it
+					$flags[$matches[0]] = FALSE;
+					$write = TRUE;
+				}
+			} else if($write) {
+				$out[] = $line;
+			}
+		}
+
+		$out = implode(chr(10),$out);
+
+		$this->template = $out;
+	}
+
+	/**
 	 * Fills the markers ###FORM_STARTBLOCK### and ###FORM_ENDBLOCK### with the stored values from session.
 	 *
 	 * @return void
@@ -357,22 +451,18 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 	 * @return void
 	 */
 	protected function fillSelectedMarkers() {
-		$markers = array();
+		$values = $this->gp;
+		unset($values['randomID']);
+		unset($values['submitted']);
+		unset($values['removeFile']);
+		unset($values['removeFileField']);
+		unset($values['submitField']);
+		unset($values['formErrors']);
+		$markers = $this->getSelectedMarkers($values);
+		$markers = array_merge($markers, $this->getSelectedMarkers($this->gp, 0, 'checked_'));
+		$this->template = $this->cObj->substituteMarkerArray($this->template, $markers);
 
-		if (is_array($this->gp)) {
-			foreach ($this->gp as $k => $v) {
-				if (is_array($v)) {
-					foreach ($v as $field => $value) {
-						$markers['###checked_' . $k . '_' . $value . '###'] = 'checked="checked"';
-						$markers['###selected_' . $k . '_' . $value . '###'] = 'selected="selected"';
-					}
-				} else {
-					$markers['###checked_' . $k  .'_' . $v . '###'] = 'checked="checked"';
-					$markers['###selected_' . $k . '_' . $v . '###'] = 'selected="selected"';
-				}
-			}
-			$this->template = $this->cObj->substituteMarkerArray($this->template, $markers);
-		}
+		$this->template = preg_replace('/###(selected|checked)_.*?###/i', '', $this->template);
 	}
 
 	/**
@@ -905,7 +995,13 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 					$type = strtolower($type);
 					$errorMessage = $this->utilityFuncs->getTranslatedMessage($this->langFiles, 'error_' . $field . '_' . $type);
 				}
+				//Still no error message found, try to find a less specific one
+				if (strlen($errorMessage) === 0) {
+					$type = strtolower($type);
+					$errorMessage = $this->utilityFuncs->getTranslatedMessage($this->langFiles, 'error_default_' . $type);
+				}
 				if ($errorMessage) {
+					$errorMessage = str_replace(array('###fieldname###', '###FIELDNAME###'), $field, $errorMessage);
 					if (is_array($values)) {
 						foreach ($values as $key => $value) {
 							$errorMessage = str_replace('###' . $key . '###', $value, $errorMessage);
@@ -982,6 +1078,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 	 * @return void
 	 */
 	protected function fillValueMarkers() {
+		$values = $this->gp;
 		$markers = $this->getValueMarkers($this->gp);
 		$this->template = $this->cObj->substituteMarkerArray($this->template, $markers);
 
@@ -1008,9 +1105,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 				if (is_array($v)) {
 					$level++;
 					$markers = array_merge($markers, $this->getValueMarkers($v, $level, $currPrefix));
-					foreach($v as &$arrayValue) {
-						$arrayValue = htmlspecialchars($arrayValue);
-					}
+					$v = $this->utilityFuncs->recursiveHtmlSpecialChars($v);
 					$v = implode($arrayValueSeparator, $v);
 					$level--;
 				} else {
@@ -1019,6 +1114,40 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 				$v = trim($v);
 				$markers['###' . $currPrefix . '###'] = $v;
 				$markers['###' . strtoupper($currPrefix) . '###'] = $markers['###' . $currPrefix . '###'];
+			}
+		}
+		return $markers;
+	}
+	
+	protected function getSelectedMarkers($values, $level = 0, $prefix = 'selected_') {
+		$markers = array();
+		$activeString = 'selected="selected"';
+		if($prefix === 'checked_') {
+			$activeString = 'checked="checked"';
+		}
+		if (is_array($values)) {
+			foreach ($values as $k => $v) {
+				$currPrefix = $prefix;
+				if ($level === 0) {
+					$currPrefix .= $k;
+				} else {
+					$currPrefix .= '|' . $k;
+				}
+				if (is_array($v)) {
+					$level++;
+					$markers = array_merge($markers, $this->getSelectedMarkers($v, $level, $currPrefix));
+					foreach($v as $arrayValue) {
+						$arrayValue = $this->utilityFuncs->recursiveHtmlSpecialChars($arrayValue);
+						$markers['###' . $currPrefix . '_' . $arrayValue . '###'] = $activeString;
+						$markers['###' . strtoupper($currPrefix) . '###'] = $markers['###' . $currPrefix  . '_' . $arrayValue . '###'];
+					}
+					$level--;
+				} else {
+					$v = htmlspecialchars($v);
+					$markers['###' . $currPrefix . '_' . $v . '###'] = $activeString;
+					$markers['###' . strtoupper($currPrefix) . '###'] = $markers['###' . $currPrefix . '_' . $v . '###'];
+				}
+				
 			}
 		}
 		return $markers;

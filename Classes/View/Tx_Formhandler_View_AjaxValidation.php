@@ -11,40 +11,20 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_MinItems.php 53970 2011-11-09 17:53:39Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_AntiSpam.php 23976 2009-09-03 16:01:24Z reinhardfuehricht $
  *                                                                        */
 
 /**
- * Validates that a specified field is an array and has at least a specified amount of items
+ * A default view for Formhandler AJAX based validation
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
  * @package	Tx_Formhandler
- * @subpackage	ErrorChecks
+ * @subpackage	View
  */
-class Tx_Formhandler_ErrorCheck_MinItems extends Tx_Formhandler_AbstractErrorCheck {
-
-	public function init($gp, $settings) {
-		parent::init($gp, $settings);
-		$this->mandatoryParameters = array('value');
+class Tx_Formhandler_View_AjaxValidation extends Tx_Formhandler_View_Form {
+	
+	public function pi_wrapInBaseClass($content) {
+		return $content;
 	}
-
-	public function check() {
-		$checkFailed = '';
-
-		if (isset($this->gp[$this->formFieldName])) {
-			$value = $this->utilityFuncs->getSingle($this->settings['params'], 'value');
-			if (is_array($this->gp[$this->formFieldName])) {
-				if (count($this->gp[$this->formFieldName]) < $value) {
-					$checkFailed = $this->getCheckFailed();
-				}
-			} else {
-				$checkFailed = $this->getCheckFailed();
-			}
-		} else {
-			$checkFailed = $this->getCheckFailed();
-		}
-		return $checkFailed;
-	}
-
 }
 ?>
