@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Logger_DB.php 65839 2012-09-01 14:12:31Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Logger_DB.php 67353 2012-10-22 13:56:59Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -68,6 +68,13 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 				unset($logParams[$excludeField]);
 			}
 		}
+
+		if($this->settings['fieldOrder']) {
+			$fieldOrder = $this->utilityFuncs->getSingle($this->settings, 'fieldOrder');
+			$fieldOrder = t3lib_div::trimExplode(',', $fieldOrder);
+			$orderedFields = $this->parseFieldOrder($fieldOrder);
+			$logParams = $this->sortFields($logParams, $orderedFields);
+		}
 		$serialized = serialize($logParams);
 		$hash = md5(serialize($keys));
 		$uniqueHash = sha1(sha1($serialized) . $TYPO3_CONF_VARS['SYS']['encryptionKey'] . time() . $this->globals->getRandomID());
@@ -89,6 +96,8 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 			'unique_hash' => $uniqueHash
 		);
 		$this->globals->getSession()->setMultiple($sessionValues);
+		$this->gp['inserted_uid'] = $insertedUID;
+		$this->gp[$table . '_inserted_uid'] = $this->gp['inserted_uid'];
 
 		if (intval($this->utilityFuncs->getSingle($this->settings, 'nodebug')) !== 1) {
 			$this->utilityFuncs->debugMessage('logging', array($table, implode(',', $fields)));
@@ -98,6 +107,43 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 		}
 
 		return $this->gp;
+	}
+
+	protected function parseFieldOrder($order, $orderedFields = array()) {
+		foreach($order as $fieldName) {
+			if(strpos($fieldName, '|') !== FALSE) {
+				$parts = explode('|', $fieldName);
+				$orderedFields = $this->createDeep($orderedFields, $parts);
+			} else {
+				$orderedFields[$fieldName] = array();
+			}
+		}
+		return $orderedFields;
+	}
+
+	protected function createDeep($array, $items) {
+		if(count($items) > 0) {
+			$item = array_shift($items);
+			if(!is_array($array[$item])) {
+				$array[$item] = array();
+			}
+			$array[$item] = $this->createDeep($array[$item], $items);
+		}
+		return $array;
+	}
+
+	protected function sortFields($params, $order, $sortedParams = array()) {
+		foreach($order as $fieldName => $subItems) {
+			if(isset($params[$fieldName])) {
+				if(count($subItems) === 0) {
+					$sortedParams[$fieldName] = $params[$fieldName];
+				} elseif(!is_array($sortedParams[$fieldName])) {
+					$sortedParams[$fieldName] = array();
+					$sortedParams[$fieldName] = $this->sortFields($params[$fieldName], $order[$fieldName], $sortedParams[$fieldName]);
+				}
+			}
+		}
+		return $sortedParams;
 	}
 
 }

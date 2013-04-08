@@ -10,39 +10,35 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHAN-    *
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
- *
- * $Id: Tx_Formhandler_ErrorCheck_Captcha.php 67837 2012-11-14 09:11:59Z reinhardfuehricht $
  *                                                                        */
 
 /**
- * Validates that a specified field's value matches the generated word of the extension "captcha"
+ * Validates that a person is older than a specified amount of years by converting a specified date field's value to a timestamp.
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
  * @package	Tx_Formhandler
  * @subpackage	ErrorChecks
  */
-class Tx_Formhandler_ErrorCheck_Captcha extends Tx_Formhandler_AbstractErrorCheck {
+class Tx_Formhandler_ErrorCheck_IsYoungerThan extends Tx_Formhandler_AbstractErrorCheck {
+
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+		$this->mandatoryParameters = array('dateFormat', 'years');
+	}
 
 	public function check() {
 		$checkFailed = '';
 
-		// get captcha string
-		session_start();
-
-		// make sure that an anticipated answer to the captcha actually exists
-		if ( isset( $_SESSION['tx_captcha_string'] ) && $_SESSION['tx_captcha_string'] > '' ) {
-			$captchaStr = $_SESSION['tx_captcha_string'];
-
-			// make sure the answer given to the captcha is not empty
-			if ($captchaStr != $this->gp[$this->formFieldName] || strlen(trim($this->gp[$this->formFieldName])) === 0) {
+		if (isset($this->gp[$this->formFieldName]) && strlen(trim($this->gp[$this->formFieldName])) > 0) {
+			$date = $this->gp[$this->formFieldName];
+			$dateFormat = $this->utilityFuncs->getSingle($this->settings['params'], 'dateFormat');
+			$mandatoryYears = intval($this->utilityFuncs->getSingle($this->settings['params'], 'years'));
+			$timestamp = $this->utilityFuncs->dateToTimestamp($date, $dateFormat);
+			$difference = time() - $timestamp;
+			$years = floor($difference / 60 / 60 / 24 / 365);
+			if($years >= $mandatoryYears) {
 				$checkFailed = $this->getCheckFailed();
 			}
-		} else {
-			$checkFailed = $this->getCheckFailed();
-		}
-
-		if(!$this->globals->isAjaxMode()) {
-			$_SESSION['tx_captcha_string'] = '';
 		}
 		return $checkFailed;
 	}

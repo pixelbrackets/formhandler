@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_StoreGP.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_StoreGP.php 67354 2012-10-22 14:01:36Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -46,10 +46,13 @@ class Tx_Formhandler_Finisher_StoreGP extends Tx_Formhandler_AbstractFinisher {
 	 * @return void
 	 */
 	protected function storeUserGPinSession() {
-		foreach ($this->gp as $key => $value) {
-			$GLOBALS['TSFE']->fe_user->setKey('ses', $key, $value);
-			$GLOBALS['TSFE']->fe_user->storeSessionData();
+		$sessionKey = 'finisher-storegp';
+		if($this->settings['sessionKey']) {
+			$sessionKey = $this->utilityFuncs->getSingle($this->settings, 'sessionKey');
 		}
+		$dataToStoreInSession = $this->gp;
+		$GLOBALS['TSFE']->fe_user->setKey('ses', $sessionKey, $dataToStoreInSession);
+		$GLOBALS['TSFE']->fe_user->storeSessionData();
 	}
 
 	/**

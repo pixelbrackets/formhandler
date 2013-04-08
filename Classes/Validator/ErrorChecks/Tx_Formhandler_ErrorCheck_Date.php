@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_Date.php 63910 2012-06-26 09:41:58Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_Date.php 68649 2012-12-10 14:08:38Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -32,7 +32,8 @@ class Tx_Formhandler_ErrorCheck_Date extends Tx_Formhandler_AbstractErrorCheck {
 		$checkFailed = '';
 
 		if (isset($this->gp[$this->formFieldName]) && strlen(trim($this->gp[$this->formFieldName])) > 0) {
-			# find out separator
+
+			// find out separator
 			$pattern = $this->utilityFuncs->getSingle($this->settings['params'], 'pattern');
 			preg_match('/^[d|m|y]*(.)[d|m|y]*/i', $pattern, $res);
 			$sep = $res[1];

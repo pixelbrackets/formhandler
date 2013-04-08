@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_CSV.php 65722 2012-08-29 12:39:18Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Generator_CSV.php 66171 2012-09-19 15:00:13Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -116,7 +116,7 @@ class Tx_Formhandler_Generator_CSV {
 		$csv->input_encoding = $this->getInputCharset();
 		$csv->output_encoding = $encoding;
 		$csv->convert_encoding = FALSE;
-		if($csv->input_encoding !== $csv->output_encoding) {
+		if(strtolower($csv->input_encoding) !== strtolower($csv->output_encoding)) {
 			$csv->convert_encoding = TRUE;
 		}
 		$csv->output('formhandler.csv', $data, $exportParams);

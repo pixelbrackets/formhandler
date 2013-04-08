@@ -10,42 +10,42 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHAN-    *
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
- *
- * $Id: Tx_Formhandler_ErrorCheck_Captcha.php 67837 2012-11-14 09:11:59Z reinhardfuehricht $
  *                                                                        */
 
 /**
- * Validates that a specified field's value matches the generated word of the extension "captcha"
+ * A PreProcessor cleaning session values stored by Finisher_StoreGP
+ * 
+ * Example:
+ * <code>
+ * preProcessors.1.class = Tx_Formhandler_PreProcessor_ClearSession
+ * </code>
  *
+ * @author	Stefan Froemken <firma@sfroemken.de>
  * @author	Reinhard Führicht <rf@typoheads.at>
  * @package	Tx_Formhandler
- * @subpackage	ErrorChecks
+ * @subpackage	PreProcessor
  */
-class Tx_Formhandler_ErrorCheck_Captcha extends Tx_Formhandler_AbstractErrorCheck {
+class Tx_Formhandler_PreProcessor_ClearSession extends Tx_Formhandler_AbstractPreProcessor {
 
-	public function check() {
-		$checkFailed = '';
-
-		// get captcha string
-		session_start();
-
-		// make sure that an anticipated answer to the captcha actually exists
-		if ( isset( $_SESSION['tx_captcha_string'] ) && $_SESSION['tx_captcha_string'] > '' ) {
-			$captchaStr = $_SESSION['tx_captcha_string'];
-
-			// make sure the answer given to the captcha is not empty
-			if ($captchaStr != $this->gp[$this->formFieldName] || strlen(trim($this->gp[$this->formFieldName])) === 0) {
-				$checkFailed = $this->getCheckFailed();
-			}
-		} else {
-			$checkFailed = $this->getCheckFailed();
+	/**
+	 * The main method called by the controller
+	 *
+	 * @return array The probably modified GET/POST parameters
+	 */
+	public function process() {
+		$sessionKeysToRemove = array(
+			'finisher-storegp'
+		);
+		if($this->settings['sessionKeysToRemove']) {
+			$sessionKeysToRemove = t3lib_div::trimExplode(',', $this->utilityFuncs->getSingle($this->settings, 'sessionKeysToRemove'));
 		}
 
-		if(!$this->globals->isAjaxMode()) {
-			$_SESSION['tx_captcha_string'] = '';
+		foreach($sessionKeysToRemove as $sessionKey) {
+			$GLOBALS['TSFE']->fe_user->setKey('ses', $sessionKey, NULL);
+			$GLOBALS['TSFE']->fe_user->storeSessionData();
 		}
-		return $checkFailed;
+
+		return $this->gp;
 	}
-
 }
 ?>

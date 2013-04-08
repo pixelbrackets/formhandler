@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Controller_Form.php 65847 2012-09-02 11:35:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Controller_Form.php 68705 2012-12-11 11:38:51Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -341,13 +341,13 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			}
 		}
 
+		//process files
+		if ($this->currentStep >= $this->lastStep) {
+			$this->processFiles();
+		}
+
 		//if form is valid
 		if ($this->isValid($valid)) {
-
-			//process files
-			if ($this->currentStep >= $this->lastStep) {
-				$this->processFiles();
-			}
 
 			$this->loadSettingsForStep($this->currentStep);
 			$this->parseConditions();
@@ -365,17 +365,25 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			$this->storeGPinSession();
 			$this->mergeGPWithSession();
 
+				//mark step as finished
+			$finishedSteps = $this->globals->getSession()->get('finishedSteps');
+			if(!is_array($finishedSteps)) {
+				$finishedSteps = array();
+			}
+
+			if($this->currentStep > $this->lastStep && !in_array($this->currentStep - 1, $finishedSteps)) {
+				$finishedSteps[] = $this->currentStep - 1;
+			}
+			$this->globals->getSession()->set('finishedSteps', $finishedSteps);
+
 			//if no more steps
 			if ($this->finished) {
 				return $this->processFinished();
 			} else {
-
-				//display form
 				return $this->view->render($this->gp, $this->errors);
 			}
 		} else {
 
-			//read template file
 			$this->templateFile = $this->utilityFuncs->readTemplateFile($this->templateFile, $this->settings);
 			$this->globals->setTemplateCode($this->templateFile);
 			$this->langFiles = $this->utilityFuncs->readLanguageFiles($this->langFiles, $this->settings);
@@ -407,7 +415,10 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 					foreach ($uploadFields as $field) {
 
 						//if a file was uploaded through this field
-						if(strlen($files['tmp_name'][$field]) > 0) {
+						if(!is_array($files['tmp_name'][$field])) {
+							$files['tmp_name'][$field] = array($files['tmp_name'][$field]);
+						}
+						if(count($files['tmp_name'][$field]) > 0) {
 							$valid = FALSE;
 							$hasAllowedTypesCheck = FALSE;
 							if (isset($this->settings['validators.']) && 
@@ -476,7 +487,6 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			$this->mergeGPWithSession();
 		}
 
-		//display form
 		return $this->view->render($this->gp, $this->errors);
 	}
 
@@ -486,6 +496,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	 * @return Output of a Finisher
 	 */
 	protected function processFinished() {
+
 		//If skipView is set, call preProcessors and initInterceptors here
 		if (intval($this->utilityFuncs->getSingle($this->settings, 'skipView')) === 1) {
 
@@ -562,7 +573,6 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 
 		$this->view->setSettings($this->settings);
 
-		//read template file
 		$this->templateFile = $this->utilityFuncs->readTemplateFile($this->templateFile, $this->settings);
 		$this->globals->setTemplateCode($this->templateFile);
 		$this->langFiles = $this->utilityFuncs->readLanguageFiles($this->langFiles, $this->settings);
@@ -571,13 +581,11 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$this->view->setLangFiles($this->langFiles);
 		$this->setViewSubpart($this->currentStep);
 
-		//run preProcessors
 		$output = $this->runClasses($this->settings['preProcessors.']);
 		if (strlen($output) > 0) {
 			return $output;
 		}
 
-		//run init interceptors
 		$this->addFormhandlerClass($this->settings['initInterceptors.'], 'Interceptor_Filtreatment');
 		$output = $this->runClasses($this->settings['initInterceptors.']);
 		if (strlen($output) > 0) {
@@ -588,9 +596,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$this->parseConditions();
 		$this->loadSettingsForStep($this->currentStep);
 
-		//display form
-		$content = $this->view->render($this->gp, $this->errors);
-		return $content;
+		return $this->view->render($this->gp, $this->errors);
 	}
 
 	/**
@@ -723,7 +729,6 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$sessionFiles = $this->globals->getSession()->get('files');
 		$tempFiles = $sessionFiles;
 
-		//if files were uploaded
 		if (isset($_FILES) && is_array($_FILES) && !empty($_FILES)) {
 
 			$uploadedFilesWithSameNameAction = $this->utilityFuncs->getSingle($this->settings['files.'], 'uploadedFilesWithSameName');
@@ -738,7 +743,13 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 				if (isset($files['name']) && is_array($files['name'])) {
 
 					//for all file names
-					foreach ($files['name'] as $field => $name) {
+					foreach ($files['name'] as $field => $uploadedFiles) {
+
+						//If only a single file is uploaded
+						if(!is_array($uploadedFiles)) {
+							$uploadedFiles = array($uploadedFiles);
+						}
+
 						if (!isset($this->errors[$field])) {
 
 							//get upload folder
@@ -752,60 +763,65 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 								return;
 							}
 
-							$exists = FALSE;
-							if (is_array($sessionFiles[$field])) {
-								foreach ($sessionFiles[$field] as $idx => $fileOptions) {
-									if ($fileOptions['name'] === $name) {
-										$exists = TRUE;
-									}
-								}
-							}
-							if (!$exists || $uploadedFilesWithSameNameAction === 'replace' || $uploadedFilesWithSameNameAction === 'append') {
-								$name = $this->utilityFuncs->doFileNameReplace($name);
-								$filename = substr($name, 0, strpos($name, '.'));
-								if (strlen($filename) > 0) {
-									$ext = substr($name, strpos($name, '.'));
-									$suffix = 1;
-
-									//build file name
-									$uploadedFileName = $filename . $ext;
-
-									if($uploadedFilesWithSameNameAction !== 'replace') {
-
-										//rename if exists
-										while(file_exists($uploadPath . $uploadedFileName)) {
-											$uploadedFileName = $filename . '_' . $suffix . $ext;
-											$suffix++;
+							foreach($uploadedFiles as $idx => $name) {
+								$exists = FALSE;
+								if (is_array($sessionFiles[$field])) {
+									foreach ($sessionFiles[$field] as $idx => $fileOptions) {
+										if ($fileOptions['name'] === $name) {
+											$exists = TRUE;
 										}
 									}
-									$files['name'][$field] = $uploadedFileName;
-
-									//move from temp folder to temp upload folder
-									move_uploaded_file($files['tmp_name'][$field], $uploadPath . $uploadedFileName);
-									t3lib_div::fixPermissions($uploadPath . $uploadedFileName);
-									$files['uploaded_name'][$field] = $uploadedFileName;
-
-									//set values for session
-									$tmp['name'] = $name;
-									$tmp['uploaded_name'] = $uploadedFileName;
-									$tmp['uploaded_path'] = $uploadPath;
-									$tmp['uploaded_folder'] = $uploadFolder;
-									$uploadedUrl = t3lib_div::getIndpEnv('TYPO3_SITE_URL') . $uploadFolder . $uploadedFileName;
-									$uploadedUrl = str_replace('//', '/', $uploadedUrl);
-									$tmp['uploaded_url'] = $uploadedUrl;
-									$tmp['size'] = $files['size'][$field];
-									$tmp['type'] = $files['type'][$field];
-									if (!is_array($tempFiles[$field]) && strlen($field) > 0) {
-										$tempFiles[$field] = array();
-									}
-									if(!$exists || $uploadedFilesWithSameNameAction !== 'replace') {
-										array_push($tempFiles[$field], $tmp);
-									}
-									if (!is_array($this->gp[$field])) {
-										$this->gp[$field] = array();
-									}
-									if(!$exists || $uploadedFilesWithSameNameAction !== 'replace') {
-										array_push($this->gp[$field], $uploadedFileName);
+								}
+								if (!$exists || $uploadedFilesWithSameNameAction === 'replace' || $uploadedFilesWithSameNameAction === 'append') {
+									$name = $this->utilityFuncs->doFileNameReplace($name);
+									$filename = substr($name, 0, strpos($name, '.'));
+									if (strlen($filename) > 0) {
+										$ext = substr($name, strpos($name, '.'));
+										$suffix = 1;
+	
+										//build file name
+										$uploadedFileName = $filename . $ext;
+	
+										if($uploadedFilesWithSameNameAction !== 'replace') {
+	
+											//rename if exists
+											while(file_exists($uploadPath . $uploadedFileName)) {
+												$uploadedFileName = $filename . '_' . $suffix . $ext;
+												$suffix++;
+											}
+										}
+										$files['name'][$field][$idx] = $uploadedFileName;
+	
+										//move from temp folder to temp upload folder
+										if(!is_array($files['tmp_name'][$field])) {
+											$files['tmp_name'][$field] = array($files['tmp_name'][$field]);
+										}
+										move_uploaded_file($files['tmp_name'][$field][$idx], $uploadPath . $uploadedFileName);
+										t3lib_div::fixPermissions($uploadPath . $uploadedFileName);
+										$files['uploaded_name'][$field][$idx] = $uploadedFileName;
+	
+										//set values for session
+										$tmp['name'] = $name;
+										$tmp['uploaded_name'] = $uploadedFileName;
+										$tmp['uploaded_path'] = $uploadPath;
+										$tmp['uploaded_folder'] = $uploadFolder;
+										$uploadedUrl = t3lib_div::getIndpEnv('TYPO3_SITE_URL') . $uploadFolder . $uploadedFileName;
+										$uploadedUrl = str_replace('//', '/', $uploadedUrl);
+										$tmp['uploaded_url'] = $uploadedUrl;
+										$tmp['size'] = $files['size'][$field];
+										$tmp['type'] = $files['type'][$field];
+										if (!is_array($tempFiles[$field]) && strlen($field) > 0) {
+											$tempFiles[$field] = array();
+										}
+										if(!$exists || $uploadedFilesWithSameNameAction !== 'replace') {
+											array_push($tempFiles[$field], $tmp);
+										}
+										if (!is_array($this->gp[$field])) {
+											$this->gp[$field] = array();
+										}
+										if(!$exists || $uploadedFilesWithSameNameAction !== 'replace') {
+											array_push($this->gp[$field], $uploadedFileName);
+										}
 									}
 								}
 							}
@@ -863,7 +879,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	 *
 	 * @return void
 	 */
-	protected function reset() {
+	protected function reset($gp = array()) {
 		$values = array (
 			'creationTstamp' => time(),
 			'values' => NULL,
@@ -875,10 +891,11 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			'inserted_uid' => NULL,
 			'inserted_tstamp' => NULL,
 			'key_hash' => NULL,
-			'finished' => NULL
+			'finished' => NULL,
+			'finishedSteps' => array()
 		);
 		$this->globals->getSession()->setMultiple($values);
-		$this->gp = array();
+		$this->gp = $gp;
 		$this->currentStep = 1;
 		$this->globals->setGP($this->gp);
 		$this->utilityFuncs->debugMessage('cleared_session');
@@ -904,14 +921,26 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			}
 		}
 
-		$stepInSession = intval($this->globals->getSession()->get('currentStep'));
+		$allowStepJumps = FALSE;
+		if(isset($this->settings['allowStepJumps'])) {
+			$allowStepJumps = (bool)$this->utilityFuncs->getSingle($this->settings, 'allowStepJumps');
+		}
+		$stepInSession = max(intval($this->globals->getSession()->get('currentStep')), 1);
 		switch ($action) {
 			case 'prev':
 			case 'next':
 				if ($step > $stepInSession) {
-					$this->currentStep = $stepInSession + 1;
+					if($allowStepJumps) {
+						$this->currentStep = $step;
+					} else {
+						$this->currentStep = $stepInSession + 1;
+					}
 				} elseif ($step < $stepInSession) {
-					$this->currentStep = $stepInSession - 1;
+					if($allowStepJumps) {
+						$this->currentStep = $step;
+					} else {
+						$this->currentStep = $stepInSession - 1;
+					}
 				} else {
 					$this->currentStep = $step;
 				}
@@ -926,12 +955,30 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		if (!$this->currentStep) {
 			$this->currentStep = 1;
 		}
+
+		$isValidStep = TRUE;
+		$disableStepCheck = FALSE;
+		if(isset($this->settings['disableStepCheck'])) {
+			$disableStepCheck = (bool)$this->utilityFuncs->getSingle($this->settings, 'disableStepCheck');
+		}
+		if(!$disableStepCheck) {
+			for($i = 1; $i < $this->currentStep - 1; $i++) {
+				$finishedSteps = $this->globals->getSession()->get('finishedSteps');
+				if(is_array($finishedSteps) && !in_array($i, $finishedSteps)) {
+					$isValidStep = FALSE;
+				}
+			}
+		}
 		$this->utilityFuncs->debugMessage('current_step', array($this->currentStep));
+
+		if(!$isValidStep) {
+			$this->utilityFuncs->throwException('You are not allowed to go to this step!');
+		}
 	}
 
 	/**
 	 * Validates the Formhandler config.
-	 * E.g. If email addresses were set in Fleform then Finisher_Mail must exist in the TS configuration.
+	 * E.g. If email addresses were set in flexform then Finisher_Mail must exist in the TS configuration.
 	 *
 	 * @return void
 	 */
@@ -954,8 +1001,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			if (is_array($this->settings[$component . '.'])) {
 				foreach ($this->settings[$component . '.'] as $idx => $finisher) {
 					$className = $this->utilityFuncs->getPreparedClassName($finisher);
-					if ($className == $componentName
-						|| @is_subclass_of($className, $componentName)) {
+					if ($className == $componentName || @is_subclass_of($className, $componentName)) {
 
 						$isConfigOk = TRUE;
 						break;
@@ -963,7 +1009,6 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 				}
 			}
 
-			// Throws an Exception if a problem occurs
 			if ($value != '' && !$isConfigOk) {
 				$this->utilityFuncs->throwException('missing_component', $component, $value, $componentName);
 			}
@@ -1080,7 +1125,6 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$this->globals->setFormID($this->utilityFuncs->getSingle($this->settings, 'formID'));
 		$this->globals->setFormValuesPrefix($this->formValuesPrefix);
 
-		//set debug mode
 		$isDebugMode = $this->utilityFuncs->getSingle($this->settings, 'debug');
 		$this->debugMode = (intval($isDebugMode) === 1);
 
@@ -1097,7 +1141,9 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$this->globals->setRandomID($randomID);
 
 		$sessionClass = $this->utilityFuncs->getPreparedClassName($this->settings['session.'], 'Session_PHP');
-		$this->globals->setSession($this->componentManager->getComponent($sessionClass));
+		$session = $this->componentManager->getComponent($sessionClass);
+		$session->init($this->gp, $this->settings['session.']['config.']);
+		$this->globals->setSession($session);
 
 		$action = t3lib_div::_GP('action');
 		if ($this->globals->getFormValuesPrefix()) {
@@ -1144,7 +1190,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$this->globals->getSession()->set('predef', $this->globals->getPredef());
 
 		//init view
-		$viewClass = $this->utilityFuncs->getPreparedClassName($this->settings['view'], 'View_Form');
+		$viewClass = $this->utilityFuncs->getPreparedClassName($this->settings['view.'], 'View_Form');
 		$this->utilityFuncs->debugMessage('using_view', array($viewClass));
 
 		$this->utilityFuncs->debugMessage('current_gp', array(), 1, $this->gp);
@@ -1153,18 +1199,20 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 
 		$this->mergeGPWithSession();
 
-		//set submitted
 		$this->submitted = $this->isFormSubmitted();
 
 		$this->globals->setSubmitted($this->submitted);
-		if (!$this->submitted) {
-			$this->reset();
+		if ($this->globals->getSession()->get('creationTstamp') === NULL) {
+			if($this->submitted) {
+				$this->reset($this->gp);
+				$this->findCurrentStep();
+				$this->globals->getSession()->set('currentStep', $this->currentStep);
+			} else {
+				$this->reset();
+			}
 		}
 
-		// set stylesheet file(s)
 		$this->addCSS();
-
-		// add JavaScript file(s)
 		$this->addJS();
 
 		$this->utilityFuncs->debugMessage('current_session_params', array(), 1, (array)$this->globals->getSession()->get('values'));
@@ -1205,7 +1253,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		} elseif (intval($this->utilityFuncs->getSingle($this->settings, 'skipView')) === 1) {
 			$submitted = TRUE;
 		}
-		
+
 		return $submitted;
 	}
 
@@ -1263,6 +1311,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	 * @return void
 	 */
 	protected function loadSettingsForStep($step) {
+
 		//merge settings with specific settings for current step
 		if (isset($this->settings[$step . '.']) && is_array($this->settings[$step . '.'])) {
 			$this->settings = t3lib_div::array_merge_recursive_overrule($this->settings, $this->settings[$step . '.']);
@@ -1277,20 +1326,16 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	 */
 	protected function getStepInformation() {
 
-		//find current step
 		$this->findCurrentStep();
 
-		//set last step
 		$this->lastStep = $this->globals->getSession()->get('currentStep');
 		if (!$this->lastStep) {
 			$this->lastStep = 1;
 		}
 
-		//total steps
 		$this->templateFile = $this->utilityFuncs->readTemplateFile($this->templateFile, $this->settings);
 		preg_match_all('/(###TEMPLATE_FORM)([0-9]+)(_.*)?(###)/', $this->templateFile, $subparts);
 
-		//get step numbers
 		$subparts = array_unique($subparts[2]);
 		sort($subparts);
 		$countSubparts = count($subparts);
@@ -1317,7 +1362,6 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		}
 
 		$maxStep = $this->currentStep;
-
 		foreach ($values as $step => &$params) {
 			if (is_array($params) && (!$maxStep || $step <= $maxStep)) {
 				unset($params['submitted']);
@@ -1339,6 +1383,8 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	protected function runClasses($classesArray) {
 		$return = '';
 		if (isset($classesArray) && is_array($classesArray) && intval($this->utilityFuncs->getSingle($classesArray, 'disable')) !== 1) {
+
+			ksort($classesArray);
 
 			//Load language files everytime before running a component. They may have been changed by previous components
 			$this->langFiles = $this->utilityFuncs->readLanguageFiles($this->langFiles, $this->settings);
@@ -1425,7 +1471,6 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			if(strlen(trim($file)) > 0) {
 				$file = $this->utilityFuncs->resolveRelPathFromSiteRoot($file);
 				if(file_exists($file)) {
-
 					$GLOBALS['TSFE']->additionalHeaderData[$this->configuration->getPackageKeyLowercase()] .=
 						'<script type="text/javascript" src="' . $file . '"></script>' . "\n";
 				}

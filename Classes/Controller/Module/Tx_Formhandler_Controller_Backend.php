@@ -435,9 +435,11 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 					if ($params['csvFormat'] === '*') {
 						$exportParams = array();
 						foreach ($renderRecords as $record) {
-							foreach ($record['params'] as $key=>$value) {
-								if (!array_key_exists($key, $exportParams)) {
-									$exportParams[$key] = $value;
+							if(is_array($record['params'])) {
+								foreach ($record['params'] as $key=>$value) {
+									if (!array_key_exists($key, $exportParams)) {
+										$exportParams[$key] = $value;
+									}
 								}
 							}
 						}
@@ -845,13 +847,13 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 
 		//only records submitted after given timestamp
 		if (strlen(trim($params['startdateFilter'])) > 0) {
-			$tstamp = $this->utilityFuncs->dateToTimestamp($params['startdateFilter']);
+			$tstamp = $this->utilityFuncs->dateToTimestampForBackendModule($params['startdateFilter']);
 			$where[] = 'crdate >= ' . $tstamp;
 		}
 
 		//only records submitted before given timestamp
 		if (strlen(trim($params['enddateFilter'])) > 0) {
-			$tstamp = $this->utilityFuncs->dateToTimestamp($params['enddateFilter'], TRUE);
+			$tstamp = $this->utilityFuncs->dateToTimestampForBackendModule($params['enddateFilter'], TRUE);
 			$where[] = 'crdate <= ' . $tstamp;
 		}
 
@@ -904,10 +906,21 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 		$markers['###LLL:cal###'] = $LANG->getLL('cal');
 		$markers['###LLL:startdate###'] = $LANG->getLL('startdate');
 		$markers['###LLL:enddate###'] = $LANG->getLL('enddate');
-
+		$markers['###cal-icon-startdate###'] = t3lib_iconWorks::getSpriteIcon(
+			'actions-edit-pick-date',
+			array(
+				'style' => 'cursor:pointer;',
+				'id' => 'picker-tceforms-datefield-startdate'
+			)
+		);
+		$markers['###cal-icon-enddate###'] = t3lib_iconWorks::getSpriteIcon(
+			'actions-edit-pick-date',
+			array(
+				'style' => 'cursor:pointer;',
+				'id' => 'picker-tceforms-datefield-enddate'
+			)
+		);
 		$this->addValueMarkers($markers, $params);
-
-		$filter .= $this->getCalendarJS();
 
 		return $this->utilityFuncs->substituteMarkerArray($filter, $markers);
 	}
@@ -926,15 +939,6 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 				$markers['###value_' . $key . '###'] = $value;
 			}
 		}
-	}
-
-	/**
-	 * This function returns the JavaScript code to initialize the popup calendar
-	 *
-	 * @return string JavaScript code
-	 */
-	protected function getCalendarJS() {
-		return $this->utilityFuncs->getSubpart($this->templateCode, '###CALENDAR_JS###');
 	}
 
 	/**
@@ -1086,7 +1090,9 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 			'formhandler[howmuch]' => intval($gpParams['howmuch']),
 			'formhandler[pointer]' => intval($gpParams['pointer']),
 		);
-		if(!$params['formhandler[pidFilter]']) {
+		if($gpParams['pidFilter'] === '*') {
+			$params['formhandler[pidFilter]'] = '*';
+		} elseif(!$params['formhandler[pidFilter]']) {
 			$params['formhandler[pidFilter]'] = intval($_GET['id']);
 		}
 		$paramsString = '';
