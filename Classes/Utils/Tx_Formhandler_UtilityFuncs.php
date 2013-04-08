@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_UtilityFuncs.php 62900 2012-05-28 15:43:20Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_UtilityFuncs.php 65721 2012-08-29 12:26:48Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -145,12 +145,16 @@ class Tx_Formhandler_UtilityFuncs {
 
 			if (isset($settings['templateFile.']) && is_array($settings['templateFile.'])) {
 				$templateFile = $this->getSingle($settings, 'templateFile');
-				if (strpos($templateFile, "\n") === FALSE) {
+				if ($this->isTemplateFilePath($templateFile)) {
 					$templateFile = $this->resolvePath($templateFile);
 					if (!@file_exists($templateFile)) {
 						$this->throwException('template_file_not_found', $templateFile);
 					}
 					$templateCode = t3lib_div::getURL($templateFile);
+				} else {
+
+					//The setting "templateFile" was a cObject which returned HTML content. Just use that as template code.
+					$templateCode = $templateFile;
 				}
 			} else {
 				$templateFile = $this->resolvePath($templateFile);
@@ -160,7 +164,7 @@ class Tx_Formhandler_UtilityFuncs {
 				$templateCode = t3lib_div::getURL($templateFile);
 			}
 		} else {
-			if (strpos($templateFile, "\n") === FALSE) {
+			if ($this->isTemplateFilePath($templateFile)) {
 				$templateFile = $this->resolvePath($templateFile);
 				if (!@file_exists($templateFile)) {
 					$this->throwException('template_file_not_found', $templateFile);
@@ -284,7 +288,7 @@ class Tx_Formhandler_UtilityFuncs {
 
 		if ($url) {
 			if(!$this->globals->isAjaxMode()) {
-				$status = '307 Temporary Redirect';
+				$status = '303 See Other';
 				if($headerStatusCode) {
 					$status = $headerStatusCode;
 				}
@@ -315,7 +319,7 @@ class Tx_Formhandler_UtilityFuncs {
 			$redirectPage = $gp[$redirectPage];
 		}
 
-		if(strlen($redirectPage > 0)) {
+		if(strlen($redirectPage) > 0) {
 			$correctRedirectUrl = $this->getSingle($settings, 'correctRedirectUrl');
 			$headerStatusCode = $this->getSingle($settings, 'headerStatusCode');
 			$this->doRedirect($redirectPage, $correctRedirectUrl, $settings['additionalParams.'], $headerStatusCode);
@@ -675,19 +679,24 @@ class Tx_Formhandler_UtilityFuncs {
 	 *
 	 * The default upload folder is: '/uploads/formhandler/tmp/'
 	 *
-	 * @return void
+	 * @return string
 	 */
-	public function getTempUploadFolder() {
+	public function getTempUploadFolder($fieldName = '') {
 
 		//set default upload folder
 		$uploadFolder = '/uploads/formhandler/tmp/';
 
 		//if temp upload folder set in TypoScript, take that setting
 		$settings = $this->globals->getSession()->get('settings');
-		if ($settings['files.']['uploadFolder']) {
+		if(strlen($fieldName) > 0 && $settings['files.']['uploadFolder.'][$fieldName]) {
+			$uploadFolder = $this->getSingle($settings['files.']['uploadFolder.'], $fieldName);
+		} elseif($settings['files.']['uploadFolder.']['default']) {
+			$uploadFolder = $this->getSingle($settings['files.']['uploadFolder.'], 'default');
+		} elseif ($settings['files.']['uploadFolder']) {
 			$uploadFolder = $this->getSingle($settings['files.'], 'uploadFolder');
-			$uploadFolder = $this->sanitizePath($uploadFolder);
 		}
+
+		$uploadFolder = $this->sanitizePath($uploadFolder);
 
 		//if the set directory doesn't exist, print a message and try to create
 		if (!is_dir($this->getTYPO3Root() . $uploadFolder)) {
@@ -695,6 +704,37 @@ class Tx_Formhandler_UtilityFuncs {
 			t3lib_div::mkdir_deep($this->getTYPO3Root() . '/', $uploadFolder);
 		}
 		return $uploadFolder;
+	}
+
+	/**
+	 * Searches for upload folders set in TypoScript setup.
+	 * Returns all upload folders as array.
+	 *
+	 * @return array
+	 */
+	public function getAllTempUploadFolders() {
+
+		$uploadFolders = array();
+
+		//set default upload folder
+		$defaultUploadFolder = '/uploads/formhandler/tmp/';
+
+		//if temp upload folder set in TypoScript, take that setting
+		$settings = $this->globals->getSession()->get('settings');
+
+		if(is_array($settings['files.']['uploadFolder.'])) {
+			foreach($settings['files.']['uploadFolder.'] as $fieldName => $folderSettings) {
+				$uploadFolders[] = $this->sanitizePath($this->getSingle($settings['files.']['uploadFolder.'], $fieldName));
+			}
+		} elseif ($settings['files.']['uploadFolder']) {
+			$defaultUploadFolder = $this->sanitizePath($this->getSingle($settings['files.'], 'uploadFolder'));
+		}
+
+		//If no special upload folder for a field was set, add the default upload folder
+		if(count($uploadFolders) === 0) {
+			$uploadFolders[] = $defaultUploadFolder;
+		}
+		return $uploadFolders;
 	}
 
 	/**
@@ -831,7 +871,13 @@ class Tx_Formhandler_UtilityFuncs {
 			$replace = $this->getSingle($settings['files.'], 'replace');
 			$replace = explode(',', $replace);
 		}
-		$fileName = str_replace($search, $replace, $fileName);
+
+		$usePregReplace = $this->getSingle($settings['files.'], 'usePregReplace');
+		if(intval($usePregReplace) === 1) {
+			$fileName = preg_replace($search, $replace, $fileName);
+		} else {
+			$fileName = str_replace($search, $replace, $fileName);
+		}
 		return $fileName;
 	}
 	
@@ -878,6 +924,63 @@ class Tx_Formhandler_UtilityFuncs {
 			}
 			return $qty;
 		}
+	}
+
+	/**
+	 * Check if a given string is a file path or contains parsed HTML template data
+	 *
+	 * @param	string	$templateFile
+	 * @return	boolean
+	 */
+	public function isTemplateFilePath($templateFile) {
+		return (stristr($templateFile, '###TEMPLATE_') === FALSE);
+	}
+
+	/**
+	 * Method to normalize a specified date pattern for internal use
+	 *
+	 * @param string $pattern The pattern
+	 * @param string $sep The separator character
+	 * @return string The normalized pattern
+	 */
+	public function normalizeDatePattern($pattern,$sep) {
+		$pattern = strtoupper($pattern);
+		$pattern = str_replace(
+			array($sep, 'DD', 'D', 'MM', 'M', 'YYYY', 'YY', 'Y'),
+			array('', 'd', 'd', 'm', 'm', 'y', 'y', 'y'),
+			$pattern
+		);
+		return $pattern;
+	}
+
+	/**
+	 * Copy of tslib_content::getGlobal for use in Formhandler.
+	 * 
+	 * Changed to be able to return an array and not only scalar values.
+	 * 
+	 * @param string Global var key, eg. "HTTP_GET_VAR" or "HTTP_GET_VARS|id" to get the GET parameter "id" back.
+	 * @param array Alternative array than $GLOBAL to get variables from.
+	 * @return mixed Whatever value. If none, then blank string.
+	 */
+	public function getGlobal($keyString, $source = NULL) {
+		$keys = explode('|', $keyString);
+		$numberOfLevels = count($keys);
+		$rootKey = trim($keys[0]);
+		$value = isset($source) ? $source[$rootKey] : $GLOBALS[$rootKey];
+
+		for ($i = 1; $i < $numberOfLevels && isset($value); $i++) {
+			$currentKey = trim($keys[$i]);
+			if (is_object($value)) {
+				$value = $value->$currentKey;
+			} elseif (is_array($value)) {
+				$value = $value[$currentKey];
+			} else {
+				$value = '';
+				break;
+			}
+		}
+
+		return $value;
 	}
 
 }

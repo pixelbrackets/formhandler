@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_CSV.php 62894 2012-05-28 15:07:23Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Generator_CSV.php 65722 2012-08-29 12:39:18Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -138,7 +138,7 @@ class Tx_Formhandler_Generator_CSV {
 		}
 		return $ordered + $array;
 	}
-	
+
 	/**
 	* Get charset used by TYPO3
 	*
@@ -153,6 +153,6 @@ class Tx_Formhandler_Generator_CSV {
 			$charset = 'utf-8';
 		}
 		return $charset;
-		}
+	}
 }
 ?>

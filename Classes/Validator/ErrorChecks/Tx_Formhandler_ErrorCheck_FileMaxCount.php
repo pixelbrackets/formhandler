@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileMaxCount.php 50875 2011-08-10 09:21:19Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileMaxCount.php 65847 2012-09-02 11:35:54Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -36,6 +36,11 @@ class Tx_Formhandler_ErrorCheck_FileMaxCount extends Tx_Formhandler_AbstractErro
 		$currentStep = $this->globals->getSession()->get('currentStep');
 		$lastStep = $this->globals->getSession()->get('lastStep');
 		$maxCount = $this->utilityFuncs->getSingle($this->settings['params'], 'maxCount');
+
+		$uploadedFilesWithSameNameAction = $this->utilityFuncs->getSingle($settings['files.'], 'uploadedFilesWithSameName');
+		if(!$uploadedFilesWithSameNameAction) {
+			$uploadedFilesWithSameNameAction = 'ignore';
+		}
 		if (is_array($files[$this->formFieldName]) &&
 			count($files[$this->formFieldName]) >= $maxCount &&
 			$currentStep == $lastStep) {
@@ -47,7 +52,18 @@ class Tx_Formhandler_ErrorCheck_FileMaxCount extends Tx_Formhandler_AbstractErro
 				}
 			}
 			if ($found) {
-				$checkFailed = $this->getCheckFailed();
+				$newFileName = $info['name'][$this->formFieldName];
+				$exists = FALSE;
+				foreach($files[$this->formFieldName] as $fileInfo) {
+					if($fileInfo['name'] === $newFileName) {
+						$exists = TRUE;
+					}
+				}
+				if(!$exists) {
+					$checkFailed = $this->getCheckFailed();
+				} elseif($uploadedFilesWithSameNameAction === 'append') {
+					$checkFailed = $this->getCheckFailed();
+				}
 			}
 		} elseif (is_array($files[$this->formFieldName]) &&
 			$currentStep > $lastStep) {

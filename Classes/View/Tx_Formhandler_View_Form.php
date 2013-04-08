@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Form.php 62903 2012-05-28 16:13:14Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Form.php 65846 2012-09-02 11:15:34Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -286,7 +286,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 			$fieldname = substr($condition, 1);
 			$negate = TRUE;
 		}
-		$value = $this->globals->getCObj()->getGlobal($fieldname, $this->gp);
+		$value = $this->utilityFuncs->getGlobal($fieldname, $this->gp);
 		if(is_array($value)) {
 			$result = (empty($value));
 		} else {
@@ -312,48 +312,48 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		$conditionResult = FALSE;
 		switch($conditionOperator) {
 			case '!=':
-				$conditionResult = $this->globals->getCObj()->getGlobal($fieldName, $this->gp) != $valueConditions[2];
+				$conditionResult = $this->utilityFuncs->getGlobal($fieldName, $this->gp) != $valueConditions[2];
 				break;
 			case '^=':
-				$conditionResult = strpos($this->globals->getCObj()->getGlobal($fieldName, $this->gp), $valueConditions[2]) === 0;
+				$conditionResult = strpos($this->utilityFuncs->getGlobal($fieldName, $this->gp), $valueConditions[2]) === 0;
 				break;
 			case '$=':
-				$gpValue = $this->globals->getCObj()->getGlobal($fieldName, $this->gp);
+				$gpValue = $this->utilityFuncs->getGlobal($fieldName, $this->gp);
 				$checkValue = substr($valueConditions[2], -strlen($gpValue));
 				$conditionResult = (strcmp($checkValue, $gpValue) === 0);
 				break;
 			case '~=':
-				$conditionResult = strpos($valueConditions[2], $this->globals->getCObj()->getGlobal($fieldName, $this->gp)) !== FALSE;
+				$conditionResult = strpos($valueConditions[2], $this->utilityFuncs->getGlobal($fieldName, $this->gp)) !== FALSE;
 				break;
 			case '=':
-				$conditionResult = $this->globals->getCObj()->getGlobal($fieldName, $this->gp) == $valueConditions[2];
+				$conditionResult = $this->utilityFuncs->getGlobal($fieldName, $this->gp) == $valueConditions[2];
 				break;
 			case '>':
-				$value = $this->globals->getCObj()->getGlobal($fieldName, $this->gp);
+				$value = $this->utilityFuncs->getGlobal($fieldName, $this->gp);
 				if(is_numeric($value)) {
 					$conditionResult = floatval($value) > floatval($valueConditions[2]);
 				}
 				break;
 			case '<':
-				$value = $this->globals->getCObj()->getGlobal($fieldName, $this->gp);
+				$value = $this->utilityFuncs->getGlobal($fieldName, $this->gp);
 				if(is_numeric($value)) {
 					$conditionResult = floatval($value) < floatval($valueConditions[2]);
 				}
 				break;
 			case '>=':
-				$value = $this->globals->getCObj()->getGlobal($fieldName, $this->gp);
+				$value = $this->utilityFuncs->getGlobal($fieldName, $this->gp);
 				if(is_numeric($value)) {
 					$conditionResult = floatval($value) >= floatval($valueConditions[2]);
 				}
 				break;
 			case '<=':
-				$value = $this->globals->getCObj()->getGlobal($fieldName, $this->gp);
+				$value = $this->utilityFuncs->getGlobal($fieldName, $this->gp);
 				if(is_numeric($value)) {
 					$conditionResult = floatval($value) <= floatval($valueConditions[2]);
 				}
 				break;
 			default:
-				$conditionResult = strlen(trim($this->globals->getCObj()->getGlobal($fieldName, $this->gp))) > 0;
+				$conditionResult = strlen(trim($this->utilityFuncs->getGlobal($fieldName, $this->gp))) > 0;
 		}
 
 		return $conditionResult;
@@ -436,6 +436,8 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		$markers['###rel_url###'] = $markers['###REL_URL###'];
 		$markers['###timestamp###'] = $markers['###TIMESTAMP###'];
 		$markers['###abs_url###'] = $markers['###ABS_URL###'];
+		
+		$markers['###formID###'] = htmlspecialchars($this->globals->getFormID());
 
 		$name = 'submitted';
 		if ($this->globals->getFormValuesPrefix()) {
@@ -488,6 +490,23 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 			';
 		}
 
+		$currentStepFromSession = $this->globals->getSession()->get('currentStep');
+		$hiddenActionFieldName = 'step-';
+		$prefix = $this->globals->getFormValuesPrefix();
+		if ($prefix) {
+			$hiddenActionFieldName = $prefix . '[' . $hiddenActionFieldName . '#step#-#action#]';
+		} else {
+			$hiddenActionFieldName = $hiddenActionFieldName . '#step#-#action#';
+		}
+
+		// submit name for next page
+		$hiddenActionFieldName = ' name="' . str_replace('#action#', 'next', $hiddenActionFieldName) . '" ';
+		$hiddenActionFieldName = str_replace('#step#', $currentStepFromSession + 1, $hiddenActionFieldName);
+
+		$markers['###HIDDEN_FIELDS###'] .= '
+			<input type="hidden" ' . $hiddenActionFieldName . ' value="1" />
+		';
+
 		$markers['###formValuesPrefix###'] = $this->globals->getFormValuesPrefix();
 
 		if ($this->gp['generated_authCode']) {
@@ -501,7 +520,6 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		$markers['###PID###'] = $markers['###pid###'];
 
 		// current step
-		$currentStepFromSession = $this->globals->getSession()->get('currentStep');
 		$markers['###curStep###'] = $currentStepFromSession;
 
 		// maximum step/number of steps
@@ -800,15 +818,18 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 								onclick="' . str_replace(array("\n", '	'), '', $onClick) . '"
 								>' . $text . '</a>';
 					}
-
+					$stdWrappedFilename = $filename;
+					if($settings['singleFileMarkerTemplate.']['filenameWrap']) {
+						$stdWrappedFilename = str_replace('|', $filename, $settings['singleFileMarkerTemplate.']['filenameWrap']);
+					}
 					if (strlen($singleWrap) > 0 && strstr($singleWrap, '|')) {
-						$wrappedFilename = str_replace('|', $filename . $link, $singleWrap);
+						$wrappedFilename = str_replace('|', $stdWrappedFilename . $link, $singleWrap);
 						$wrappedThumb = str_replace('|', $thumb . $link, $singleWrap);
-						$wrappedThumbFilename = str_replace('|', $thumb . ' ' . $filename . $link, $singleWrap);
+						$wrappedThumbFilename = str_replace('|', $thumb . ' ' . $stdWrappedFilename . $link, $singleWrap);
 					} else {
-						$wrappedFilename = $filename . $link;
+						$wrappedFilename = $stdWrappedFilename . $link;
 						$wrappedThumb = $thumb . $link;
-						$wrappedThumbFilename = $thumb . ' ' . $filename . $link;
+						$wrappedThumbFilename = $thumb . ' ' . $stdWrappedFilename . $link;
 					}
 					if (intval($settings['singleFileMarkerTemplate.']['showThumbnails']) === 1) {
 						$markers['###' . $field . '_uploadedFiles###'] .= $wrappedThumb;
@@ -827,16 +848,20 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 							$imgConf['image.'] = $settings['singleFileMarkerTemplate.']['image.'];
 						}
 						$thumb = $this->getThumbnail($imgConf, $fileInfo);
-						
+
+					}
+					$stdWrappedFilename = $filename;
+					if($settings['totalFilesMarkerTemplate.']['filenameWrap']) {
+						$stdWrappedFilename = str_replace('|', $filename, $settings['totalFilesMarkerTemplate.']['filenameWrap']);
 					}
 					if (strlen($totalMarkerSingleWrap) > 0 && strstr($totalMarkerSingleWrap, '|')) {
-						$wrappedFilename = str_replace('|', $filename . $link, $totalMarkerSingleWrap);
+						$wrappedFilename = str_replace('|', $stdWrappedFilename . $link, $totalMarkerSingleWrap);
 						$wrappedThumb = str_replace('|', $thumb . $link, $totalMarkerSingleWrap);
-						$wrappedThumbFilename = str_replace('|', $thumb . ' ' . $filename . $link, $totalMarkerSingleWrap);
+						$wrappedThumbFilename = str_replace('|', $thumb . ' ' . $stdWrappedFilename . $link, $totalMarkerSingleWrap);
 					} else {
-						$wrappedFilename = $filename . $link;
+						$wrappedFilename = $stdWrappedFilename . $link;
 						$wrappedThumb = $thumb . $link;
-						$wrappedThumbFilename = $thumb . $filename . $link;
+						$wrappedThumbFilename = $thumb . $stdWrappedFilename . $link;
 					}
 					if (intval($settings['totalFilesMarkerTemplate.']['showThumbnails']) === 1) {
 						$markers['###total_uploadedFiles###'] .= $wrappedThumb;

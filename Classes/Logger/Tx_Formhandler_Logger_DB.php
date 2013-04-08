@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Logger_DB.php 58494 2012-02-25 18:51:38Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Logger_DB.php 65839 2012-09-01 14:12:31Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -48,6 +48,19 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 		$keys = array_keys($this->gp);
 
 		$logParams = $this->gp;
+
+		if($this->settings['fields.']) {
+			foreach($this->settings['fields.'] as $field => $fieldConf) {
+				$field = str_replace('.', '', $field);
+				if($fieldConf['ifIsEmpty'] && (empty($logParams[$field]) || !isset($logParams[$field]))) {
+					$value = $this->utilityFuncs->getSingle($fieldConf, 'ifIsEmpty');
+					$logParams[$field] = $value;
+				}
+				if(intval($this->utilityFuncs->getSingle($fieldConf, 'nullIfEmpty')) === 1 && (empty($logParams[$field]) || !isset($logParams[$field]))) {
+					unset($logParams[$field]);
+				}
+			}
+		}
 		if($this->settings['excludeFields']) {
 			$excludeFields = $this->utilityFuncs->getSingle($this->settings, 'excludeFields');
 			$excludeFields = t3lib_div::trimExplode(',', $excludeFields);
