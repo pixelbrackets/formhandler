@@ -11,15 +11,13 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Configuration.php 49145 2011-06-27 13:15:48Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Configuration.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
  *                                                                        */
 
 /**
  * The configuration of the Formhandler
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Controller
  */
 class Tx_Formhandler_Configuration implements ArrayAccess {
 

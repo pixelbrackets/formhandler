@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_ClearCache.php 55171 2011-11-30 11:44:56Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_ClearCache.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -34,8 +34,6 @@
  * </code>
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Finisher
  */
 class Tx_Formhandler_Finisher_ClearCache extends Tx_Formhandler_AbstractFinisher {
 

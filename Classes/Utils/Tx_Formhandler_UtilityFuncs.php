@@ -11,15 +11,13 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_UtilityFuncs.php 56223 2012-01-11 18:28:15Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_UtilityFuncs.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
  *                                                                        */
 
 /**
  * A class providing helper functions for Formhandler
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Utils
  */
 class Tx_Formhandler_UtilityFuncs {
 
@@ -102,8 +100,8 @@ class Tx_Formhandler_UtilityFuncs {
 	 *
 	 * Returns the first subpart encapsulated in the marker, $marker (possibly present in $content as a HTML comment)
 	 *
-	 * @param	string		Content with subpart wrapped in fx. "###CONTENT_PART###" inside.
-	 * @param	string		Marker string, eg. "###CONTENT_PART###"
+	 * @param	string	Content with subpart wrapped in fx. "###CONTENT_PART###" inside.
+	 * @param	string	Marker string, eg. "###CONTENT_PART###"
 	 * @return	string
 	 */
 	public function getSubpart($content, $marker) {
@@ -509,6 +507,28 @@ class Tx_Formhandler_UtilityFuncs {
 		foreach($this->globals->getDebuggers() as $idx => $debugger) {
 			$debugger->addToDebugLog(htmlspecialchars($message), $severity, $data);
 		}
+	}
+
+	public function debugMailContent($emailObj) {
+		$this->debugMessage('mail_subject', array($emailObj->getSubject()));
+		
+		$sender = $emailObj->getSender();
+		if(!is_array($sender)) {
+			$sender = array($sender);
+		}
+		$this->debugMessage('mail_sender', array(), 1, $sender);
+
+		$replyTo = $emailObj->getReplyTo();
+		if(!is_array($replyTo)) {
+			$replyTo = array($replyTo);
+		}
+		$this->debugMessage('mail_replyto', array(), 1, $replyTo);
+
+		$this->debugMessage('mail_cc', array(), 1, (array)$emailObj->getCc());
+		$this->debugMessage('mail_bcc', array(), 1, (array)$emailObj->getBcc());
+		$this->debugMessage('mail_returnpath', array(), 1, array($emailObj->returnPath));
+		$this->debugMessage('mail_plain', array(), 1, array($emailObj->getPlain()));
+		$this->debugMessage('mail_html', array(), 1, array($emailObj->getHTML()));
 	}
 
 	/**

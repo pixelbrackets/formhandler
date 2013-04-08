@@ -11,15 +11,14 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractPreProcessor.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractPreProcessor.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
  *                                                                        */
 
 /**
  * An abstract class for pre processors used by Formhandler
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	PreProcessor
+ * @abstract
  */
 abstract class Tx_Formhandler_AbstractPreProcessor extends Tx_Formhandler_AbstractComponent {
 

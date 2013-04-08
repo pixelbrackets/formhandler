@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Mail.php 52578 2011-09-30 07:51:00Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Mail.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -65,8 +65,6 @@
  * </code>
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Finisher
  */
 class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 
@@ -80,7 +78,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		//send emails
 		$this->sendMail('admin');
 		$this->sendMail('user');
-		
+
 		return $this->gp;
 	}
 
@@ -92,14 +90,15 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	 * @return string The template code
 	 */
 	protected function parseTemplate($mode, $suffix) {
-		
+
 		$viewClass = $this->settings['view'];
 		if(!$viewClass) {
 			$viewClass = 'Tx_Formhandler_View_Mail';
 		}
+
 		/* @var $view Tx_Formhandler_AbstractView */
 		$view = $this->componentManager->getComponent($viewClass);
-		
+
 		$view->setLangFiles($this->globals->getLangFiles());
 		$view->setPredefined($this->predefined);
 		$view->setComponentSettings($this->settings);
@@ -110,7 +109,6 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		if($this->settings[$mode]['templateFile']) {
 			$templateCode = $this->utilityFuncs->readTemplateFile(FALSE, $this->settings[$mode]);
 		}
-
 
 		$view->setTemplate($templateCode, ('EMAIL_' . strtoupper($mode) . '_' . strtoupper($suffix) . $this->globals->getTemplateSuffix()));
 		if (!$view->hasTemplate()) {
@@ -262,8 +260,10 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			$mailSettings['attachment'] = array($mailSettings['attachment']);
 		}
 		foreach ($mailSettings['attachment'] as $idx => $attachment) {
-			if (strlen($attachment) > 0) {
+			if (strlen($attachment) > 0 && @file_exists($attachment)) {
 				$emailObj->addAttachment($attachment);
+			} else {
+				$this->utilityFuncs->debugMessage('attachment_not_found', array($attachment), 2);
 			}
 		}
 		if ($mailSettings['attachGeneratedFiles']) {
@@ -302,14 +302,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		} else {
 			$this->utilityFuncs->debugMessage('mail_not_sent', array(implode(',', $recipients)), 2);
 		}
-		$this->utilityFuncs->debugMessage('mail_subject', array($emailObj->getSubject()));
-		$this->utilityFuncs->debugMessage('mail_sender', array($emailObj->getSender()));
-		$this->utilityFuncs->debugMessage('mail_replyto', array($emailObj->getReplyTo()));
-		$this->utilityFuncs->debugMessage('mail_returnpath', array($emailObj->returnPath));
-		$this->utilityFuncs->debugMessage('mail_cc', array(implode(',', $emailObj->getCc())));
-		$this->utilityFuncs->debugMessage('mail_bcc', array(implode(',', $emailObj->getBcc())));
-		$this->utilityFuncs->debugMessage('mail_plain', array(), 1, array($template['plain']));
-		$this->utilityFuncs->debugMessage('mail_html', array(), 1, array($template['html']));
+		$this->utilityFuncs->debugMailContent($emailObj);
 		if ($tmphtml) {
 			unlink($tmphtml);
 		}
@@ -442,7 +435,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	/**
 	 * Fetches the global TypoScript settings of the Formhandler
 	 *
-	 * @return void
+	 * @return array The settings
 	 */
 	protected function getSettings() {
 		return $this->configuration->getSettings();
@@ -553,11 +546,11 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 						break;
 
 					case 'attachment':
-						$emailSettings[$option] = $this->parseFilesList($currentSettings,$type,$option);
+						$emailSettings[$option] = $this->parseFilesList($currentSettings, $type, $option);
 						break;
 
 					case 'attachPDF':
-				case 'attachGeneratedFiles':
+					case 'attachGeneratedFiles':
 						if (isset($currentSettings['attachGeneratedFiles.']) && is_array($currentSettings['attachGeneratedFiles.'])) {
 							foreach($currentSettings['attachGeneratedFiles.'] as $idx => $options) {
 								$generatorClass = $options['class'];

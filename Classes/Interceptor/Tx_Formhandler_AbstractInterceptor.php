@@ -11,19 +11,23 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractInterceptor.php 49145 2011-06-27 13:15:48Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractInterceptor.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
  *                                                                        */
 
 /**
  * Abstract interceptor class
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Interceptor
  * @abstract
  */
 abstract class Tx_Formhandler_AbstractInterceptor extends Tx_Formhandler_AbstractComponent {
 
+	/**
+	 * Logs an action of an interceptor, e.g. if Interceptor_IPBlocking blocked a request.
+	 *
+	 * @param boolean $markAsSpam Indicates if this was a blocked SPAM attempt. Will be highlighted in the backend module.
+	 * @return void
+	 */
 	protected function log($markAsSpam = FALSE) {
 		$classesArray = $this->settings['loggers.'];
 		if (isset($classesArray) && is_array($classesArray)) {
