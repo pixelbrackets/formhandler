@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_StaticFuncs.php 23905 2009-09-01 12:06:50Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_StaticFuncs.php 24857 2009-09-28 09:36:08Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -22,24 +22,6 @@
  * @subpackage	Utils
  */
 class Tx_Formhandler_StaticFuncs {
-
-	/**
-	 * The cObj
-	 *
-	 * @access public
-	 * @static
-	 * @var tslib_cObj
-	 */
-	static public $cObj;
-
-	/**
-	 * Identifier of the selected predefined form
-	 *
-	 * @access public
-	 * @static
-	 * @var string
-	 */
-	static public $predefined;
 
 	/**
 	 * Returns the absolute path to the document root
@@ -138,20 +120,22 @@ class Tx_Formhandler_StaticFuncs {
 		
 		//template file was not set in flexform, search TypoScript for setting
 		if(!$templateFile) {
-
 			$templateFile = $settings['templateFile'];
 			if(isset($settings['templateFile.']) && is_array($settings['templateFile.'])) {
 				$templateFile = Tx_Formhandler_StaticFuncs::$cObj->cObjGetSingle($settings['templateFile'], $settings['templateFile.']);
 			} else {
-				$templateFile = t3lib_div::getURL(Tx_Formhandler_StaticFuncs::resolvePath($templateFile));
+				$templateFile = Tx_Formhandler_StaticFuncs::resolvePath($templateFile);
+				$templateFile = t3lib_div::getURL($templateFile);
 			}
 		} else {
 			if(strpos($templateFile, "\n") === FALSE) {
-				$templateFile = t3lib_div::getURL(Tx_Formhandler_StaticFuncs::resolvePath($templateFile));
+				$templateFile = Tx_Formhandler_StaticFuncs::resolvePath($templateFile);
+				$templateFile = t3lib_div::getURL($templateFile);
 			}
 		}
 
 		if(!$templateFile) {
+			
 			Tx_Formhandler_StaticFuncs::throwException('no_template_file');
 		}
 		return $templateFile;
@@ -164,14 +148,37 @@ class Tx_Formhandler_StaticFuncs {
 	 * @return void
 	 * @author	Reinhard Führicht <rf@typoheads.at>
 	 */
-	static public function readLanguageFile($langFile, &$settings) {
+	static public function readLanguageFiles($langFiles, &$settings) {
 
 		//language file was not set in flexform, search TypoScript for setting
-		if(!$langFile) {
-			$langFile = $settings['langFile'];
+		if(!$langFiles) {
+			$langFiles = array();
+			if($settings['langFile.']) {
+				foreach($settings['langFile.'] as $langFile) {
+					$langFiles[] = $langFile;
+				}
+			} elseif($settings['langFile']) {
+				$langFiles[] = $settings['langFile'];
+			}
 		}
-		$langFile = Tx_Formhandler_StaticFuncs::convertToRelativePath($langFile);
-		return $langFile;
+		foreach($langFiles as &$langFile) {
+			$langFile = Tx_Formhandler_StaticFuncs::convertToRelativePath($langFile);
+		}
+		return $langFiles;
+	}
+	
+	static public function getTranslatedMessage($langFiles, $key) {
+		$message = '';
+		if(!is_array($langFiles)) {
+			$message = trim($GLOBALS['TSFE']->sL('LLL:' . $langFiles . ':' . $key));
+		} else {
+			foreach($langFiles as $langFile) {
+				if(strlen(trim($GLOBALS['TSFE']->sL('LLL:' . $langFile . ':' . $key))) > 0) {
+					$message = trim($GLOBALS['TSFE']->sL('LLL:' . $langFile . ':' . $key));
+				}
+			}
+		}
+		return $message;
 	}
 	
 	/**
@@ -192,7 +199,7 @@ class Tx_Formhandler_StaticFuncs {
 				$addparams['L'] = t3lib_div::_GP('L');
 			}
 
-			$url = Tx_Formhandler_StaticFuncs::$cObj->getTypoLink_URL($redirect, $addparams);
+			$url = Tx_Formhandler_Globals::$cObj->getTypoLink_URL($redirect, $addparams);
 
 			//else it may be a full URL
 		} else {
@@ -344,17 +351,21 @@ class Tx_Formhandler_StaticFuncs {
 	 * @return array The filled language markers
 	 * @static
 	 */
-	static public function getFilledLangMarkers(&$template,$langFile) {
-		$GLOBALS['TSFE']->readLLfile($langFile);
+	static public function getFilledLangMarkers(&$template,$langFiles) {
+		//$GLOBALS['TSFE']->readLLfile($langFile);
 		$langMarkers = array();
-		if (strlen($langFile) > 0) {
+		if (is_array($langFiles)) {
 			$aLLMarkerList = array();
 			preg_match_all('/###LLL:.+?###/Ssm', $template, $aLLMarkerList);
 
 			foreach($aLLMarkerList[0] as $LLMarker){
 				$llKey =  substr($LLMarker, 7, strlen($LLMarker) - 10);
 				$marker = $llKey;
-				$langMarkers['###LLL:'.$marker.'###'] = trim($GLOBALS['TSFE']->sL('LLL:' . $langFile. ':' . $llKey));
+				$message = '';
+				foreach($langFiles as $langFile) {
+					$message = trim($GLOBALS['TSFE']->sL('LLL:' . $langFile . ':' . $llKey));
+				}
+				$langMarkers['###LLL:' . $marker . '###'] = $message;
 			}
 		}
 		return $langMarkers;

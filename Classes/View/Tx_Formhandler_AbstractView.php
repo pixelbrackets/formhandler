@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractView.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_AbstractView.php 24857 2009-09-28 09:36:08Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -138,7 +138,7 @@ abstract class Tx_Formhandler_AbstractView extends tslib_pibase {
 		parent::__construct();
 		$this->componentManager = $componentManager;
 		$this->configuration = $configuration;
-		$this->cObj = Tx_Formhandler_StaticFuncs::$cObj;
+		$this->cObj = Tx_Formhandler_Globals::$cObj;
 		$this->typolinkConf['parameter.']['current'] = 1;
 		$this->typolinkConf['additionalParams'] = $this->cObj->stdWrap($typolinkConf['additionalParams'], $typolinkConf['additionalParams.']);
 		unset($this->typolinkConf['additionalParams.']);
@@ -153,8 +153,8 @@ abstract class Tx_Formhandler_AbstractView extends tslib_pibase {
 	 * @param string $langFile The file path
 	 * @return void
 	 */
-	public function setLangFile($langFile) {
-		$this->langFile = $langFile;
+	public function setLangFiles($langFiles) {
+		$this->langFiles = $langFiles;
 	}
 
 	/**

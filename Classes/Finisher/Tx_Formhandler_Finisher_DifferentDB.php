@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_DifferentDB.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_Finisher_DifferentDB.php 24857 2009-09-28 09:36:08Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -163,8 +163,9 @@ class Tx_Formhandler_Finisher_DifferentDB extends Tx_Formhandler_Finisher_DB {
 	 * @see Tx_Formhandler_Finisher_DB::init
 	 * @return void
 	 */
-	protected function init() {
-		parent::init();
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+		
 		$this->driver = $this->settings['driver'];
 		$this->db = $this->settings['db'];
 		$this->host = $this->settings['host'];

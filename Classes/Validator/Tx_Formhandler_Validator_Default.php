@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Validator_Default.php 23307 2009-08-12 14:34:30Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Validator_Default.php 24857 2009-09-28 09:36:08Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -50,7 +50,7 @@ class Tx_Formhandler_Validator_Default extends Tx_Formhandler_AbstractValidator 
 	 * @param array The TypoScript configuration
 	 * @return void
 	 */
-	public function loadConfig($gp, $tsConfig) {
+	public function init($gp, $tsConfig) {
 		$this->settings = $tsConfig;
 
 		$flexformValue = Tx_Formhandler_StaticFuncs::pi_getFFvalue($this->cObj->data['pi_flexform'], 'required_fields', 'sMISC');
