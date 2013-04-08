@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_AntiSpamFormTime.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_AntiSpamFormTime.php 60132 2012-03-30 13:36:38Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -46,14 +46,24 @@ class Tx_Formhandler_Interceptor_AntiSpamFormTime extends Tx_Formhandler_Abstrac
 			$this->log(TRUE);
 			if ($this->settings['redirectPage']) {
 				$this->globals->getSession()->reset();
-				$this->utilityFuncs->doRedirect($this->settings['redirectPage'], $this->settings['correctRedirectUrl'], $this->settings['additionalParams.']);
+				$this->utilityFuncs->doRedirectBasedOnSettings($this->settings, $this->gp);
 				return 'Lousy spammer!';
 			} else {
-				$view = $this->componentManager->getComponent('Tx_Formhandler_View_AntiSpam');
+
+				//set view
+				$viewClass = 'Tx_Formhandler_View_AntiSpam';
+				if($this->settings['view']) {
+					$viewClass = $this->utilityFuncs->getSingle($this->settings, 'view');
+				}
+				$viewClass = $this->utilityFuncs->prepareClassName($viewClass);
+				$view = $this->componentManager->getComponent($viewClass);
 				$view->setLangFiles($this->globals->getLangFiles());
 				$view->setPredefined($this->predefined);
 
 				$templateCode = $this->globals->getTemplateCode();
+				if($this->settings['templateFile']) {
+					$templateCode = $this->utilityFuncs->readTemplateFile(FALSE, $this->settings);
+				}
 				$view->setTemplate($templateCode, 'ANTISPAM');
 				if (!$view->hasTemplate()) {
 					$this->utilityFuncs->throwException('spam_detected');
@@ -73,12 +83,12 @@ class Tx_Formhandler_Interceptor_AntiSpamFormTime extends Tx_Formhandler_Abstrac
 	 * @return boolean
 	 */
 	protected function doCheck() {
-		$value = $this->settings['minTime.']['value'];
-		$unit = $this->settings['minTime.']['unit'];
+		$value = $this->utilityFuncs->getSingle($this->settings['minTime.'], 'value');
+		$unit = $this->utilityFuncs->getSingle($this->settings['minTime.'], 'unit');
 		$minTime = $this->utilityFuncs->convertToSeconds($value, $unit);
 
-		$value = $this->settings['maxTime.']['value'];
-		$unit = $this->settings['maxTime.']['unit'];
+		$value = $this->utilityFuncs->getSingle($this->settings['maxTime.'], 'value');
+		$unit = $this->utilityFuncs->getSingle($this->settings['maxTime.'], 'unit');
 		$maxTime = $this->utilityFuncs->convertToSeconds($value, $unit);
 		$spam = FALSE;
 		if (!isset($this->gp['formtime']) || 

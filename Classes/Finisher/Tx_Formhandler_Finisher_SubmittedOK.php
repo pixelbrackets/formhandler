@@ -44,9 +44,17 @@ class Tx_Formhandler_Finisher_SubmittedOK extends Tx_Formhandler_AbstractFinishe
 
 		//read template file
 		$this->templateFile = $this->globals->getTemplateCode();
+		if($this->settings['templateFile']) {
+			$this->templateFile = $this->utilityFuncs->readTemplateFile(FALSE, $this->settings);
+		}
 
 		//set view
-		$view = $this->componentManager->getComponent('Tx_Formhandler_View_SubmittedOK');
+		$viewClass = 'Tx_Formhandler_View_SubmittedOK';
+		if($this->settings['view']) {
+			$viewClass = $this->utilityFuncs->getSingle($this->settings, 'view');
+		}
+		$viewClass = $this->utilityFuncs->prepareClassName($viewClass);
+		$view = $this->componentManager->getComponent($viewClass);
 
 		//show TEMPLATE_SUBMITTEDOK
 		$view->setTemplate($this->templateFile, ('SUBMITTEDOK' . $this->globals->getTemplateSuffix()));

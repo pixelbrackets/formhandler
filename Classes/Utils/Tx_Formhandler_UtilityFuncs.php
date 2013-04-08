@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_UtilityFuncs.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_UtilityFuncs.php 62900 2012-05-28 15:43:20Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -229,13 +229,24 @@ class Tx_Formhandler_UtilityFuncs {
 	}
 
 	public function getSingle($arr, $key) {
-		if (!isset($arr[$key . '.'])) {
+		if(!is_array($arr)) {
+			return $arr;
+		}
+		if (!is_array($arr[$key . '.'])) {
 			return $arr[$key];
 		}
 		if (!isset($arr[$key . '.']['sanitize'])) {
 			$arr[$key . '.']['sanitize'] = 1;
 		}
 		return $this->globals->getCObj()->cObjGetSingle($arr[$key], $arr[$key . '.']);
+	}
+
+	public function getPreparedClassName($settingsArray, $defaultClassName = '') {
+		$className = $defaultClassName;
+		if(is_array($settingsArray) && $settingsArray['class']) {
+			$className = $this->getSingle($settingsArray, 'class');
+		}
+		return $this->prepareClassName($className);
 	}
 
 	/**
@@ -245,7 +256,7 @@ class Tx_Formhandler_UtilityFuncs {
 	 * @param boolean $correctRedirectUrl replace &amp; with & in URL 
 	 * @return void
 	 */
-	public function doRedirect($redirect, $correctRedirectUrl, $additionalParams = array()) {
+	public function doRedirect($redirect, $correctRedirectUrl, $additionalParams = array(), $headerStatusCode = '') {
 
 		// these parameters have to be added to the redirect url
 		$addparams = array();
@@ -273,13 +284,44 @@ class Tx_Formhandler_UtilityFuncs {
 
 		if ($url) {
 			if(!$this->globals->isAjaxMode()) {
-				header('Status: 301 Moved Permanently');
+				$status = '307 Temporary Redirect';
+				if($headerStatusCode) {
+					$status = $headerStatusCode;
+				}
+				header('Status: ' . $status);
 				header('Location: ' . t3lib_div::locationHeaderUrl($url));
 			} else {
 				print '{' . json_encode('redirect') . ':' . json_encode(t3lib_div::locationHeaderUrl($url)) . '}';
 				exit;
 			}
 			
+		}
+	}
+
+	/**
+	 * Redirects to a specified page or URL.
+	 * The redirect url, additional params and other settings are taken from the given settings array.
+	 *
+	 * @param array $settings Array containing the redirect settings
+	 * @param array $gp Array with GET/POST parameters
+	 * @param string $redirectPageSetting Name of the Typoscript setting which holds the redirect page.
+	 * @return void
+	 */
+	public function doRedirectBasedOnSettings($settings, $gp, $redirectPageSetting = 'redirectPage') {
+		$redirectPage = $this->getSingle($settings, $redirectPageSetting);
+
+		//Allow "redirectPage" to be the value of a form field
+		if($redirectPage && isset($gp[$redirectPage])) {
+			$redirectPage = $gp[$redirectPage];
+		}
+
+		if(strlen($redirectPage > 0)) {
+			$correctRedirectUrl = $this->getSingle($settings, 'correctRedirectUrl');
+			$headerStatusCode = $this->getSingle($settings, 'headerStatusCode');
+			$this->doRedirect($redirectPage, $correctRedirectUrl, $settings['additionalParams.'], $headerStatusCode);
+			exit();
+		} else {
+			$this->debugMessage('No redirectPage set.');
 		}
 	}
 
@@ -318,7 +360,13 @@ class Tx_Formhandler_UtilityFuncs {
 	public function pi_getFFvalueFromSheetArray($sheetArray, $fieldNameArr, $value) {
 		$tempArr = $sheetArray;
 		foreach ($fieldNameArr as $k => $v) {
-			if (t3lib_div::testInt($v)) {
+			$isInt = FALSE;
+			if (version_compare(TYPO3_branch, '4.6', '<')) {
+				$isInt = t3lib_div::testInt($v);
+			} else {
+				$isInt = t3lib_utility_Math::canBeInterpretedAsInteger($v);
+			}
+			if ($isInt) {
 				if (is_array($tempArr)) {
 					$c = 0;
 					foreach ($tempArr as $idx => $values) {
@@ -728,6 +776,7 @@ class Tx_Formhandler_UtilityFuncs {
 			// Get the page
 		$TSFE->fetch_the_id();
 		$TSFE->getConfigArray();
+		$TSFE->includeLibraries($TSFE->tmpl->setup['includeLibs.']);
 		$TSFE->newCObj();
 	}
 	
@@ -775,10 +824,12 @@ class Tx_Formhandler_UtilityFuncs {
 
 		//The settings "search" and "replace" are comma separated lists
 		if($settings['files.']['search']) {
-			$search = explode(',', $settings['files.']['search']);
+			$search = $this->getSingle($settings['files.'], 'search');
+			$search = explode(',', $search);
 		}
 		if($settings['files.']['replace']) {
-			$replace = explode(',', $settings['files.']['replace']);
+			$replace = $this->getSingle($settings['files.'], 'replace');
+			$replace = explode(',', $replace);
 		}
 		$fileName = str_replace($search, $replace, $fileName);
 		return $fileName;
@@ -797,6 +848,36 @@ class Tx_Formhandler_UtilityFuncs {
 			$values = htmlspecialchars($values);
 		}
 		return $values;
+	}
+
+	/**
+	 * Convert a shorthand byte value from a PHP configuration directive to an integer value
+	 * 
+	 * Copied from http://www.php.net/manual/de/faq.using.php#78405
+	 * 
+	 * @param	string	$value
+	 * @return	int
+	 */
+	public function convertBytes($value) {
+		if(is_numeric($value)) {
+			return $value;
+		} else {
+			$value_length = strlen($value);
+			$qty = substr($value, 0, $value_length - 1);
+			$unit = strtolower(substr($value, $value_length - 1));
+			switch($unit) {
+				case 'k':
+					$qty *= 1024;
+					break;
+				case 'm':
+					$qty *= 1048576;
+					break;
+				case 'g':
+					$qty *= 1073741824;
+					break;
+			}
+			return $qty;
+		}
 	}
 
 }

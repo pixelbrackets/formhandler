@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractInterceptor.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractInterceptor.php 59139 2012-03-12 14:02:07Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -32,9 +32,10 @@ abstract class Tx_Formhandler_AbstractInterceptor extends Tx_Formhandler_Abstrac
 		$classesArray = $this->settings['loggers.'];
 		if (isset($classesArray) && is_array($classesArray)) {
 			foreach ($classesArray as $idx => $tsConfig) {
-				if (is_array($tsConfig) && isset($tsConfig['class']) && !empty($tsConfig['class']) && intval($tsConfig['disable']) !== 1) {
-					$className = $this->utilityFuncs->prepareClassName($tsConfig['class']);
-					$this->utilityFuncs->Message('calling_class', array($className));
+				$className = $this->utilityFuncs->getPreparedClassName($tsConfig);
+				if (is_array($tsConfig) && strlen($className) > 0 && intval($this->utilityFuncs->getSingle($tsConfig, 'disable')) !== 1) {
+
+					$this->utilityFuncs->debugMessage('calling_class', array($className));
 					$obj = $this->componentManager->getComponent($className);
 					if ($markAsSpam) {
 						$tsConfig['config.']['markAsSpam'] = 1;
