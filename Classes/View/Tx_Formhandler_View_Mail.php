@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Mail.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Mail.php 42315 2011-01-18 16:13:38Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -75,12 +75,23 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 
 		//fill default markers
 		$this->fillDefaultMarkers();
-
-		//fill value_[fieldname] markers
-		$this->fillValueMarkers();
+		
+		if(intval($this->settings['fillValueMarkersBeforeLangMarkers']) === 1) {
+			
+			//fill value_[fieldname] markers
+			$this->fillValueMarkers();
+		}
 
 		//fill LLL:[language_key] markers
 		$this->fillLangMarkers();
+		
+		$this->fillSelectedMarkers();
+
+		if(intval($this->settings['fillValueMarkersBeforeLangMarkers']) !== 1) {
+			
+			//fill value_[fieldname] markers
+			$this->fillValueMarkers();
+		}
 
 		//remove markers that were not substituted
 		$content = Tx_Formhandler_StaticFuncs::removeUnfilledMarkers($this->template);
