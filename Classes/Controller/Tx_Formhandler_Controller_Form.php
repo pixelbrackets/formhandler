@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Controller_Form.php 46260 2011-04-06 08:01:12Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Controller_Form.php 46556 2011-04-15 08:51:00Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -324,14 +324,17 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			if ($this->currentStep > $this->lastStep) {
 				$this->loadSettingsForStep($this->currentStep);
 				$this->parseConditions();
-				$this->view->setLangFiles($this->langFiles);
-				$this->view->setSettings($this->settings);
-				$this->setViewSubpart($this->currentStep);
-			} else {
-				$this->view->setLangFiles($this->langFiles);
-				$this->view->setSettings($this->settings);
-				$this->setViewSubpart($this->currentStep);
 			}
+			
+					//read template file
+			$this->templateFile = Tx_Formhandler_StaticFuncs::readTemplateFile($this->templateFile, $this->settings);
+			Tx_Formhandler_Globals::$templateCode = $this->templateFile;
+			$this->langFiles = Tx_Formhandler_StaticFuncs::readLanguageFiles($this->langFiles, $this->settings);
+			Tx_Formhandler_Globals::$langFiles = $this->langFiles;
+
+			$this->view->setLangFiles($this->langFiles);
+			$this->view->setSettings($this->settings);
+			$this->setViewSubpart($this->currentStep);
 
 			//if no more steps
 			if ($this->finished) {
@@ -362,6 +365,12 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		//load settings from last step again because an error occurred
 		$this->loadSettingsForStep($this->currentStep);
 		Tx_Formhandler_Globals::$session->set('settings', $this->settings);
+		
+		//read template file
+		$this->templateFile = Tx_Formhandler_StaticFuncs::readTemplateFile($this->templateFile, $this->settings);
+		Tx_Formhandler_Globals::$templateCode = $this->templateFile;
+		$this->langFiles = Tx_Formhandler_StaticFuncs::readLanguageFiles($this->langFiles, $this->settings);
+		Tx_Formhandler_Globals::$langFiles = $this->langFiles;
 
 		$this->view->setLangFiles($this->langFiles);
 		$this->view->setSettings($this->settings);
@@ -417,6 +426,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 						$tsConfig['config.'] = $this->addDefaultComponentConfig($tsConfig['config.']);
 
 						$finisher->init($this->gp, $tsConfig['config.']);
+						$finisher->validateConfig();
 						$this->storeGPinSession();
 						$this->mergeGPWithSession(FALSE, $this->currentStep);
 
@@ -515,9 +525,9 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		} else {
 			$found = FALSE;
 			foreach ($classesArray as $idx => $classOptions) {
-				if (strpos($className, $classOptions['class']) !== FALSE) {
+				if ($className === $classOptions['class']) {
 					$found = TRUE;
-				} elseif (strpos(str_replace('Tx_Formhandler_', '', $className), $classOptions['class']) !== FALSE) {
+				} elseif ($className === str_replace('Tx_Formhandler_', '', $classOptions['class'])) {
 					$found = TRUE;
 				}
 			}
@@ -882,7 +892,8 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		Tx_Formhandler_Globals::$formValuesPrefix = $this->formValuesPrefix;
 
 		//set debug mode
-		$this->debugMode = (intval($this->settings['debug']) === 1);
+		$isDebugMode = Tx_Formhandler_StaticFuncs::getSingle($this->settings, 'debug');
+		$this->debugMode = (intval($isDebugMode) === 1);
 
 		$sessionClass = 'Tx_Formhandler_Session_PHP';
 		if($this->settings['session.']) {
@@ -911,13 +922,13 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			exit();
 		}
 		$this->parseConditions();
+
+		$this->initializeDebuggers();
+
 		$this->getStepInformation();
 
 		$currentStepFromSession = Tx_Formhandler_Globals::$session->get('currentStep');
 		$prevStep = $currentStepFromSession;
-		if ($this->settings['prevStep']) {
-			$prevStep = $this->settings['prevStep'];
-		}
 		if (intval($prevStep) !== intval($currentStepFromSession)) {
 			$this->currentStep = 1;
 			$this->lastStep = 1;
@@ -940,25 +951,6 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		//set debug mode again cause it may have changed in specific step settings
 		$this->debugMode = (intval($this->settings['debug']) === 1);
 		Tx_Formhandler_Globals::$session->set('debug', $this->debugMode);
-		
-		if (!is_array($this->settings['debuggers.'])) {
-			$this->settings['debuggers.'] = array(
-				'1.' => array(
-					'class' => 'Tx_Formhandler_Debugger_Print'
-				)
-			);
-		}
-		
-		foreach ($this->settings['debuggers.'] as $idx => $options) {
-			if(intval($options['disable']) !== 1) {
-				$debuggerClass = $options['class'];
-				$debuggerClass = Tx_Formhandler_StaticFuncs::prepareClassName($debuggerClass);
-				$debugger = $this->componentManager->getComponent($debuggerClass);
-				$debugger->init($this->gp, $options['config.']);
-				$debugger->validateConfig();
-				Tx_Formhandler_Globals::$debuggers[] = $debugger;
-			}
-		}
 
 		Tx_Formhandler_StaticFuncs::debugMessage('using_prefix', array($this->formValuesPrefix));
 
@@ -994,7 +986,6 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$this->view = $this->componentManager->getComponent($viewClass);
 		$this->view->setLangFiles($this->langFiles);
 		$this->view->setSettings($this->settings);
-		$this->setViewSubpart($this->currentStep);
 
 		Tx_Formhandler_Globals::$gp = $this->gp;
 
@@ -1155,6 +1146,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 						$obj = $this->componentManager->getComponent($className);
 						$tsConfig['config.'] = $this->addDefaultComponentConfig($tsConfig['config.']);
 						$obj->init($this->gp, $tsConfig['config.']);
+						$obj->validateConfig();
 						$return = $obj->process();
 						if (is_array($return)) {
 
@@ -1185,16 +1177,19 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$cssFiles = array();
 		if ($this->settings['cssFile.']) {
 			foreach ($this->settings['cssFile.'] as $idx => $file) {
-				$cssFiles[] = $file;
+				if(strpos($idx, '.') === FALSE) {
+					$file = Tx_Formhandler_StaticFuncs::getSingle($this->settings['cssFile.'], $idx);
+					$cssFiles[] = $file;
+				}
 			}
 		} elseif (strlen($stylesheetFile) > 0) {
-			$cssFiles[] = $stylesheetFile;
+			$cssFiles[] = Tx_Formhandler_StaticFuncs::getSingle($this->settings, 'cssFile');
 		}
 		foreach ($cssFiles as $idx => $file) {
 
-			// set stylesheet
-			$GLOBALS['TSFE']->additionalHeaderData[$this->configuration->getPackageKeyLowercase()] .=
-				'<link rel="stylesheet" href="' . Tx_Formhandler_StaticFuncs::resolveRelPathFromSiteRoot($file) . '" type="text/css" media="screen" />' . "\n";
+				// set stylesheet
+				$GLOBALS['TSFE']->additionalHeaderData[$this->configuration->getPackageKeyLowercase()] .=
+					'<link rel="stylesheet" href="' . Tx_Formhandler_StaticFuncs::resolveRelPathFromSiteRoot($file) . '" type="text/css" media="screen" />' . "\n";
 		}
 	}
 
@@ -1209,10 +1204,13 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$jsFiles = array();
 		if ($this->settings['jsFile.']) {
 			foreach ($this->settings['jsFile.'] as $idx => $file) {
-				$jsFiles[] = $file;
+				if(strpos($idx, '.') === FALSE) {
+					$file = Tx_Formhandler_StaticFuncs::getSingle($this->settings['jsFile.'], $idx);
+					$jsFiles[] = $file;
+				}
 			}
 		} elseif (strlen($jsFile) > 0) {
-			$jsFiles[] = $jsFile;
+			$jsFiles[] = Tx_Formhandler_StaticFuncs::getSingle($this->settings, 'jsFile');;
 		}
 		foreach ($jsFiles as $idx => $file) {
 
@@ -1254,6 +1252,21 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 						$this->gp[$field] = array();
 					}
 				}
+			}
+		}
+	}
+
+	protected function initializeDebuggers() {
+		$this->addFormhandlerClass($this->settings['debuggers.'], 'Tx_Formhandler_Debugger_Print');
+
+		foreach ($this->settings['debuggers.'] as $idx => $options) {
+			if(intval($options['disable']) !== 1) {
+				$debuggerClass = $options['class'];
+				$debuggerClass = Tx_Formhandler_StaticFuncs::prepareClassName($debuggerClass);
+				$debugger = $this->componentManager->getComponent($debuggerClass);
+				$debugger->init($this->gp, $options['config.']);
+				$debugger->validateConfig();
+				Tx_Formhandler_Globals::$debuggers[] = $debugger;
 			}
 		}
 	}

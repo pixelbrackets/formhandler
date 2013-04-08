@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Dispatcher.php 46243 2011-04-05 15:17:49Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Dispatcher.php 46555 2011-04-15 08:17:27Z reinhardfuehricht $
  *                                                                        */
 
 require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Formhandler_Component_Manager.php');
@@ -100,7 +100,7 @@ class Tx_Formhandler_Dispatcher extends tslib_pibase {
 			$result .= '<div style="color:red; font-weight: bold">File: ' . $e->getFile() . '(' . $e->getLine() . ')</div>';
 			
 		}
-		if (Tx_Formhandler_Globals::$session->get('debug')) {
+		if (Tx_Formhandler_Globals::$session && Tx_Formhandler_Globals::$session->get('debug')) {
 			foreach(Tx_Formhandler_Globals::$debuggers as $idx => $debugger) {
 				$debugger->outputDebugLog();
 			}

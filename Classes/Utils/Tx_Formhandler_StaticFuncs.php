@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_StaticFuncs.php 46260 2011-04-06 08:01:12Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_StaticFuncs.php 46532 2011-04-14 15:01:09Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -124,15 +124,22 @@ class Tx_Formhandler_StaticFuncs {
 	 */
 	static public function readTemplateFile($templateFile, &$settings) {
 		$templateCode = FALSE;
-
 		//template file was not set in flexform, search TypoScript for setting
 		if (!$templateFile) {
-			if (!$settings['templateFile']) {
+			if (!$settings['templateFile'] && !!$settings['templateFile.']) {
 				return '';
 			}
 			$templateFile = $settings['templateFile'];
+
 			if (isset($settings['templateFile.']) && is_array($settings['templateFile.'])) {
-				$templateCode = Tx_Formhandler_StaticFuncs::getSingle($settings, 'templateFile');
+				$templateFile = Tx_Formhandler_StaticFuncs::getSingle($settings, 'templateFile');
+				if (strpos($templateFile, "\n") === FALSE) {
+					$templateFile = Tx_Formhandler_StaticFuncs::resolvePath($templateFile);
+					if (!@file_exists($templateFile)) {
+						Tx_Formhandler_StaticFuncs::throwException('template_file_not_found', $templateFile);
+					}
+					$templateCode = t3lib_div::getURL($templateFile);
+				}
 			} else {
 				$templateFile = Tx_Formhandler_StaticFuncs::resolvePath($templateFile);
 				if (!@file_exists($templateFile)) {
@@ -148,7 +155,6 @@ class Tx_Formhandler_StaticFuncs {
 				}
 				$templateCode = t3lib_div::getURL($templateFile);
 			} else {
-
 				// given variable $templateFile already contains the template code
 				$templateCode = $templateFile;
 			}
@@ -182,7 +188,7 @@ class Tx_Formhandler_StaticFuncs {
 				foreach ($settings['langFile.'] as $key => $langFile) {
 					if (FALSE === strpos($key, '.')) {
 						if (is_array($settings['langFile.'][$key . '.'])) {
-							array_push($langFiles, Tx_Formhandler_Globals::getSingle($settings['langFile.'], $key));
+							array_push($langFiles, Tx_Formhandler_StaticFuncs::getSingle($settings['langFile.'], $key));
 						} else {
 							array_push($langFiles, Tx_Formhandler_StaticFuncs::resolveRelPathFromSiteRoot($langFile));
 						}
@@ -602,10 +608,7 @@ class Tx_Formhandler_StaticFuncs {
 		//if temp upload folder set in TypoScript, take that setting
 		$settings = Tx_Formhandler_Globals::$session->get('settings');
 		if ($settings['files.']['uploadFolder']) {
-			$uploadFolder = $settings['files.']['uploadFolder'];
-			if ($settings['files.']['uploadFolder.']) {
-				$uploadFolder = Tx_Formhandler_StaticFuncs::getSingle($settings['files.'], 'uploadFolder');
-			}
+			$uploadFolder = Tx_Formhandler_StaticFuncs::getSingle($settings['files.'], 'uploadFolder');
 			$uploadFolder = Tx_Formhandler_StaticFuncs::sanitizePath($uploadFolder);
 		}
 

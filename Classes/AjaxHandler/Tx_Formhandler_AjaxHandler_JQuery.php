@@ -8,14 +8,12 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 
 	public function fillAjaxMarkers(&$markers) {
 		$settings = Tx_Formhandler_Globals::$session->get('settings');
-		$initial = '';
-		if ($settings['ajax.']['config.']['initial']) {
-			$initial = Tx_Formhandler_StaticFuncs::getSingle($settings['ajax.']['config.'], 'initial');
-		}
-		$loadingImg = t3lib_extMgm::extRelPath('formhandler') . 'Resources/Images/ajax-loader.gif';
-		$loadingImg = '<img src="' . $loadingImg . '"/>';
-		if ($settings['ajax.']['config.']['loading']) {
-			$loadingImg = Tx_Formhandler_StaticFuncs::getSingle($settings['ajax.']['config.'], 'loading');
+		$initial = Tx_Formhandler_StaticFuncs::getSingle($settings['ajax.']['config.'], 'initial');
+		
+		$loadingImg = Tx_Formhandler_StaticFuncs::getSingle($settings['ajax.']['config.'], 'loading');
+		if(strlen($loadingImg) === 0) {
+			$loadingImg = t3lib_extMgm::extRelPath('formhandler') . 'Resources/Images/ajax-loader.gif';
+			$loadingImg = '<img src="' . $loadingImg . '"/>';
 		}
 
 		//parse validation settings
@@ -28,6 +26,14 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 						if (Tx_Formhandler_Globals::$formValuesPrefix) {
 							$fieldname = Tx_Formhandler_Globals::$formValuesPrefix . '[' . $fieldname . ']';
 						}
+						$params = array(
+							'eID' => 'formhandler',
+							'pid' => $GLOBALS['TSFE']->id,
+							'randomID' => Tx_Formhandler_Globals::$randomID,
+							'field' => $replacedFieldname,
+							'value' => ''
+						);
+						$url = Tx_Formhandler_Globals::$cObj->getTypoLink_Url($GLOBALS['TSFE']->id, $params);
 						$markers['###validate_' . $replacedFieldname . '###'] = '
 							<span class="loading" id="loading_' . $replacedFieldname . '" style="display:none">' . $loadingImg . '</span>
 							<span id="result_' . $replacedFieldname . '">' . str_replace('###fieldname###', $replacedFieldname, $initial) . '</span>
@@ -42,7 +48,8 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 										}
 										$("#loading_' . $replacedFieldname . '").show();
 										$("#result_' . $replacedFieldname . '").hide();
-										var url = "/index.php?id=' . $GLOBALS['TSFE']->id . '&eID=formhandler&randomID=' . Tx_Formhandler_Globals::$randomID . '&field=' . $replacedFieldname . '&value=" + fieldVal;
+										var url = "' . $url . '";
+										url = url.replace("value=", "value=" + fieldVal);
 										$("#result_' . $replacedFieldname . '").load(url,
 										function() {
 										
@@ -62,6 +69,7 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 	public function getFileRemovalLink($text, $field, $uploadedFileName) {
 		$params = array(
 			'eID' => 'formhandler-removefile',
+			'pid' => $GLOBALS['TSFE']->id,
 			'field' => $field,
 			'uploadedFileName' => $uploadedFileName,
 			'randomID' => Tx_Formhandler_Globals::$randomID

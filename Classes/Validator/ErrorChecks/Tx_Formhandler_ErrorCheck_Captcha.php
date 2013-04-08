@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_Captcha.php 46245 2011-04-05 15:27:29Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_Captcha.php 46481 2011-04-13 07:38:20Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -43,7 +43,7 @@ class Tx_Formhandler_ErrorCheck_Captcha extends Tx_Formhandler_AbstractErrorChec
 			$_SESSION['tx_captcha_string'] = '';
 
 			// make sure the answer given to the captcha is not empty
-			if ($captchaStr != $gp[$name] || empty(trim($gp[$name]))) {
+			if ($captchaStr != $gp[$name] || strlen(trim($gp[$name])) === 0) {
 				$checkFailed = $this->getCheckFailed($check);
 			}
 		} else {
