@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_CSV.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Generator_CSV.php 29965 2010-02-12 11:50:30Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -99,11 +99,11 @@ class Tx_Formhandler_Generator_CSV {
 	}
 
 	/**
-	 * Function to generate a CSV file from submitted form values. This function is called by Tx_Formhandler_Finisher_Confirmation
+	 * Function to generate a CSV file from submitted form values. This function is called by Tx_Formhandler_Finisher_SubmittedOK
 	 *
 	 * @param array $params The values to export to CSV
 	 * @param array $exportParams A list of fields to export. If not set all fields are exported
-	 * @see Tx_Formhandler_Finisher_Confirmation::process()
+	 * @see Tx_Formhandler_Finisher_SubmittedOK::process()
 	 * @return void
 	 */
 	public function generateFrontendCSV($params, $exportParams = array()) {

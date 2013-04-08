@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Controller_Form.php 29051 2010-01-19 15:17:57Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Controller_Form.php 31246 2010-03-19 11:54:25Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -89,7 +89,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	
 	/**
 	 * Flag indicating if the form was already submitted in last step.
-	 * If TRUE no loggers, saveInterceptors or finishers will be called except Finisher_Confirmation
+	 * If TRUE no loggers, saveInterceptors or finishers will be called except Finisher_SubmittedOK
 	 *
 	 * @access protected
 	 * @var boolean
@@ -178,9 +178,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	public function process() {
 		
 		$this->init();
-		
-		
-		
+
 		//not submitted
 		if(!$this->submitted) {
 			$this->loadSettingsForStep($this->currentStep);
@@ -223,18 +221,11 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 						if(isset($tsConfig['class']) && intval($tsConfig['disable']) !== 1) {
 							$className = Tx_Formhandler_StaticFuncs::prepareClassName($tsConfig['class']);
 							$finisher = $this->componentManager->getComponent($className);
-							if($finisher instanceof Tx_Formhandler_Finisher_Confirmation) {
+							if($finisher instanceof Tx_Formhandler_Finisher_SubmittedOK) {
 								$className = Tx_Formhandler_StaticFuncs::prepareClassName($tsConfig['class']);
 								Tx_Formhandler_StaticFuncs::debugBeginSection('calling_finisher', $className);
 								$finisher = $this->componentManager->getComponent($className);
-								if(!$tsConfig['config.']['templateFile']) {
-									$tsConfig['config.']['templateFile'] = $this->templateFile;
-								}
-								if(!$tsConfig['config.']['langFile']) {
-									$tsConfig['config.']['langFile'] = $this->langFile;
-								}
-								$tsConfig['config.']['formValuesPrefix'] = $this->settings['formValuesPrefix'];
-								$tsConfig['config.']['templateSuffix'] = $this->settings['templateSuffix'];
+								$tsConfig['config.'] = $this->addDefaultComponentConfig($tsConfig['config.']);
 								$finisher->init($this->gp, $tsConfig['config.']);
 								Tx_Formhandler_StaticFuncs::debugEndSection();
 								return $finisher->process();
@@ -269,7 +260,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 
 				//run validation
 				$this->errors = array();
-				$valid = array(true);
+				$valid = array(TRUE);
 				if(	isset($this->settings['validators.']) && 
 					is_array($this->settings['validators.']) && 
 					intval($this->settings['validators.']['disable']) !== 1) {
@@ -285,6 +276,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 								$merged = array_merge($userSetting,$autoSetting);
 								$tsConfig['config.']['restrictErrorChecks'] = implode(',', $merged);
 							}
+							$tsConfig['config.'] = $this->addDefaultComponentConfig($tsConfig['config.']);
 							$validator->init($this->gp,$tsConfig['config.']);
 							$res = $validator->validate($this->errors);
 							array_push($valid,$res);
@@ -356,34 +348,28 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 									$finisher = $this->componentManager->getComponent($className);
 									
 									Tx_Formhandler_StaticFuncs::debugBeginSection('calling_finisher', $className);
-									if(!$tsConfig['config.']['templateFile']) {
-										$tsConfig['config.']['templateFile'] = $this->templateFile;
-									}
-									if(!$tsConfig['config.']['langFile']) {
-										$tsConfig['config.']['langFile'] = $this->langFile;
-									}
-									$tsConfig['config.']['formValuesPrefix'] = $this->settings['formValuesPrefix'];
-									$tsConfig['config.']['templateSuffix'] = $this->settings['templateSuffix'];
 									
+									$tsConfig['config.'] = $this->addDefaultComponentConfig($tsConfig['config.']);
 									
-									//check if the form was finished before. This flag is set by the Finisher_Confirmation
+									//check if the form was finished before. This flag is set by the Finisher_SubmittedOK
 									if(!$this->submittedOK) {
 	
 										$finisher->init($this->gp,$tsConfig['config.']);
 	
-										//if the finisher returns HTML (e.g. Tx_Formhandler_Finisher_Confirmation)
+										//if the finisher returns HTML (e.g. Tx_Formhandler_Finisher_SubmittedOK)
 										if($tsConfig['config.']['returns']) {
 											Tx_Formhandler_StaticFuncs::debugEndSection();
 											return $finisher->process();
 										} else {
 												
 											$this->gp = $finisher->process();
+											Tx_Formhandler_Globals::$gp = $this->gp;
 											Tx_Formhandler_StaticFuncs::debugEndSection();
 										}
 										
 									
-									//if the form was finished before, only show the output of the Tx_Formhandler_Finisher_Confirmation
-									} elseif($finisher instanceof Tx_Formhandler_Finisher_Confirmation) {
+									//if the form was finished before, only show the output of the Tx_Formhandler_Finisher_SubmittedOK
+									} elseif($finisher instanceof Tx_Formhandler_Finisher_SubmittedOK) {
 									
 										$finisher->init($this->gp, $tsConfig['config.']);
 										Tx_Formhandler_StaticFuncs::debugEndSection();
@@ -391,7 +377,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 									}
 								}
 							}
-							$_SESSION['submitted_ok'] = 1;
+							Tx_Formhandler_Session::set('submitted_ok', 1);
 						}
 					} else {
 
@@ -402,26 +388,21 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 							$this->mergeGPWithSession(FALSE, $this->currentStep);
 							Tx_Formhandler_StaticFuncs::debugEndSection();
 						}
-						
-						
-
+								
 						//display form
 						return $this->view->render($this->gp, $this->errors);
-
 					}
 				} else {
-
+					
 					//stay on current step
-					if($this->lastStep < $_SESSION['formhandlerSettings']['currentStep']) {
-						$_SESSION['formhandlerSettings']['currentStep'] = $this->lastStep;
+					if($this->lastStep < Tx_Formhandler_Session::get('currentStep')) {
+						Tx_Formhandler_Session::set('currentStep', $this->lastStep);
 						$this->currentStep = $this->lastStep;
 					}
 					
-					
-
 					//load settings from last step again because an error occurred
 					$this->loadSettingsForStep($this->currentStep);
-					$_SESSION['formhandlerSettings']['settings'] = $this->settings;
+					Tx_Formhandler_Session::set('settings', $this->settings);
 
 					//reset the template because step had probably been decreased
 					$this->setViewSubpart($this->currentStep);
@@ -433,6 +414,18 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		}
 
 	}
+	
+	protected function addDefaultComponentConfig($conf) {
+		if(!$conf['templateFile']) {
+			$conf['templateFile'] = $this->templateFile;
+		}
+		if(!$conf['langFiles']) {
+			$conf['langFiles'] = $this->langFiles;
+		}
+		$conf['formValuesPrefix'] = $this->settings['formValuesPrefix'];
+		$conf['templateSuffix'] = $this->settings['templateSuffix'];
+		return $conf;
+	}
 
 	/**
 	 * Adds the Finisher_StoreGP
@@ -443,7 +436,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		//add Finisher_StoreGP to the end of Finisher array
 		$this->settings['finishers.'][] = array('class' => 'Tx_Formhandler_Finisher_StoreGP');
 
-		//search for Finisher_Confirmation (finishers with config.returns), put them at the very end
+		//search for Finisher_SubmittedOK (finishers with config.returns), put them at the very end
 		foreach($this->settings['finishers.'] as $key => $tsConfig) {
 
 			$className = Tx_Formhandler_StaticFuncs::prepareClassName($tsConfig['class']);
@@ -490,7 +483,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 
 	/**
 	 * Processes uploaded files, moves them to a temporary upload folder, renames them if they already exist and
-	 * stores the information in $_SESSION['formhandlerFiles']
+	 * stores the information in user session
 	 *
 	 *
 	 * @return void
@@ -542,6 +535,8 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			*	 )
 			*)
 			*/
+			$sessionFiles = Tx_Formhandler_Session::get('files');
+			$tempFiles = $sessionFiles;
 			foreach($_FILES as $sthg => &$files) {
 
 				//if a file was uploaded
@@ -550,12 +545,12 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 					//for all file names
 					foreach($files['name'] as $field => $name) {
 						if(!isset($this->errors[$field])) {
-							$exists = false;
-							if(is_array($_SESSION['formhandlerFiles'][$field])) {
-								foreach($_SESSION['formhandlerFiles'][$field] as $fileOptions) {
+							$exists = FALSE;
+							if(is_array($sessionFiles[$field])) {
+								foreach($sessionFiles[$field] as $fileOptions) {
 
 									if($fileOptions['name'] == $name) {
-										$exists = true;
+										$exists = TRUE;
 									}
 								}
 							}
@@ -582,7 +577,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 									move_uploaded_file($files['tmp_name'][$field], $uploadPath . $uploadedFileName);
 									$files['uploaded_name'][$field] = $uploadedFileName;
 
-									//set values for $_SESSION
+									//set values for session
 									$tmp['name'] = $name;
 									$tmp['uploaded_name'] = $uploadedFileName;
 									$tmp['uploaded_path'] = $uploadPath;
@@ -592,10 +587,10 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 									$tmp['uploaded_url'] = $uploadedUrl;
 									$tmp['size'] = $files['size'][$field];
 									$tmp['type'] = $files['type'][$field];
-									if(!is_array($_SESSION['formhandlerFiles'][$field]) && strlen($field)) {
-										$_SESSION['formhandlerFiles'][$field] = array();
+									if(!is_array($tempFiles[$field]) && strlen($field)) {
+										$tempFiles[$field] = array();
 									}
-									array_push($_SESSION['formhandlerFiles'][$field], $tmp);
+									array_push($tempFiles[$field], $tmp);
 									if(!is_array($this->gp[$field])) {
 										$this->gp[$field] = array();
 									}
@@ -608,8 +603,9 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			}
 		}
 		
+		Tx_Formhandler_Session::set('files', $tempFiles);
 		Tx_Formhandler_StaticFuncs::debugBeginSection('current_files');
-		Tx_Formhandler_StaticFuncs::debugArray($_SESSION['formhandlerFiles']);
+		Tx_Formhandler_StaticFuncs::debugArray($tempFiles);
 		Tx_Formhandler_StaticFuncs::debugEndSection();
 	}
 
@@ -625,17 +621,19 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		session_start();
 
 		//merge GET/POST again to get a third version of submitted values.
-		//the values in $this->gp are not reliable because they got merged with $_SESSION in initPreProcessor
+		//the values in $this->gp are not reliable because they got merged with session in initPreProcessor
 		$newGP = array_merge(t3lib_div::_GET(), t3lib_div::_POST());
-		if($_SESSION['formhandlerSettings']['settings']['formValuesPrefix']) {
-			$newGP = $newGP[$_SESSION['formhandlerSettings']['settings']['formValuesPrefix']];
+		$prefix = Tx_Formhandler_Session::get('formValuesPrefix');
+		if($prefix) {
+			$newGP = $newGP[$prefix];
 		}
 
+		$data = Tx_Formhandler_Session::get('values');
 		//set the variables in session
 		if($this->lastStep !== $this->currentStep) {
 			foreach($newGP as $key => $value) {
 				if(!strstr($key, 'step-') && !strstr($key, 'submitted')) {
-					$_SESSION['formhandlerValues'][$this->lastStep][$key] = $value;
+					$data[$this->lastStep][$key] = $value;
 				}
 			}
 		}
@@ -645,7 +643,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			$fields = t3lib_div::trimExplode(',', $this->settings['checkBoxFields']);
 			foreach($fields as $field) {
 				if(!isset($newGP[$field]) && isset($this->gp[$field])) {
-					$_SESSION['formhandlerValues'][($this->lastStep)][$field] = array();
+					$data[($this->lastStep)][$field] = array();
 				}
 			}
 		}
@@ -653,23 +651,23 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			$fields = t3lib_div::trimExplode(',', $this->settings['radioButtonFields']);
 			foreach($fields as $field) {
 				if(!isset($newGP[$field]) && isset($this->gp[$field])) {
-					$_SESSION['formhandlerValues'][($this->lastStep)][$field] = array();
+					$data[($this->lastStep)][$field] = array();
 				}
 			}
 		}
+		
+		Tx_Formhandler_Session::set('values', $data);
 	}
 
 	protected function reset() {
-		session_start();
-		unset($_SESSION['formhandlerValues']);
-		unset($_SESSION['formhandlerFiles']);
-		unset($_SESSION['formhandlerSettings']['lastStep']);
-		unset($_SESSION['submitted_ok']);
-		unset($_SESSION['formhandlerSettings']['usedSuffix']);
-		unset($_SESSION['formhandlerSettings']['usedSettings']);
-		unset($_SESSION['startblock']);
-		unset($_SESSION['endblock']);
+		Tx_Formhandler_Session::set('values', NULL);
+		Tx_Formhandler_Session::set('files', NULL);
+		Tx_Formhandler_Session::set('lastStep', NULL);
+		Tx_Formhandler_Session::set('submittedOK', NULL);
+		Tx_Formhandler_Session::set('startblock', NULL);
+		Tx_Formhandler_Session::set('endblock', NULL);
 		$this->gp = array();
+		Tx_Formhandler_Globals::$gp = $this->gp;
 		Tx_Formhandler_StaticFuncs::debugMessage('cleared_session');
 	}
 
@@ -727,10 +725,14 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			$isConfigOk = FALSE;
 			if (is_array($this->settings[$component . '.'])) {
 				foreach ($this->settings[$component . '.'] as $finisher) {
-					if ($finisher['class'] == $componentName) {
+					if (    $finisher['class'] == $componentName
+                            || @is_subclass_of($finisher['class'], $componentName)) {
+
 						$isConfigOk = TRUE;
 						break;
-					} elseif ($finisher['class'] == (str_replace('Tx_Formhandler_', '', $componentName))) {
+					} elseif (  $finisher['class'] == (str_replace('Tx_Formhandler_', '', $componentName))
+                                || @is_subclass_of('Tx_Formhandler_' . $finisher['class'], $componentName)) {
+
 						$isConfigOk = TRUE;
 						break;
 					}
@@ -745,8 +747,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	}
 	
 	protected function parseConditions() {
-		//$this->mergeGPWithSession(FALSE, FALSE);
-		//print_r($this->settings['validators.']);
+
 		if(is_array($this->settings['if.'])) {
 			$finalResult = FALSE;
 			foreach($this->settings['if.'] as $conditionSettings) {
@@ -800,14 +801,12 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		
 		$this->settings = $this->getSettings();
 		
-		Tx_Formhandler_Globals::$formValuesPrefix = $this->settings['formValuesPrefix'];
-		if($this->settings['formValuesPrefix']) {
-			$this->formValuesPrefix = $this->settings['formValuesPrefix'];
-		}
+		$this->formValuesPrefix = Tx_Formhandler_StaticFuncs::getSingle($this->settings, 'formValuesPrefix');
+		Tx_Formhandler_Globals::$formValuesPrefix = $this->formValuesPrefix;
 
 		//set debug mode
-		$this->debugMode = ($this->settings['debug'] == '1') ? TRUE : FALSE;
-		$_SESSION['formhandlerSettings']['debugMode'] = $this->debugMode;
+		$this->debugMode = (intval($this->settings['debug']) === 1) ? TRUE : FALSE;
+		Tx_Formhandler_Session::set('debug', $this->debugMode);
 		Tx_Formhandler_StaticFuncs::debugBeginSection('init_values');
 		$this->loadGP();
 		if($this->currentStep >= $this->lastStep) {
@@ -826,16 +825,13 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		Tx_Formhandler_Globals::$templateCode = $this->templateFile;
 		$this->langFiles = Tx_Formhandler_StaticFuncs::readLanguageFiles($this->langFiles, $this->settings);
 		Tx_Formhandler_Globals::$langFiles = $this->langFiles;
-		
-		
-		//print_r($this->settings);
-		
+
 		$this->validateConfig();
 		Tx_Formhandler_Globals::$settings = $this->settings;
 
 		//set debug mode again cause it may have changed in specific step settings
-		$this->debugMode = ($this->settings['debug'] == '1') ? TRUE : FALSE;
-		$_SESSION['formhandlerSettings']['debugMode'] = $this->debugMode;
+		$this->debugMode = (intval($this->settings['debug']) === 1) ? TRUE : FALSE;
+		Tx_Formhandler_Session::set('debug', $this->debugMode);
 		
 		Tx_Formhandler_StaticFuncs::debugMessage('using_prefix', $this->formValuesPrefix);
 		
@@ -851,13 +847,15 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		Tx_Formhandler_StaticFuncs::debugBeginSection('current_gp');
 		Tx_Formhandler_StaticFuncs::debugArray($this->gp);
 		Tx_Formhandler_StaticFuncs::debugEndSection();
-		$this->storeSettingsInSession();
 		
+
+		$this->storeSettingsInSession();
+
 		//if($this->currentStep <= $this->lastStep) {
 			$this->mergeGPWithSession(FALSE, $this->currentStep);
 		//}
 		
-		$this->submittedOK = $_SESSION['submitted_ok'];
+		$this->submittedOK = Tx_Formhandler_Session::get('submittedOK');
 		
 		if(!$this->submittedOK) {
 			$this->submittedOK = t3lib_div::_GP('submitted_ok');
@@ -866,9 +864,9 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		//set submitted
 		$this->submitted = $this->isFormSubmitted();
 		
-		
 		//not submitted
 		$dontReset = t3lib_div::_GP('dontReset');
+
 		if(!$this->submitted && intval($dontReset) !== 1) {
 			$this->reset();
 		}
@@ -877,15 +875,16 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$this->setStyleSheet();
 		
 		Tx_Formhandler_StaticFuncs::debugBeginSection('current_session_params');
-		Tx_Formhandler_StaticFuncs::debugArray($_SESSION['formhandlerValues']);
+		Tx_Formhandler_StaticFuncs::debugArray(Tx_Formhandler_Session::get('values'));
 		Tx_Formhandler_StaticFuncs::debugEndSection();
-
 		
 		$viewClass = Tx_Formhandler_StaticFuncs::prepareClassName($viewClass);
 		$this->view = $this->componentManager->getComponent($viewClass);
 		$this->view->setLangFiles($this->langFiles);
 		$this->view->setSettings($this->settings);
 		$this->setViewSubpart($this->currentStep);
+		
+		Tx_Formhandler_Globals::$gp = $this->gp;
 	}
 
 	protected function loadGP() {
@@ -899,6 +898,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	protected function isFormSubmitted() {
 		$submitted = $this->gp['submitted'];
 		if($submitted && !$this->submittedOK) {
+			
 			$found = FALSE;
 			foreach($this->gp as $key=>$value) {
 				if(substr($key, 0, 5) === 'step-') {
@@ -945,27 +945,23 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	}
 
 	protected function storeSettingsInSession() {
-		$_SESSION['formhandlerSettings']['formValuesPrefix'] = $this->formValuesPrefix;
-		$_SESSION['formhandlerSettings']['settings'] = $this->settings;
-		$_SESSION['formhandlerSettings']['currentStep'] = $this->currentStep;
-		$_SESSION['formhandlerSettings']['totalSteps'] = $this->totalSteps;
-		$_SESSION['formhandlerSettings']['lastStep'] = $this->lastStep;
-		$_SESSION['formhandlerSettings']['debugMode'] = $this->debugMode;
-		$_SESSION['formhandlerSettings']['templateSuffix'] = $this->settings['templateSuffix'];
+		Tx_Formhandler_Session::set('formValuesPrefix', $this->formValuesPrefix);
+		Tx_Formhandler_Session::set('settings', $this->settings);
+		Tx_Formhandler_Session::set('debug', $this->debugMode);
+		Tx_Formhandler_Session::set('currentStep', $this->currentStep);
+		Tx_Formhandler_Session::set('totalSteps', $this->totalSteps);
+		Tx_Formhandler_Session::set('lastStep', $this->lastStep);
+		Tx_Formhandler_Session::set('templateSuffix', $this->settings['templateSuffix']);
 	}
 
 	protected function loadSettingsForStep($step) {
-
-		//read global settings
-		//$this->settings = $this->getSettings();
 
 		//merge settings with specific settings for current step
 		if(isset($this->settings[$step . '.']) && is_array($this->settings[$step . '.'])) {
 			$this->settings = array_merge($this->settings, $this->settings[$step . '.']);
 		}
 		
-		session_start();
-		$_SESSION['formhandlerSettings']['settings'] = $this->settings;
+		Tx_Formhandler_Session::set('settings', $this->settings);
 	}
 
 	protected function getStepInformation() {
@@ -974,7 +970,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$this->findCurrentStep();
 
 		//set last step
-		$this->lastStep = $_SESSION['formhandlerSettings']['currentStep'];
+		$this->lastStep = Tx_Formhandler_Session::get('currentStep');
 		if(!$this->lastStep) {
 			$this->lastStep = 1;
 		}
@@ -1007,11 +1003,12 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		if(!is_array($this->gp)) {
 			$this->gp = array();
 		}
-		if(!is_array($_SESSION['formhandlerValues'])) {
-			$_SESSION['formhandlerValues'] = array();
+		$values = Tx_Formhandler_Session::get('values');
+		if(!is_array($values)) {
+			$values = array();
 		}
 
-		foreach($_SESSION['formhandlerValues'] as $step => &$params) {
+		foreach($values as $step => &$params) {
 			if(is_array($params) && (!$maxStep || $step <= $maxStep)) {
 				unset($params['submitted']);
 				foreach($params as $key => $value) {
@@ -1040,10 +1037,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 					Tx_Formhandler_StaticFuncs::debugBeginSection('calling_class', $className);
 	
 					$obj = $this->componentManager->getComponent($className);
-					$tsConfig['config.']['templateFile'] = $this->settings['templateFile'];
-					$tsConfig['config.']['langFile'] = $this->settings['langFile'];
-					$tsConfig['config.']['formValuesPrefix'] = $this->settings['formValuesPrefix'];
-					$tsConfig['config.']['templateSuffix'] = $this->settings['templateSuffix'];
+					$tsConfig['config.'] = $this->addDefaultComponentConfig($tsConfig['config.']);
 					$obj->init($this->gp, $tsConfig['config.']);
 					$return = $obj->process();
 					Tx_Formhandler_StaticFuncs::debugEndSection();
@@ -1051,6 +1045,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 						
 						//return value is an array. Treat it as the probably modified get/post parameters
 						$this->gp = $return;
+						Tx_Formhandler_Globals::$gp = $this->gp;
 					} else {
 						
 						//return value is no array. treat this return value as output.
@@ -1080,7 +1075,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	}
 
 	/**
-	 * Find out if submitted form was valid. If one of the values in the given array $valid is false the submission was not valid.
+	 * Find out if submitted form was valid. If one of the values in the given array $valid is FALSE the submission was not valid.
 	 *
 	 * @param $validArr Array with the return values of each validator
 	 * @return boolean
@@ -1092,7 +1087,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		if(is_array($validArr)) {
 			foreach($validArr as $item) {
 				if(!$item) {
-					$valid = false;
+					$valid = FALSE;
 				}
 			}
 		}

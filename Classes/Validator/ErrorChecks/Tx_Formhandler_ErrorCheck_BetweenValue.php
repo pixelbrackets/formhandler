@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_BetweenValue.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_BetweenValue.php 30983 2010-03-10 18:24:18Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -37,8 +37,8 @@ class Tx_Formhandler_ErrorCheck_BetweenValue extends Tx_Formhandler_AbstractErro
 		$max = $check['params']['maxValue'];
 		if(	isset($gp[$name]) &&
 			(!t3lib_div::testInt($gp[$name]) || 
-			intVal($gp[$name]) < intVal($min) || 
-			intVal($gp[$name]) > intVal($max))) {
+			intval($gp[$name]) < intval($min) || 
+			intval($gp[$name]) > intval($max))) {
 				
 			$checkFailed = $this->getCheckFailed($check);
 		}

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 29002 2010-01-18 20:03:42Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 30986 2010-03-10 18:34:49Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -40,7 +40,7 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 			//user set custom rules via cObject
 			$cObjSettings = $globalSetting['removeChars.'];
 			if(is_array($cObjSettings)) {
-				$list = $this->cObj->cObjGetSingle($globalSetting['removeChars'], $cObjSettings);
+				$list = Tx_Formhandler_StaticFuncs::getSingle($globalSetting, 'removeChars');
 				
 				//user set custom seperator
 				if($globalSetting['seperator']) {
@@ -95,8 +95,7 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 					//user set custom rules via cObject
 					$cObjSettings = $fieldSetting['removeChars.'];
 					if(is_array($cObjSettings)) {
-						$list = $this->cObj->cObjGetSingle($fieldSetting['removeChars'], $cObjSettings);
-						
+						$list = Tx_Formhandler_StaticFuncs::getSingle($fieldSetting, 'removeChars');
 						
 						//user set custom seperator
 						if($fieldSetting['seperator']) {
@@ -121,11 +120,8 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 					$value = str_replace($char, ' ', $value);
 				}
 				
-				$isUTF8 = true;
-				if(!$this->isUTF8($value)) {
-					$isUTF8 = false;
-				}
-
+				$isUTF8 = $this->isUTF8($value);
+				
 				if(!$isUTF8) {
 					$value = utf8_encode($value);
 				}
@@ -159,7 +155,7 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 			$c = ord($str[$i]);
 			if($c > 128){
 				if(($c >= 254)) {
-					return false;
+					return FALSE;
 				} elseif($c >= 252) {
 					$bits = 6;
 				} elseif($c >= 248) {
@@ -171,22 +167,22 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 				} elseif($c >= 192) {
 					$bits = 2;
 				} else {
-					return false;
+					return FALSE;
 				}
 				if(($i + $bits) > $len) {
-					return false;
+					return FALSE;
 				}
 				while($bits > 1) {
 					$i++;
 					$b = ord($str[$i]);
 					if($b < 128 || $b > 191) {
-						return false;
+						return FALSE;
 					}
 					$bits--;
 				}
 			}
 		}
-		return true;
+		return TRUE;
 	}
 
 }

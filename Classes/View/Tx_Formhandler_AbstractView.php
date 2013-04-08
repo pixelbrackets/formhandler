@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractView.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractView.php 30986 2010-03-10 18:34:49Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -223,7 +223,7 @@ abstract class Tx_Formhandler_AbstractView extends tslib_pibase {
 	}
 	
 	/**
-	 * Returns false if the view doesn't have template code.
+	 * Returns FALSE if the view doesn't have template code.
 	 *
 	 * @return boolean
 	 */

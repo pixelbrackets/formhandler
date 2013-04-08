@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_BetweenLength.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_BetweenLength.php 30983 2010-03-10 18:24:18Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -36,8 +36,8 @@ class Tx_Formhandler_ErrorCheck_BetweenLength extends Tx_Formhandler_AbstractErr
 		$min = $check['params']['minValue'];
 		$max = $check['params']['maxValue'];
 		if(	isset($gp[$name]) &&
-			(strlen($gp[$name]) < intVal($min) || 
-			strlen($gp[$name]) > intVal($max))) {
+			(strlen($gp[$name]) < intval($min) || 
+			strlen($gp[$name]) > intval($max))) {
 				
 			$checkFailed = $this->getCheckFailed($check);
 		}

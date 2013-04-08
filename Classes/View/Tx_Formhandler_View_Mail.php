@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Mail.php 27493 2009-12-09 08:46:05Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Mail.php 30750 2010-03-04 11:07:40Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -54,6 +54,15 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 			$this->sanitizeMarkers();
 		}
 		
+		//read master template
+		if(!$this->masterTemplates) {
+			$this->readMasterTemplates();
+		}
+		
+		if(!empty($this->masterTemplates)) {
+			$this->replaceMarkersFromMaster();
+		}
+		
 		//substitute ISSET markers
 		$this->substituteIssetSubparts();
 
@@ -91,7 +100,7 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 			$paramsToCheck = t3lib_div::trimExplode(',', $checkBinaryCrLf);
 			foreach($paramsToCheck as &$field) {
 				if(!is_array($field)) {
-					$this->gp[$field] = str_replace (chr(13), '<br />', $this->gp[$field]);
+					$this->gp[$field] = str_replace (chr(13), '', $this->gp[$field]);
 					$this->gp[$field] = str_replace ('\\', '', $this->gp[$field]);
 					$this->gp[$field] = nl2br($this->gp[$field]);
 				}

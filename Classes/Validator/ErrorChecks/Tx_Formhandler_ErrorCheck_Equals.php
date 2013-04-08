@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_Equals.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_Equals.php 30983 2010-03-10 18:24:18Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -35,8 +35,8 @@ class Tx_Formhandler_ErrorCheck_Equals extends Tx_Formhandler_AbstractErrorCheck
 		$checkFailed = '';
 		$formValue = trim($gp[$name]);
 		
-		if(isset($gp[$name]) && !empty($formValue)) {
-			$checkValue = $this->getCheckValue($check['params']['word'], $check['params']['word.']);
+		if(isset($gp[$name]) && strlen(trim($gp[$name])) > 0) {
+			$checkValue = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'word');
 			if(strcasecmp($formValue, $checkValue)) {
 					
 					//remove userfunc settings

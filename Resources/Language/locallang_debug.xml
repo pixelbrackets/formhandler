@@ -12,7 +12,8 @@
 			<label index="check_not_found">Error check "%s" not found!</label>
 			<label index="check_skipped">Skipped error check "%s"!</label>
 			<label index="cleaning_temp_files">Cleaning temporary files in folder "%s"!</label>
-			<label index="cleared_session">Form is called the first time, cleared params in $_SESSION</label>
+			<label index="cleared_session">Form is called the first time, cleared params in session</label>
+			<label index="combined">Combined %s = %s!</label>
 			<label index="condition">Condition was evaluated as %s : $s!</label>
 			<label index="copy_file">Copying file "%s" to "%s"!</label>
 			<label index="current_files">The current uploaded files are:</label>
@@ -39,7 +40,7 @@
 			<label index="mail_sender">Sender: %s</label>
 			<label index="mail_sent">Mail successfully sent to: %s</label>
 			<label index="mail_subject">Subject: %s</label>
-			<label index="no_confirmation_template">Confirmation template not found! Make sure that the subpart ###TEMPLATE_CONFIRMATION### is in your HTML template!</label>
+			<label index="no_submittedok_template">SubmittedOK template not found! Make sure that the subpart ###TEMPLATE_SUBMITTEDOK### is in your HTML template!</label>
 			<label index="no_error_message">Could not find error message with key "%s"!</label>
 			<label index="no_mail_template">E-Mail template not found for mode %s and type %s! This mail is skipped!</label>
 			<label index="no_update_possible">UID parameter not found in GP. Cannot make update!</label>
@@ -48,6 +49,7 @@
 			<label index="store_gp">Storing GP in session!</label>
 			<label index="subparts_missing">Subparts in template missing! Found: %s</label>
 			<label index="total_steps">Highest step subpart found in template file (number of steps): %s</label>
+			<label index="translated">Translated %s = %s!</label>
 			<label index="using_controller">Using controller "%s"</label>
 			<label index="using_prefix">Using prefix for form values: "%s"</label>
 			<label index="using_subpart">Using subpart "%s"!</label>
@@ -64,7 +66,7 @@
 			<label index="check_not_found">Error check "%s" nicht gefunden!</label>
 			<label index="check_skipped">Error check "%s" übersprungen!</label>
 			<label index="cleaning_temp_files">Lösche temporäre Dateien in "%s"!</label>
-			<label index="cleared_session">Form wird zum ersten Mal aufgerufen, leere Parameter in $_SESSION</label>
+			<label index="cleared_session">Form wird zum ersten Mal aufgerufen, leere Parameter in der Session</label>
 			<label index="condition">Bedingung wurde ausgewertet als %s : $s!</label>
 			<label index="copy_file">Kopiere Datei "%s" nach "%s"!</label>
 			<label index="current_files">Aktuell hochgeladene Dateien:</label>
@@ -91,7 +93,7 @@
 			<label index="mail_sender">Absender: %s</label>
 			<label index="mail_sent">E-Mail verschickt an: %s</label>
 			<label index="mail_subject">Betreff: %s</label>
-			<label index="no_confirmation_template">Confirmation-Template nicht gefunden! Stellen Sie sicher, dass der Subpart ###TEMPLATE_CONFIRMATION### im HTML-Template ist!</label>
+			<label index="no_submittedok_template">SubmittedOK-Template nicht gefunden! Stellen Sie sicher, dass der Subpart ###TEMPLATE_SUBMITTEDOK### im HTML-Template ist!</label>
 			<label index="no_error_message">Konnte Fehlermeldung mit Key "%s" nicht finden!</label>
 			<label index="no_mail_template">E-Mail-Template für Modus %s und Typ %s nicht gefunden! Diese E-Mail wird übersprungen!</label>
 			<label index="no_update_possible">UID-Parameter nicht gefunden in GP. Update nicht möglich!</label>
@@ -114,7 +116,7 @@
 			<label index="calling_logger">Appel du logger "%s"</label>
 			<label index="calling_validator">Appel du validator "%s"</label>
 			<label index="cleaning_temp_files">Nettoyage des fichiers temporaires dans le dossier "%s"!</label>
-			<label index="cleared_session">Le formulaire est appaelé pour la première fois, les paramètres ont été supprimés $_SESSION</label>
+			<label index="cleared_session">Le formulaire est appaelé pour la première fois, les paramètres ont été supprimés session</label>
 			<label index="check_not_found">TRANSLATE: Error check "%s" not found!</label>
 			<label index="check_skipped">TRANSLATE: Skipped error check "%s"!</label>
 			<label index="condition">La condition a été évaluée à %s : $s!</label>
@@ -143,7 +145,7 @@
 			<label index="mail_sender">Expéditeur: %s</label>
 			<label index="mail_sent">L'email a été envoyé avec succès à: %s</label>
 			<label index="mail_subject">Sujet: %s</label>
-			<label index="no_confirmation_template">TRANSLATE: Confirmation template not found! Make sure that the subpart ###TEMPLATE_CONFIRMATION### is in your HTML template!</label>
+			<label index="no_submittedok_template">TRANSLATE: SubmittedOK template not found! Make sure that the subpart ###TEMPLATE_SUBMITTEDOK### is in your HTML template!</label>
 			<label index="no_error_message">Pas de message d'eurreur avec la clé "%s"!</label>
 			<label index="no_mail_template">Le template E-Mail n'a pas été trouvé pour le mode %s et le type %s! Cet email est ignoré!</label>
 			<label index="no_update_possible">Paramètre UID non trouvé dans les GP. Impossible de continuer!</label>
