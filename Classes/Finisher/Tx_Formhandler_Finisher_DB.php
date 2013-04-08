@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_DB.php 42313 2011-01-18 16:09:26Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_DB.php 46243 2011-04-05 15:17:49Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -95,7 +95,7 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 			$condition = $this->parseCondition($this->settings['condition']);
 			eval('$evaluation = ' . $condition . ';');
 			$evaluationMessage = ($evaluation === TRUE) ?  'TRUE' : 'FALSE';
-			Tx_Formhandler_StaticFuncs::debugMessage('condition', $evaluationMessage, $condition);
+			Tx_Formhandler_StaticFuncs::debugMessage('condition', array($evaluationMessage, $condition));
 		}
 
 		if ($evaluation) {
@@ -193,7 +193,7 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 			} elseif($this->settings['insertIfNoUpdatePossible']) {
 				$this->doInsert($queryFields);
 			} else {
-				Tx_Formhandler_StaticFuncs::debugMessage('no_update_possible');
+				Tx_Formhandler_StaticFuncs::debugMessage('no_update_possible', array(), 2);
 			}
 		}
 	}
@@ -213,17 +213,17 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 	
 	protected function doInsert($queryFields) {
 		$query = $GLOBALS['TYPO3_DB']->INSERTquery($this->table, $queryFields);
-		Tx_Formhandler_StaticFuncs::debugMessage('sql_request', $query);
+		Tx_Formhandler_StaticFuncs::debugMessage('sql_request', array($query));
 		$res = $GLOBALS['TYPO3_DB']->sql_query($query);
 		if ($GLOBALS['TYPO3_DB']->sql_error()) {
-			Tx_Formhandler_StaticFuncs::debugMessage($GLOBALS['TYPO3_DB']->sql_error());
+			Tx_Formhandler_StaticFuncs::debugMessage('error', array($GLOBALS['TYPO3_DB']->sql_error()), 3);
 		}
 	}
 	
 	protected function doUpdate($uid, $queryFields) {
 		$uid = $GLOBALS['TYPO3_DB']->fullQuoteStr($uid, $this->table);
 		$query = $GLOBALS['TYPO3_DB']->UPDATEquery($this->table, $this->key . '=' . $uid, $queryFields);
-		Tx_Formhandler_StaticFuncs::debugMessage('sql_request', $query);
+		Tx_Formhandler_StaticFuncs::debugMessage('sql_request', array($query));
 		$res = $GLOBALS['TYPO3_DB']->sql_query($query);
 	}
 
@@ -237,8 +237,13 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 
 		//set table
 		$this->table = $this->settings['table'];
-		if (!$this->table || !is_array($this->settings['fields.'])) {
+		if (!$this->table) {
 			Tx_Formhandler_StaticFuncs::throwException('no_table', 'Tx_Formhandler_Finisher_DB');
+			return;
+		}
+		
+		if(!is_array($this->settings['fields.'])) {
+			Tx_Formhandler_StaticFuncs::throwException('no_fields', 'Tx_Formhandler_Finisher_DB');
 			return;
 		}
 
@@ -320,9 +325,9 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 				}
 
 				//process uploaded files
-				$files = Tx_Formhandler_Session::get('files');
+				$files = Tx_Formhandler_Globals::$session->get('files');
 				if (isset($files[$fieldname]) && is_array($files[$fieldname])) {
-					$queryFields[$fieldname] = $this->getFileList($fieldname);
+					$queryFields[$fieldname] = $this->getFileList($files, $fieldname);
 				}
 
 				//special mapping
@@ -367,9 +372,8 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 	 * @return string list of filenames
 	 * @param string $fieldname
 	 */
-	protected function getFileList($fieldname){
+	protected function getFileList($files, $fieldname){
 		$filenames = array();
-		$files = Tx_Formhandler_Session::get('files');
 		foreach ($files[$fieldname] as $idx => $file) {
 			array_push($filenames, $file['uploaded_name']);
 		}

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_AntiSpamFormTime.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_AntiSpamFormTime.php 46257 2011-04-06 07:30:28Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -47,6 +47,7 @@ class Tx_Formhandler_Interceptor_AntiSpamFormTime extends Tx_Formhandler_Abstrac
 		if ($isSpam) {
 			$this->log(TRUE);
 			if ($this->settings['redirectPage']) {
+				Tx_Formhandler_Globals::$session->reset();
 				Tx_Formhandler_Staticfuncs::doRedirect($this->settings['redirectPage'], $this->settings['correctRedirectUrl']);
 				return 'Lousy spammer!';
 			} else {
@@ -60,7 +61,9 @@ class Tx_Formhandler_Interceptor_AntiSpamFormTime extends Tx_Formhandler_Abstrac
 					Tx_Formhandler_StaticFuncs::throwException('spam_detected');
 					return 'Lousy spammer!';
 				}
-				return $view->render($this->gp, array());
+				$content = $view->render($this->gp, array());
+				Tx_Formhandler_Globals::$session->reset();
+				return $content;
 			}
 		}
 		return $this->gp;

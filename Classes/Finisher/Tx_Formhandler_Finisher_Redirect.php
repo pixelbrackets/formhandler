@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Redirect.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Redirect.php 46243 2011-04-05 15:17:49Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -43,7 +43,7 @@ class Tx_Formhandler_Finisher_Redirect extends Tx_Formhandler_AbstractFinisher {
 		if (!isset($redirectPage)) {
 			return $this->gp;
 		}
-		Tx_Formhandler_Session::reset();
+		Tx_Formhandler_Globals::$session->reset();
 		Tx_Formhandler_Staticfuncs::doRedirect($redirectPage, $this->settings['correctRedirectUrl'], $this->settings['additionalParams.']);
 		exit();
 	}

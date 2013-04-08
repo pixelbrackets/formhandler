@@ -11,38 +11,44 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Messages.php 43837 2011-02-18 15:46:46Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractLogger.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
  *                                                                        */
 
 /**
- * A class providing messages for exceptions and debugging
+ * An abstract debugger
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
  * @package	Tx_Formhandler
- * @subpackage	Utils
+ * @subpackage	Debugger
+ * @abstract
  */
-class Tx_Formhandler_Messages {
+abstract class Tx_Formhandler_AbstractDebugger extends Tx_Formhandler_AbstractComponent {
 
-	/**
-	 * Returns a debug message according to given key
-	 *
-	 * @param string The key in translation file
-	 * @return string
-	 */
-	public static function getDebugMessage($key) {
-		return trim($GLOBALS['TSFE']->sL('LLL:EXT:formhandler/Resources/Language/locallang_debug.xml:' . $key));
+	protected $debugLog = array();
+
+	public function process() {
+		//Not available for this type of component
 	}
 
-	/**
-	 * Returns an exception message according to given key
-	 *
-	 * @param string The key in translation file
-	 * @return string
-	 */
-	public static function getExceptionMessage($key) {
-		return trim($GLOBALS['TSFE']->sL('LLL:EXT:formhandler/Resources/Language/locallang_exceptions.xml:' . $key));
+	public function addToDebugLog($message = '', $severity = 1, array $data = array()) {
+		$trace = debug_backtrace();
+		$section = '';
+		if (isset($trace[2])) {
+			$section = $trace[2]['class'];
+		}
+		if(!$message && !isset($this->debugLog[$section])) {
+			$this->debugLog[$section] = array();
+		}
+		if($message) {
+			$this->debugLog[$section][] = array('message' => $message, 'severity' => $severity, 'data' => $data);
+		}
 	}
 
+	abstract public function outputDebugLog();
+
+	public function validateConfig() {
+
+	}
 }
 
 ?>

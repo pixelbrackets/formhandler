@@ -55,11 +55,11 @@ class Tx_Formhandler_Finisher_SubmittedOK extends Tx_Formhandler_AbstractFinishe
 		if (!$view->hasTemplate()) {
 			$view->setTemplate($this->templateFile, 'SUBMITTEDOK');
 			if (!$view->hasTemplate()) {
-				Tx_Formhandler_StaticFuncs::debugMessage('no_submittedok_template');
+				Tx_Formhandler_StaticFuncs::debugMessage('no_submittedok_template', array(), 3);
 			}
 		}
 
-		$view->setSettings(Tx_Formhandler_Session::get('settings'));
+		$view->setSettings(Tx_Formhandler_Globals::$session->get('settings'));
 		$view->setComponentSettings($this->settings);
 		return $view->render($this->gp, array());
 	}

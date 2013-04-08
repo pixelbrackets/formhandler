@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_PreProcessor_LoadDefaultValues.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_PreProcessor_LoadDefaultValues.php 46243 2011-04-05 15:17:49Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -91,7 +91,7 @@ class Tx_Formhandler_PreProcessor_LoadDefaultValues extends Tx_Formhandler_Abstr
 	 */
 	private function loadDefaultValuesToSession($settings, $step){
 		if (is_array($settings) && $step) {
-			$values = Tx_Formhandler_Session::get('values');
+			$values = Tx_Formhandler_Globals::$session->get('values');
 			$arrKeys = array_keys($settings);
 			foreach ($arrKeys as $idx => $fieldName) {
 				$fieldName = preg_replace('/\.$/', '', $fieldName);
@@ -103,7 +103,7 @@ class Tx_Formhandler_PreProcessor_LoadDefaultValues extends Tx_Formhandler_Abstr
 					}
 				}
 			}
-			Tx_Formhandler_Session::set('values', $values);
+			Tx_Formhandler_Globals::$session->set('values', $values);
 		}
 	}
 }

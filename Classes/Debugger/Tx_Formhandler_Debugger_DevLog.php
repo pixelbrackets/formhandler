@@ -1,4 +1,4 @@
-<?php
+<?php 
 /*                                                                        *
  * This script is part of the TYPO3 project - inspiring people to share!  *
  *                                                                        *
@@ -11,36 +11,31 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Messages.php 43837 2011-02-18 15:46:46Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractLogger.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
  *                                                                        */
 
 /**
- * A class providing messages for exceptions and debugging
+ * A simple debugger writing messages into devlog
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
  * @package	Tx_Formhandler
- * @subpackage	Utils
+ * @subpackage	Debugger
  */
-class Tx_Formhandler_Messages {
+class Tx_Formhandler_Debugger_DevLog extends Tx_Formhandler_AbstractDebugger {
 
-	/**
-	 * Returns a debug message according to given key
-	 *
-	 * @param string The key in translation file
-	 * @return string
-	 */
-	public static function getDebugMessage($key) {
-		return trim($GLOBALS['TSFE']->sL('LLL:EXT:formhandler/Resources/Language/locallang_debug.xml:' . $key));
-	}
+	public function outputDebugLog() {
 
-	/**
-	 * Returns an exception message according to given key
-	 *
-	 * @param string The key in translation file
-	 * @return string
-	 */
-	public static function getExceptionMessage($key) {
-		return trim($GLOBALS['TSFE']->sL('LLL:EXT:formhandler/Resources/Language/locallang_exceptions.xml:' . $key));
+		foreach($this->debugLog as $section => $logData) {
+			foreach($logData as $messageData) {
+				$message = $section . ': ' . $messageData['message'];
+				$data = FALSE;
+				if(is_array($messageData['data'])) {
+					$data = $messageData['data'];
+				}
+				t3lib_div::devLog($message, 'formhandler', $severity, $data);
+			}
+		}
+
 	}
 
 }
