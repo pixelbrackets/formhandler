@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_StaticFuncs.php 23789 2009-08-31 10:13:44Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_StaticFuncs.php 23905 2009-09-01 12:06:50Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -607,6 +607,12 @@ class Tx_Formhandler_StaticFuncs {
 		//if temp upload folder set in TypoScript, take that setting
 		if($_SESSION['formhandlerSettings']['settings']['files.']['uploadFolder']) {
 			$uploadFolder = $_SESSION['formhandlerSettings']['settings']['files.']['uploadFolder'];
+			if($_SESSION['formhandlerSettings']['settings']['files.']['uploadFolder.']) {
+				$uploadFolder = Tx_Formhandler_StaticFuncs::$cObj->cObjGetSingle(
+					$_SESSION['formhandlerSettings']['settings']['files.']['uploadFolder'], 
+					$_SESSION['formhandlerSettings']['settings']['files.']['uploadFolder.']
+				);
+			}
 			$uploadFolder = Tx_Formhandler_StaticFuncs::sanitizePath($uploadFolder);
 		}
 
