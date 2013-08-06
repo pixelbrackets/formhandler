@@ -12,7 +12,7 @@
  * Public License for more details.                                       *
  *                                                                        */
 
-require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Formhandler_Component_Manager.php');
+require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_GimmeFive_Component_Manager.php');
 
 /**
  * Test for the Component "Tx_Formhandler_Interceptor_ParseValues" of the extension 'formhandler'
@@ -20,19 +20,13 @@ require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Formh
  * @package	Tx_Formhandler
  * @subpackage	Tests
  */
-class Tx_Formhandler_Interceptor_ParseValues_testcase extends tx_phpunit_testcase {
+class Tx_Formhandler_Interceptor_ParseValues_testcase extends PHPUnit_Framework_TestCase {
 
 	protected $components;
 	protected $interceptor;
 
-	/**
-	 *
-	 * @var String
-	 */
-	protected $message = 'Tested value:';
-
 	protected function setUp() {
-		$this->componentManager = Tx_Formhandler_Component_Manager::getInstance();
+		$this->componentManager = Tx_GimmeFive_Component_Manager::getInstance();
 		$this->interceptor = $this->componentManager->getComponent("Tx_Formhandler_Interceptor_ParseValues");
 	}
 
@@ -88,8 +82,6 @@ class Tx_Formhandler_Interceptor_ParseValues_testcase extends tx_phpunit_testcas
 				  42 => -0,
 				  43 => -1,
 				  44 => -1,
-				  45 => -1022000.76,
-				  46 => 22000.76,
 				);
 
 		$stringFloats = array(
@@ -138,16 +130,12 @@ class Tx_Formhandler_Interceptor_ParseValues_testcase extends tx_phpunit_testcas
 				  42 => '-0,00',
 				  43 => '-1.00',
 				  44 => '-1,00',
-				  45 => '-1022000.76 EUR',
-				  46 => "22000.76 m",
 				);
 		//take the keys as fieldList to parse
 		$fakeConfig = array('parseFloatFields' => implode(",", array_keys($stringFloats)));
 		//$stringFloats as Fake GP
-		$floats = $this->interceptor->init($stringFloats, $fakeConfig);
-		$floats = $this->interceptor->process();
-
-		t3lib_div::debug($stringFloats, $this->message);
+		$floats = $this->interceptor->process($stringFloats,$fakeConfig);
+        
 		$this->assertEquals($floats, $fixture);
 	}
 

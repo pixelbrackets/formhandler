@@ -24,7 +24,6 @@
 			<label index="error_lastname_maxLength">Lastname has to be shorter than ###value### characters!</label>
 			<label index="error_interests_minItems">Select at least ###value### interests!</label>
 			<label index="error_interests_required">Select some interests!</label>
-			<label index="error_picture_fileMaxCount">You are not allowed to upload more than ###value### pictures!</label>
 			<label index="error_email_required">Enter your E-mail address!</label>
 			<label index="error_email_email">E-mail address must be valid syntax!</label>
 			<label index="error_contact_via_required">Please select how to contact You!</label>

@@ -12,7 +12,7 @@
  * Public License for more details.                                       *
  *                                                                        */
 
-require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Formhandler_Component_Manager.php');
+require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_GimmeFive_Component_Manager.php');
 
 /**
  * Test for the Component "Tx_Formhandler_Logger_DB" of the extension 'formhandler'
@@ -20,15 +20,14 @@ require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Formh
  * @package	Tx_Formhandler
  * @subpackage	Tests
  */
-class Tx_Formhandler_Logger_DB_testcase extends tx_phpunit_testcase {
+class Tx_Formhandler_Logger_DB_testcase extends PHPUnit_Framework_TestCase {
 
 	protected $components;
 	protected $logger;
 
 	protected function setUp() {
-		$this->componentManager = Tx_Formhandler_Component_Manager::getInstance();
+		$this->componentManager = Tx_GimmeFive_Component_Manager::getInstance();
 		$this->logger = $this->componentManager->getComponent("Tx_Formhandler_Logger_DB");
-		$GLOBALS['TSFE']->initFEuser();
 	}
 
 	protected function tearDown() {
@@ -41,12 +40,10 @@ class Tx_Formhandler_Logger_DB_testcase extends tx_phpunit_testcase {
 		$fakeGp['firstname'] = "Test";
 		$fakeGp['lastname'] = "Test";
 		$hash = hash("md5",serialize(array_keys($fakeGp)));
-		$this->logger->init($fakeGp,array("nodebug"=>true));
-		$this->logger->process();
+		$this->logger->log($fakeGp,array("nodebug"=>true));
 		$currTime = time();
 		$threshold = $currTime - 2000;
-		$lastId = Tx_Formhandler_Session::get('inserted_uid');
-
+		$lastId = $GLOBALS['TYPO3_DB']->sql_insert_id();
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery("*","tx_formhandler_log","uid=".$lastId);
 		$this->assertNotNull($res,'Logged record can be selected again');
 		$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);

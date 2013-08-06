@@ -14,4 +14,6 @@
 
 6. Select "Example MultiStep Conditions" from "Predefined".
 
-7. Save and view the page.
+7. Choose "Multi step" from Dropdown "Type"
+
+8. Save and view the page.

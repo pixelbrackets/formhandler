@@ -11,13 +11,15 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Content.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Content.php 22614 2009-07-21 20:43:47Z fabien_u $
  *                                                                        */
 
 /**
  * Content to be parsed.
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
+ * @package	Tx_Formhandler
+ * @subpackage	Controller
  */
 class Tx_Formhandler_Content {
 
@@ -32,6 +34,7 @@ class Tx_Formhandler_Content {
 	/**
 	 * The constructor settings the internal attribute "content"
 	 *
+	 * @author Reinhard Führicht <rf@typoheads.at>
 	 * @return void
 	 */
 	public function __construct($content) {
@@ -41,6 +44,7 @@ class Tx_Formhandler_Content {
 	/**
 	 * Sets the internal attribute "content"
 	 *
+	 * @author Reinhard Führicht <rf@typoheads.at>
 	 * @param string $content
 	 * @return void
 	 */
@@ -51,6 +55,7 @@ class Tx_Formhandler_Content {
 	/**
 	 * Returns the internal attribute "content"
 	 *
+	 * @author	Reinhard Führicht <rf@typoheads.at>
 	 * @return string The content
 	 */
 	public function getContent() {
@@ -60,6 +65,7 @@ class Tx_Formhandler_Content {
 	/**
 	 * Actually only returns the internal attribute "content"
 	 *
+	 * @author	Reinhard Führicht <rf@typoheads.at>
 	 * @return string The content
 	 */
 	public function toString() {

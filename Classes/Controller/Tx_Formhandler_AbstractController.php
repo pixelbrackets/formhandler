@@ -11,16 +11,18 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractController.php 68708 2012-12-11 13:37:00Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractController.php 22614 2009-07-21 20:43:47Z fabien_u $
  *                                                                        */
 
 /**
  * Abstract class for Controller Classes used by Formhandler.
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
+ * @package	Tx_Formhandler
+ * @subpackage	Controller
  * @abstract
  */
-abstract class Tx_Formhandler_AbstractController extends Tx_Formhandler_AbstractClass implements Tx_Formhandler_ControllerInterface {
+abstract class Tx_Formhandler_AbstractController implements Tx_Formhandler_ControllerInterface {
 
 	/**
 	 * The content returned by the controller
@@ -104,11 +106,11 @@ abstract class Tx_Formhandler_AbstractController extends Tx_Formhandler_Abstract
 	 * Sets the internal attribute "langFile"
 	 *
 	 * @author Reinhard Führicht <rf@typoheads.at>
-	 * @param array $langFiles
+	 * @param string $langFile
 	 * @return void
 	 */
-	public function setLangFiles($langFiles) {
-		$this->langFiles = $langFiles;
+	public function setLangFile($langFile) {
+		$this->langFile = $langFile;
 	}
 
 	/**
@@ -132,7 +134,7 @@ abstract class Tx_Formhandler_AbstractController extends Tx_Formhandler_Abstract
 	public function setTemplateFile($template) {
 		$this->templateFile = $template;
 	}
-
+	
 	/**
 	 * Returns the right settings for the formhandler (Checks if predefined form was selected)
 	 *
@@ -141,10 +143,10 @@ abstract class Tx_Formhandler_AbstractController extends Tx_Formhandler_Abstract
 	 */
 	public function getSettings() {
 		$settings = $this->configuration->getSettings();
-		if ($this->predefined && is_array($settings['predef.'][$this->predefined])) {
-			$predefSettings = $settings['predef.'][$this->predefined];
-			unset($settings['predef.']);
-			$settings = t3lib_div::array_merge_recursive_overrule($settings, $predefSettings);
+
+		if($this->predefined) {
+				
+			$settings = $settings['predef.'][$this->predefined];
 		}
 		return $settings;
 	}

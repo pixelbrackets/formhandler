@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Listing.php 29330 2010-01-25 19:45:41Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Listing.php 23307 2009-08-12 14:34:30Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -46,24 +46,20 @@ class Tx_Formhandler_View_Listing extends Tx_Formhandler_AbstractView {
 		$this->settings = $settings;
 
 		$subpart = $this->subparts['item'];
+
 		$this->getMapping();
 		$markers = array();
-		if(!empty($this->model)) {
-			foreach($this->model as $key => $row) {
+		foreach($this->model as $key => $row) {
 
-				$markers = $this->getValueMarkers($row);
-
-				$this->fillDefaultMarkers($markers, $row);
-				$markerArray['###LIST###'] .= $this->cObj->substituteMarkerArray($subpart, $markers);
-			}
-
-			if(isset($this->gp['detailId'])) {
-
-				$markerArray = $markers;
-				$this->fillDefaultMarkers($markerArray);
-			}
-
-			$content = $this->cObj->substituteMarkerArray($this->template, $markerArray);
+			$markers = $this->getValueMarkers($row);
+			$this->fillDefaultMarkers($markers, $row);
+			$markerArray['###LIST###'] .= $this->cObj->substituteMarkerArray($subpart, $markers);
+		}
+		$content = $this->cObj->substituteMarkerArray($this->template, $markerArray);
+		if($this->gp['detailId']) {
+			$markerArray = $markers;
+			$this->fillDefaultMarkers($markerArray);
+			$content = $this->cObj->substituteMarkerArray($content, $markerArray);
 		}
 
 		//remove markers that were not substituted
@@ -120,10 +116,11 @@ class Tx_Formhandler_View_Listing extends Tx_Formhandler_AbstractView {
 	 */
 	protected function getValueMarkers(&$row) {
 		$markers = array();
-
 		foreach($row as $field => $value) {
+			if(strcmp('uid', $field)) {
 				$mapping = $this->mapping[$field];
 				$markers['###value_' . $mapping . '###'] = $value;
+			}
 		}
 		return $markers;
 	}

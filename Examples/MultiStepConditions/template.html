@@ -76,6 +76,7 @@
 		</div>
 		
 <!-- ###FORM_ENDBLOCK### begin -->
+		###ADDITIONAL_MULTISTEP###
 	</fieldset>
 </form>
 </div>
@@ -85,9 +86,7 @@
 <!-- ###TEMPLATE_FORM2### begin -->
 
 ###FORM_STARTBLOCK###
-		
 		<div class="row">
-		
 			###error_street###
 			<label for="street">###LLL:street### ###required_street###</label>
 			<input type="text" name="formhandler[street]" id="street" value="###value_street###"/>
@@ -119,20 +118,15 @@
 <!-- ###TEMPLATE_FORM2_phone### end -->
 
 <!-- ###TEMPLATE_FORM3### begin -->
-<!-- ###TEMPLATE_FORM3_phone### begin -->
 
 ###FORM_STARTBLOCK###
 		<div class="row">
 			Thank you. Please press send to finish!
 		</div>
 		<div class="row">
-			<input type="submit" value="###LLL:prev###" ###submit_prevStep###/>
-		</div>
-		<div class="row">
 			<input type="submit" value="###LLL:submit###" ###submit_nextStep###/>
 		</div>
 ###FORM_ENDBLOCK###
-<!-- ###TEMPLATE_FORM3_phone### end -->
 <!-- ###TEMPLATE_FORM3### end -->
 
 <!-- ###TEMPLATE_EMAIL_USER_PLAIN### begin -->
@@ -174,7 +168,7 @@ a user has just filled out the form.
 
 <!-- ###TEMPLATE_EMAIL_ADMIN_HTML### end -->
 
-<!-- ###TEMPLATE_SUBMITTEDOK### begin -->
+<!-- ###TEMPLATE_CONFIRMATION### begin -->
 
 <table>
   <tr>
@@ -205,4 +199,4 @@ a user has just filled out the form.
 <div>
 ###PRINT_LINK### / ###PDF_LINK### / ###CSV_LINK###
 </div>
-<!-- ###TEMPLATE_SUBMITTEDOK### end -->
+<!-- ###TEMPLATE_CONFIRMATION### end -->

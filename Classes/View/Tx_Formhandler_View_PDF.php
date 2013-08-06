@@ -11,7 +11,9 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_PDF.php 58488 2012-02-25 18:26:23Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_PDF.php 23309 2009-08-12 15:05:33Z reinhardfuehricht $
+ *          
+ *                                                                        
  *                                                                       */
 
 /**
@@ -32,43 +34,32 @@ class Tx_Formhandler_View_PDF extends Tx_Formhandler_View_Form {
 	 */
 	public function render($gp, $errors) {
 		$this->gp = $gp;
+		session_start();
 		$this->settings = $this->parseSettings();
+		
+		$this->sanitizeMarkers();
+		$content = parent::render($this->gp, $errors);
 
-		return parent::render($this->gp, $errors);
+		return $this->pi_wrapInBaseClass($content);
 	}
-
+	
 	/**
 	 * Sanitizes GET/POST parameters by processing the 'checkBinaryCrLf' setting in TypoScript
 	 *
-	 * @return array The markers
+	 * @return void
 	 */
-	protected function sanitizeMarkers($markers) {
-		$componentSettings = $this->getComponentSettings();
-		$checkBinaryCrLf = $componentSettings['checkBinaryCrLf'];
-		if (strlen($checkBinaryCrLf) > 0) {
+	protected function sanitizeMarkers() {
+		$checkBinaryCrLf = $this->settings['checkBinaryCrLf'];
+		if ($checkBinaryCrLf != '') {
 			$paramsToCheck = t3lib_div::trimExplode(',', $checkBinaryCrLf);
-			foreach ($markers as $markerName => &$value) {
-				$fieldName = str_replace(array('value_', 'VALUE_', '###'), '', $markerName);
-				if(in_array($fieldName, $paramsToCheck)) {
-					$value = str_replace (chr(13), '', $value);
-					$value = str_replace ('\\', '', $value);
-					$value = nl2br($value);
+			foreach($paramsToCheck as &$val) {
+				if(!is_array($val)) {
+					$val = str_replace (chr(13), '<br />', $val);
+					$val = str_replace ('\\', '', $val);
+					$val = nl2br($val);
 				}
 			}
 		}
-		return $markers;
-	}
-
-	protected function fillValueMarkers() {
-		$markers = $this->getValueMarkers($this->gp);
-
-		$markers = $this->sanitizeMarkers($markers);
-
-		$this->template = $this->cObj->substituteMarkerArray($this->template, $markers);
-
-		//remove remaining VALUE_-markers
-		//needed for nested markers like ###LLL:tx_myextension_table.field1.i.###value_field1###### to avoid wrong marker removal if field1 isn't set
-		$this->template = preg_replace('/###value_.*?###/i', '', $this->template);
 	}
 }
 ?>

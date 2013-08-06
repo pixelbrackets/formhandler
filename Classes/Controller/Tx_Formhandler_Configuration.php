@@ -11,13 +11,15 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Configuration.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Configuration.php 22614 2009-07-21 20:43:47Z fabien_u $
  *                                                                        */
 
 /**
  * The configuration of the Formhandler
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
+ * @package	Tx_Formhandler
+ * @subpackage	Controller
  */
 class Tx_Formhandler_Configuration implements ArrayAccess {
 
@@ -39,25 +41,17 @@ class Tx_Formhandler_Configuration implements ArrayAccess {
 	/**
 	 * The constructor reading the TS setup into the according attribute
 	 *
+	 * @author Reinhard Führicht <rf@typoheads.at>
 	 * @return void
 	 */
 	public function __construct() {
-		if (TYPO3_MODE === 'FE') {
-			$this->globals = Tx_Formhandler_Globals::getInstance();
-			$this->utilityFuncs = Tx_Formhandler_UtilityFuncs::getInstance();
-			$this->setup = $GLOBALS['TSFE']->tmpl->setup['plugin.'][$this->getPrefixedPackageKey() . '.'];
-			if (!is_array($this->setup)) {
-				$this->utilityFuncs->throwException('missing_config');
-			}
-			if (is_array($this->globals->getOverrideSettings())) {
-				$this->setup = t3lib_div::array_merge_recursive_overrule($this->setup, $this->globals->getOverrideSettings());
-			}
-		}
+		$this->setup = $GLOBALS['TSFE']->tmpl->setup['plugin.'][$this->getPrefixedPackageKey() . '.'];
 	}
 
 	/**
 	 * Merges the values of $setup with plugin.[xxx].settings
 	 *
+	 * @author Reinhard Führicht <rf@typoheads.at>
 	 * @param array $setup
 	 * @return void
 	 */
@@ -78,7 +72,11 @@ class Tx_Formhandler_Configuration implements ArrayAccess {
 	}
 
 	public function offsetExists($offset) {
-		return isset($this->setup['settings.'][$offset]);
+		if (isset($this->setup['settings.'][$offset])) {
+			return TRUE;
+		} else {
+			return FALSE;
+		}
 	}
 
 	public function offsetUnset($offset) {
@@ -88,6 +86,7 @@ class Tx_Formhandler_Configuration implements ArrayAccess {
 	/**
 	 * Returns the TS settings for formhandler.
 	 *
+	 * @author Reinhard Führicht <rf@typoheads.at>
 	 * @return array The settings
 	 */
 	public function getSettings() {
@@ -97,6 +96,7 @@ class Tx_Formhandler_Configuration implements ArrayAccess {
 	/**
 	 * Returns the sources config for formhandler
 	 *
+	 * @author Reinhard Führicht <rf@typoheads.at>
 	 * @return array The config
 	 */
 	public function getSourcesConfiguration() {
@@ -106,6 +106,7 @@ class Tx_Formhandler_Configuration implements ArrayAccess {
 	/**
 	 * Returns the package key
 	 *
+	 * @author Reinhard Führicht <rf@typoheads.at>
 	 * @return string
 	 */
 	public function getPackageKey() {
@@ -115,6 +116,7 @@ class Tx_Formhandler_Configuration implements ArrayAccess {
 	/**
 	 * Returns the package key in lower case
 	 *
+	 * @author Reinhard Führicht <rf@typoheads.at>
 	 * @return string
 	 */
 	public function getPackageKeyLowercase() {
@@ -124,19 +126,21 @@ class Tx_Formhandler_Configuration implements ArrayAccess {
 	/**
 	 * Returns the prefixed package key
 	 *
+	 * @author Reinhard Führicht <rf@typoheads.at>
 	 * @return string
 	 */
 	public function getPrefixedPackageKey() {
-		return Tx_Formhandler_Component_Manager::PACKAGE_PREFIX . '_' . self::PACKAGE_KEY;
+		return Tx_GimmeFive_Component_Manager::PACKAGE_PREFIX . '_' . self::PACKAGE_KEY;
 	}
 
 	/**
 	 * Returns the prefixed package key in lower case
 	 *
+	 * @author Reinhard Führicht <rf@typoheads.at>
 	 * @return string
 	 */
 	public function getPrefixedPackageKeyLowercase() {
-		return strtolower(Tx_Formhandler_Component_Manager::PACKAGE_PREFIX . '_' . self::PACKAGE_KEY);
+		return strtolower(Tx_GimmeFive_Component_Manager::PACKAGE_PREFIX . '_' . self::PACKAGE_KEY);
 	}
 }
 ?>

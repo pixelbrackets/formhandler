@@ -11,36 +11,56 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Dispatcher.php 72672 2013-03-12 08:40:33Z reinhardfuehricht $
+ * $Id: tx_Formhandler_Dispatcher.php 22854 2009-07-28 18:15:27Z reinhardfuehricht $
  *                                                                        */
 
-require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Formhandler_Component_Manager.php');
-require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Utils/Tx_Formhandler_Globals.php');
-require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Utils/Tx_Formhandler_UtilityFuncs.php');
+require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_GimmeFive_Component_Manager.php');
+
+
 require_once(PATH_tslib.'class.tslib_pibase.php');
 
 /**
- * The Dispatcher instantiates the Component Manager and delegates the process to the given controller.
+ * The Dispatcher instatiates the Component Manager and delegates the process to the given controller.
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
+ * @package	Tx_Formhandler
+ * @subpackage	Controller
  */
-class Tx_Formhandler_Dispatcher extends tslib_pibase {
+class tx_Formhandler_Dispatcher extends tslib_pibase {
 
 	/**
-	 * Compontent Manager
-	 * 
-	 * @access protected
-	 * @var Tx_Formhandler_Component_Manager
-	 */
-	protected $componentManager;
-
-	/**
-	 * The global Formhandler values
+	 * Adds JavaScript for xajax and registers callable methods.
+	 * Passes AJAX requests to requested methods.
 	 *
-	 * @access protected
-	 * @var Tx_Formhandler_Globals
+	 * @return void
 	 */
-	protected $globals;
+	protected function handleAjax() {
+		if(t3lib_extMgm::isLoaded('xajax', 0) && !class_exists('tx_xajax') && !$this->xajax) {
+			require_once(t3lib_extMgm::extPath('xajax') . 'class.tx_xajax.php');
+				
+				
+		}
+		if (!$this->xajax && class_exists('tx_xajax')) {
+			$view = $this->componentManager->getComponent('Tx_Formhandler_View_Form');
+
+			$this->xajax = t3lib_div::makeInstance('tx_xajax');
+			$this->xajax->decodeUTF8InputOn();
+			$this->prefixId = 'Tx_Formhandler';
+			$this->xajax->setCharEncoding('utf-8');
+			#$this->xajax->setWrapperPrefix($this->prefixId);
+				
+			$this->xajax->registerFunction(array($this->prefixId . '_removeUploadedFile', &$view, 'removeUploadedFile'));
+			
+			// Do you wnat messages in the status bar?
+			$this->xajax->statusMessagesOn();
+			
+			// Turn only on during testing
+			$this->xajax->debugOff();
+			
+			$GLOBALS['TSFE']->additionalHeaderData[$this->prefixId] = $this->xajax->getJavascript(t3lib_extMgm::siteRelPath('xajax'));
+			$this->xajax->processRequests();
+		}
+	}
 
 	/**
 	 * Main method of the dispatcher. This method is called as a user function.
@@ -50,73 +70,64 @@ class Tx_Formhandler_Dispatcher extends tslib_pibase {
 	 * @param array $setup The TypoScript config
 	 */
 	public function main($content, $setup) {
+
 		$this->pi_USER_INT_obj = 1;
-		$this->globals = Tx_Formhandler_Globals::getInstance();
-		$this->utilityFuncs = Tx_Formhandler_UtilityFuncs::getInstance();
+		$this->componentManager = Tx_GimmeFive_Component_Manager::getInstance();
+
+		Tx_Formhandler_StaticFuncs::$cObj = $this->cObj;
+
+		//handle AJAX stuff
+		$this->handleAjax();
+
+		//init flexform
+		$this->pi_initPIflexForm();
+
+		/*
+		 * set controller:
+		 * 1. Default controller
+		 * 2. TypoScript
+		 */
+		$controller = 'Tx_Formhandler_Controller_Form';
+		if($setup['controller']) {
+			$controller = $setup['controller'];
+		}
+		
+		//Tx_Formhandler_StaticFuncs::debugMessage('using_controller', $controller);
+		$controller = Tx_Formhandler_StaticFuncs::prepareClassName($controller);
+		$controller = $this->componentManager->getComponent($controller);
+
+		/*
+		 * Parse values from flexform:
+		 * - Template file
+		 * - Translation file
+		 * - Predefined form
+		 * - E-mail settings
+		 * - Required fields
+		 * - Redirect page
+		 */
+		$templateFile = $this->pi_getFFvalue($this->cObj->data['pi_flexform'], 'template_file', 'sDEF');
+		$langFile = $this->pi_getFFvalue($this->cObj->data['pi_flexform'], 'lang_file', 'sDEF');
+		$predef = $this->pi_getFFvalue($this->cObj->data['pi_flexform'], 'predefined', 'sDEF');
+
+		if (isset($content)) {
+			$controller->setContent($this->componentManager->getComponent('Tx_Formhandler_Content', $content));
+		}
+		if(strlen($templateFile) > 0) {
+			$controller->setTemplateFile($templateFile);
+		}
+		if(strlen($langFile) > 0) {
+			$controller->setLangFile($langFile);
+		}
+		if(strlen($predef) > 0) {
+			$controller->setPredefined($predef);
+		}
 		try {
-
-			//init flexform
-			$this->pi_initPIflexForm();
-
-			/*
-			 * Parse values from flexform:
-			 * - Template file
-			 * - Translation file
-			 * - Predefined form
-			 * - E-mail settings
-			 * - Required fields
-			 * - Redirect page
-			 */
-			$templateFile = $this->pi_getFFvalue($this->cObj->data['pi_flexform'], 'template_file', 'sDEF');
-			$langFile = $this->pi_getFFvalue($this->cObj->data['pi_flexform'], 'lang_file', 'sDEF');
-			$predef = $this->pi_getFFvalue($this->cObj->data['pi_flexform'], 'predefined', 'sDEF');
-			$this->globals->setCObj($this->cObj);
-			if($setup['usePredef']) {
-				$predef = $this->utilityFuncs->getSingle($setup, 'usePredef');
-			}
-			$this->globals->setPredef($predef);
-			$this->globals->setOverrideSettings($setup);
-			$this->componentManager = Tx_Formhandler_Component_Manager::getInstance();
-
-			/*
-			 * set controller:
-			 * 1. Default controller
-			 * 2. TypoScript
-			 */
-			$controller = 'Tx_Formhandler_Controller_Form';
-			if ($setup['controller']) {
-				$controller = $setup['controller'];
-			}
-
-			$controller = $this->utilityFuncs->prepareClassName($controller);
-			$controller = $this->componentManager->getComponent($controller);
-
-			if (isset($content)) {
-				$controller->setContent($this->componentManager->getComponent('Tx_Formhandler_Content', $content));
-			}
-			if (strlen($templateFile) > 0) {
-				$controller->setTemplateFile($templateFile);
-			}
-			if (strlen($langFile) > 0) {
-				$controller->setLangFiles(array($langFile));
-			}
-			if (strlen($predef) > 0) {
-				$controller->setPredefined($predef);
-			}
-
 			$result = $controller->process();
 		} catch(Exception $e) {
-			$result = '<div style="color:red; font-weight: bold">' . $e->getMessage() . '</div>';
-			if ($this->globals->getSession() && $this->globals->getSession()->get('debug')) {
-				$result .= '<div style="color:red; font-weight: bold">File: ' . $e->getFile() . '(' . $e->getLine() . ')</div>';
-				$result .= '<div style="color:red; font-weight: bold">' . $e->getTraceAsString() . '</div>';
-			}
-		}
-		if ($this->globals->getSession() && $this->globals->getSession()->get('debug')) {
-			$debuggers = $this->globals->getDebuggers();
-			foreach($debuggers as $idx => $debugger) {
-				$debugger->outputDebugLog();
-			}
+			$result = '<div style="color:red; font-weight: bold">Caught exception: ' . $e->getMessage() . '</div>';
+			$result .= '<div style="color:red; font-weight: bold">File: ' . $e->getFile() . '(' . $e->getLine() . ')</div>';
+			
+			#$result .= '<div style="color:#000; font-weight: bold">Trace: ' . $e->getTraceAsString(). '</div>';
 		}
 		return $result;
 	}

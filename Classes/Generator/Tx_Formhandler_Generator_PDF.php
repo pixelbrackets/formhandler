@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_PDF.php 36376 2010-08-05 09:19:56Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Generator_PDF.php 22614 2009-07-21 20:43:47Z fabien_u $
  *                                                                        */
 
 /**
@@ -63,23 +63,23 @@ class Tx_Formhandler_Generator_PDF {
 
 		//init pdf object
 		$this->pdf = $this->componentManager->getComponent('Tx_Formhandler_Template_PDF');
-		$addedOneRecord = FALSE;
+		$addedOneRecord = false;
 
 		//for all records,
 		//check if the record is valid.
 		//a valid record has at least one param to export
 		//if no valid record is found render an error message in pdf file
 		foreach($records as $data) {
-			$valid = FALSE;
+			$valid = false;
 			if(isset($data['params']) && is_array($data['params'])) {
 				foreach($data['params'] as $key => $value) {
 					if(count($exportFields) == 0 || in_array($key, $exportFields)) {
-						$valid = TRUE;
+						$valid = true;
 					}
 				}
 			}
 			if($valid) {
-				$addedOneRecord = TRUE;
+				$addedOneRecord = true;
 				$this->pdf->AliasNbPages();
 				$this->pdf->AddPage();
 				$this->pdf->SetFont('Arial', '', 12);
@@ -104,11 +104,11 @@ class Tx_Formhandler_Generator_PDF {
 				$this->pdf->SetLineWidth(.3);
 				$this->pdf->Cell($feedWidth);
 				$this->pdf->SetFillColor(255, 255, 255);
-				$this->pdf->Cell($nameWidth, '6', 'Name', 'B', 0, 'C', TRUE);
-				$this->pdf->Cell($valueWidth, '6', 'Value', 'B', 0, 'C', TRUE);
+				$this->pdf->Cell($nameWidth, '6', 'Name', 'B', 0, 'C', true);
+				$this->pdf->Cell($valueWidth, '6', 'Value', 'B', 0, 'C', true);
 				$this->pdf->Ln();
 				$this->pdf->SetFillColor(200, 200, 200);
-				$fill = FALSE;
+				$fill = false;
 					
 				foreach($data['params'] as $key => $value) {
 					if(is_array($value) && (count($exportFields) == 0 || in_array($key, $exportFields))) {
@@ -142,23 +142,23 @@ class Tx_Formhandler_Generator_PDF {
 			$this->pdf->SetFont('Arial', '', 12);
 			$this->pdf->Cell(300, 100, 'No valid records found! Try to select more fields to export!', 0, 0, 'L');
 		}
-		$this->pdf->Output('formhandler.pdf','I');
-		exit;
+		$this->pdf->Output();
+
 	}
 
 	/**
-	 * Function to generate a PDF file from submitted form values. This function is called by Tx_Formhandler_Finisher_SubmittedOK and Tx_Formhandler_Finisher_Mail
+	 * Function to generate a PDF file from submitted form values. This function is called by Tx_Formhandler_Finisher_Confirmation and Tx_Formhandler_Finisher_Mail
 	 *
 	 * @param array $gp The values to export
 	 * @param string $langFile The translation file configured in TypoScript of Formhandler
 	 * @param array $exportFields A list of fields to export. If not set all fields are exported
 	 * @param string $file A filename to save the PDF in. If not set, the PDF will be rendered directly to screen
 	 * @param boolean $returns If set, the PDF will be rendered into the given file, if not set, the PDF will be rendered into the file and afterwards directly to screen
-	 * @see Tx_Formhandler_Finisher_SubmittedOK::process()
+	 * @see Tx_Formhandler_Finisher_Confirmation::process()
 	 * @see Tx_Formhandler_Finisher_Mail::parseMailSettings()
 	 * @return void|filename
 	 */
-	function generateFrontendPDF($gp, $langFile, $exportFields = array(), $file = '', $returns = FALSE) {
+	function generateFrontendPDF($gp, $langFile, $exportFields = array(), $file = '', $returns = false) {
 		
 		$this->pdf = $this->componentManager->getComponent('Tx_Formhandler_Template_PDF');
 		$this->pdf->AliasNbPages();
@@ -187,11 +187,11 @@ class Tx_Formhandler_Generator_PDF {
 			$this->pdf->SetLineWidth(.3);
 			$this->pdf->Cell($feedWidth);
 			$this->pdf->SetFillColor(255, 255, 255);
-			$this->pdf->Cell($nameWidth, '6', 'Name', 'B', 0, 'C', TRUE);
-			$this->pdf->Cell($valueWidth, '6', 'Value', 'B', 0, 'C', TRUE);
+			$this->pdf->Cell($nameWidth, '6', 'Name', 'B', 0, 'C', true);
+			$this->pdf->Cell($valueWidth, '6', 'Value', 'B', 0, 'C', true);
 			$this->pdf->Ln();
 			$this->pdf->SetFillColor(200, 200, 200);
-			$fill = FALSE;
+			$fill = false;
 			unset($gp['renderMethod']);
 			foreach($exportFields as $key => $field) {
 				if(	strcmp($field, 'pid') == FALSE ||

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_PreProcessor_Default.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_PreProcessor_Default.php 22614 2009-07-21 20:43:47Z fabien_u $
  *                                                                        */
 
 /**
@@ -26,9 +26,12 @@ class Tx_Formhandler_PreProcessor_Default extends Tx_Formhandler_AbstractPreProc
 	/**
 	 * Main method called by the controller.
 	 *
+	 * @param array $gp The current GET/POST parameters
+	 * @param array $settings The settings for the logger
 	 * @return array The probably modified GET/POST parameters
 	 */
-	public function process() {
+	public function process(&$gp, $settings) {
+		$this->gp = $gp;
 		return $this->gp;
 	}
 

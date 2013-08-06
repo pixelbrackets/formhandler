@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_ContainsNone.php 50192 2011-07-27 18:42:39Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_ContainsNone.php 22614 2009-07-21 20:43:47Z fabien_u $
  *                                                                        */
 
 /**
@@ -23,34 +23,38 @@
  */
 class Tx_Formhandler_ErrorCheck_ContainsNone extends Tx_Formhandler_AbstractErrorCheck {
 
-	public function init($gp, $settings) {
-		parent::init($gp, $settings);
-		$this->mandatoryParameters = array('words');
-	}
-
-	public function check() {
+	/**
+	 * Validates that a specified field doesn't contain one of the specified words
+	 *
+	 * @param array &$check The TypoScript settings for this error check
+	 * @param string $name The field name
+	 * @param array &$gp The current GET/POST parameters
+	 * @return string The error string
+	 */
+	public function check(&$check, $name, &$gp) {
 		$checkFailed = '';
-		$formValue = trim($this->gp[$this->formFieldName]);
-
-		if (strlen($formValue) > 0) {
-			$checkValue = $this->utilityFuncs->getSingle($this->settings['params'], 'words');
-			if (!is_array($checkValue)) {
+		$formValue = trim($gp[$name]);
+		
+		if(!empty($formValue)) {
+			$checkValue = $this->getCheckValue($check['params']['words'], $check['params']['words.']);
+			if(!is_array($checkValue)) {
 				$checkValue = t3lib_div::trimExplode(',', $checkValue);
 			}
-			$found = FALSE;
-			foreach ($checkValue as $idx => $word) {
-				if (stristr($formValue, $word) && !$found) {
-
+			$found = false;
+			foreach($checkValue as $word) {
+				if(stristr($formValue, $word) && !$found) {
+	
 					//remove userfunc settings and only store comma seperated words
-					$this->settings['params']['words'] = implode(',', $checkValue);
-					unset($this->settings['params']['words.']);
-					$checkFailed = $this->getCheckFailed();
-					$found = TRUE;
+					$check['params']['words'] = implode(',', $checkValue);
+					unset($check['params']['words.']);
+					$checkFailed = $this->getCheckFailed($check);
+					$found = true;
 				}
 			}
 		}
 		return $checkFailed;
 	}
+
 
 }
 ?>

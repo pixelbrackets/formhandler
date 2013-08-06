@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileMinCount.php 68656 2012-12-10 15:23:29Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileMinCount.php 23292 2009-08-12 12:27:50Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -23,37 +23,35 @@
  */
 class Tx_Formhandler_ErrorCheck_FileMinCount extends Tx_Formhandler_AbstractErrorCheck {
 
-	public function init($gp, $settings) {
-		parent::init($gp, $settings);
-		$this->mandatoryParameters = array('minCount');
-	}
-
-	public function check() {
+	/**
+	 * Validates that at least x files get uploaded via the specified upload field.
+	 *
+	 * @param array &$check The TypoScript settings for this error check
+	 * @param string $name The field name
+	 * @param array &$gp The current GET/POST parameters
+	 * @return string The error string
+	 */
+	public function check(&$check, $name, &$gp) {
 		$checkFailed = '';
 
-		$files = $this->globals->getSession()->get('files');
-		$settings = $this->globals->getSession()->get('settings');
-		$currentStep = $this->globals->getSession()->get('currentStep');
-		$lastStep = $this->globals->getSession()->get('lastStep');
-		$minCount = $this->utilityFuncs->getSingle($this->settings['params'], 'minCount');
-		if (is_array($files[$this->formFieldName]) &&
-			$currentStep > $lastStep) {
-
-			foreach ($_FILES as $idx => $info) {
-				if(!is_array($info['name'][$this->formFieldName])) {
-					$info['name'][$this->formFieldName] = array($info['name'][$this->formFieldName]);
-				}
-				if(empty($info['name'][$this->formFieldName][0])) {
-					$info['name'][$this->formFieldName] = array();
-				}
-				if ((count($info['name'][$this->formFieldName]) + count($files[$this->formFieldName])) < $minCount) {
-					$checkFailed = $this->getCheckFailed();
+		session_start();
+		$minCount = $check['params']['minCount'];
+		if (is_array($_SESSION['formhandlerFiles'][$name]) &&
+		$_SESSION['formhandlerSettings']['currentStep'] > $_SESSION['formhandlerSettings']['lastStep']) {
+			
+			foreach($_FILES as $idx => $info) {
+				if(strlen($info['name'][$name]) > 0 && count($_SESSION['formhandlerFiles'][$name]) < ($minCount - 1)) {
+					$checkFailed = $this->getCheckFailed($check);
+				} elseif(strlen($info['name'][$name]) == 0 && count($_SESSION['formhandlerFiles'][$name]) < $minCount) {
+					$checkFailed = $this->getCheckFailed($check);
 				}
 			}
+
 		}
 
 		return $checkFailed;
 	}
+
 
 }
 ?>

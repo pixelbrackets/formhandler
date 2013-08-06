@@ -1,24 +1,15 @@
 ##### CONDITION #####
-plugin.Tx_Formhandler.settings.predef.multistep_conditions_example.1 {
-	if.1 {
-		conditions {
-			OR1 {
-				AND1 = contact_via=phone
-			}
-		}
-		isTrue {
-			2 {
-				templateSuffix = _phone
-				validators.1.config.fieldConf.phone.errorCheck.1 = required
-				validators.1.config.disableErrorCheckFields = street
-			}
-		}
-	}
+[globalVar = GP:formhandler|contact_via=phone]
+plugin.Tx_Formhandler.settings.predef.multistep_conditions_example.2 {
+	templateSuffix = _phone
+	validators >
+	validators.1.class = Tx_Formhandler_Validator_Default
+	validators.1.config.fieldConf.phone.errorCheck.1 = required
 }
+[global]
 
 ##### STEP 1 CONFIGURATION #####
 plugin.Tx_Formhandler.settings.predef.multistep_conditions_example.1 {
-	checkBoxFields = interests
 	validators {
 		1 {
 			class = Tx_Formhandler_Validator_Default
@@ -82,8 +73,8 @@ plugin.Tx_Formhandler.settings.predef.multistep_conditions_example {
 	debug = 0
 	addErrorAnchors = 1
 	templateFile = EXT:formhandler/Examples/MultiStepConditions/template.html
-	langFile.1 = EXT:formhandler/Examples/MultiStepConditions/lang.xml
-	cssFile.1 = EXT:formhandler/Examples/MultiStepConditions/styles.css
+	langFile = EXT:formhandler/Examples/MultiStepConditions/lang.xml
+	stylesheetFile = EXT:formhandler/Examples/MultiStepConditions/styles.css
 	formValuesPrefix = formhandler
 
 	# HTML wrapping by validation error
@@ -106,18 +97,9 @@ plugin.Tx_Formhandler.settings.predef.multistep_conditions_example {
 
 	# Files
 	files {
-		uploadFolder = uploads/formhandler/
+		clearTempFilesOlderThanHours = 24
+		uploadFolder = uploads/formhandler/tmp2/
 		enableAjaxFileRemoval = 1
-	}
-
-	preProcessors {
-		1.class = PreProcessor_ClearTempFiles
-		1.config {
-			clearTempFilesOlderThan {
-				value = 24
-				unit = hours
-			}
-		}
 	}
 
 	# Loggers configuration
@@ -130,7 +112,7 @@ plugin.Tx_Formhandler.settings.predef.multistep_conditions_example {
 	# Interceptors configuration
 	initInterceptors {
 		1 {
-			class = Tx_Formhandler_Interceptor_Filtreatment
+			class = Tx_Formhandler_Interceptor_RemoveXSS
 		}
 	}
 
@@ -148,7 +130,7 @@ plugin.Tx_Formhandler.settings.predef.multistep_conditions_example {
 					}
 					bodytext {
 						mapping = subject
-						separator = ,
+						seperator = ,
 					}
 					hidden = 1
 					pid = 39
@@ -184,27 +166,22 @@ plugin.Tx_Formhandler.settings.predef.multistep_conditions_example {
 				replyto_name.value = Some Company
 				htmlEmailAsAttachment = 1
 				attachment = picture
-				attachPDF {
-				  class = Tx_Formhandler_Generator_WebkitPdf
-				  config {
-				  	pid = 23
-				  }
-				}
+				attachPDF.class = Tx_Formhandler_Generator_PDF
+				attachPDF.exportFields = firstname,lastname,email,interests,pid,submission_date,ip
 		 	}
 		}
-		3.class = Tx_Formhandler_Finisher_SubmittedOK
+		3.class = Tx_Formhandler_Finisher_Confirmation
 		3.config {
 			returns = 1
-			actions {
-				pdf {
-					class = Generator_WebkitPdf
-					config {
-					  	pid = 23
-					  }
-				}
-				csv {
-					class = Generator_Csv
-				}
+			pdf {
+				class = Tx_Formhandler_Generator_PDF
+				exportFields = firstname,lastname,interests,pid,ip,submission_date
+				export2File = 1
+			}
+			csv {
+				class = Tx_Formhandler_Generator_CSV
+				exportFields = firstname,lastname,interests
+			}
 		}
 	}
 }

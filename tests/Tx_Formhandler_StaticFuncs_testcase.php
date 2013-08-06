@@ -12,7 +12,7 @@
  * Public License for more details.                                       *
  *                                                                        */
 
-require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Formhandler_Component_Manager.php');
+require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_GimmeFive_Component_Manager.php');
 
 /**
  * Test for the Component "Tx_Formhandler_MarkerUtils" of the extension 'formhandler'
@@ -20,20 +20,13 @@ require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Formh
  * @package	Tx_Formhandler
  * @subpackage	Tests
  */
-class Tx_Formhandler_StaticFuncs_testcase extends tx_phpunit_testcase {
+class Tx_Formhandler_StaticFuncs_testcase extends PHPUnit_Framework_TestCase {
 
 	protected $components;
 	protected $repository;
-		/**
-	 *
-	 * @var String
-	 */
-	protected $message = 'Tested value:';
-
 
 	protected function setUp() {
 		require_once(t3lib_extMgm::extPath('formhandler')."Classes/Utils/Tx_Formhandler_StaticFuncs.php");
-		$GLOBALS['TSFE']->lang = 'en';
 	}
 
 	protected function tearDown() {
@@ -64,18 +57,16 @@ class Tx_Formhandler_StaticFuncs_testcase extends tx_phpunit_testcase {
 			<div>###LLL:lastname###</div>
 		';
 
-		$langFiles = array('EXT:formhandler/tests/locallang.xml');
-		$langMarkers = Tx_Formhandler_StaticFuncs::getFilledLangMarkers($fakeTemplate,$langFiles);
-
-		t3lib_div::debug($langMarkers, $this->message);
+		$langFile = 'EXT:formhandler/tests/locallang.xml';
+		$langMarkers = Tx_Formhandler_StaticFuncs::getFilledLangMarkers($fakeTemplate,$langFile);
 
 		$this->assertEquals(
 		$langMarkers,
 		array(
 				"###LLL:firstname###" => "Firstname_translated",
-//				"###LLL:FIRSTNAME###" => "Firstname_translated",
+				"###LLL:FIRSTNAME###" => "Firstname_translated",
 				"###LLL:lastname###" => "Lastname_translated",
-//				"###LLL:LASTNAME###" => "Lastname_translated"
+				"###LLL:LASTNAME###" => "Lastname_translated"
 				));
 	}
 

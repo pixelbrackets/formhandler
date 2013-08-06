@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Confirmation.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Confirmation.php 23307 2009-08-12 14:34:30Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -22,6 +22,52 @@
  * @subpackage	View
  */
 class Tx_Formhandler_View_Confirmation extends Tx_Formhandler_View_Form {
+
+	/**
+	 * Main method called by the controller.
+	 *
+	 * @param array $gp The current GET/POST parameters
+	 * @param array $errors The errors occurred in validation
+	 * @return string content
+	 */
+	public function render($gp, $errors) {
+
+			//set GET/POST parameters
+		$this->gp = $gp;
+
+			//set template
+		$this->template = $this->subparts['template'];
+
+			//set settings
+		$this->settings = $this->parseSettings();
+
+			//set language file
+		if(!$this->langFile) {
+			$this->readLangFile();
+		}
+
+			//substitute ISSET markers
+		$this->substituteIssetSubparts();
+
+			//fill Typoscript markers
+		if(is_array($this->settings['markers.'])) {
+			$this->fillTypoScriptMarkers();
+		}
+
+			//fill default markers
+		$this->fillDefaultMarkers();
+
+			//fill value_[fieldname] markers
+		$this->fillValueMarkers();
+
+			//fill LLL:[language_key] markers
+		$this->fillLangMarkers();
+
+			//remove markers that were not substituted
+		$content = Tx_Formhandler_StaticFuncs::removeUnfilledMarkers($this->template);
+
+		return $this->pi_wrapInBaseClass($content);
+	}
 
 	/**
 	 * This function fills the default markers:
@@ -46,19 +92,28 @@ class Tx_Formhandler_View_Confirmation extends Tx_Formhandler_View_Form {
 		}
 		$markers['###PRINT_LINK###'] = $this->cObj->getTypolink($label, $GLOBALS['TSFE']->id, $params);
 		unset($params['type']);
-		
-		if($this->componentSettings['actions.']) {
-			foreach($this->componentSettings['actions.'] as $action=>$options) {
-				$sanitizedAction = str_replace('.', '', $action);
-				$class = $options['class'];
-				if($class) {
-					$class = Tx_Formhandler_StaticFuncs::prepareClassName($class);
-					$generator = $this->componentManager->getComponent($class);
-					$generator->init($this->gp, $options['config.']);
-					$markers['###' . strtoupper($sanitizedAction) . '_LINK###'] = $generator->getLink($params);
-				}
-			}
+		if($this->settings['formValuesPrefix']) {
+			$params[$this->settings['formValuesPrefix']]['renderMethod'] = 'pdf';
+		} else {
+			$params['renderMethod'] = 'pdf';
 		}
+		
+		$label = trim($GLOBALS['TSFE']->sL('LLL:' . $this->langFile . ':pdf'));
+		if(strlen($label) == 0) {
+			$label = 'pdf';
+		}
+		$markers['###PDF_LINK###'] = $this->cObj->getTypolink($label, $GLOBALS['TSFE']->id, $params);
+		if($this->settings['formValuesPrefix']) {
+			$params[$this->settings['formValuesPrefix']]['renderMethod'] = 'csv';
+		} else {
+			$params['renderMethod'] = 'csv';
+		}
+		
+		$label = trim($GLOBALS['TSFE']->sL('LLL:' . $this->langFile . ':csv'));
+		if(strlen($label) == 0) {
+			$label = 'csv';
+		}
+		$markers['###CSV_LINK###'] = $this->cObj->getTypolink($label, $GLOBALS['TSFE']->id, $params);
 		
 		$this->fillFEUserMarkers($markers);
 		$this->fillFileMarkers($markers);

@@ -11,43 +11,72 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractInterceptor.php 59139 2012-03-12 14:02:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractInterceptor.php 22614 2009-07-21 20:43:47Z fabien_u $
  *                                                                        */
 
 /**
  * Abstract interceptor class
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
+ * @package	Tx_Formhandler
+ * @subpackage	Interceptor
  * @abstract
  */
-abstract class Tx_Formhandler_AbstractInterceptor extends Tx_Formhandler_AbstractComponent {
+abstract class Tx_Formhandler_AbstractInterceptor {
 
 	/**
-	 * Logs an action of an interceptor, e.g. if Interceptor_IPBlocking blocked a request.
+	 * The GimmeFive component manager
 	 *
-	 * @param boolean $markAsSpam Indicates if this was a blocked SPAM attempt. Will be highlighted in the backend module.
+	 * @access protected
+	 * @var Tx_GimmeFive_Component_Manager
+	 */
+	protected $componentManager;
+
+	/**
+	 * The global Formhandler configuration
+	 *
+	 * @access protected
+	 * @var Tx_Formhandler_Configuration
+	 */
+	protected $configuration;
+
+	/**
+	 * The GET/POST parameters
+	 *
+	 * @access protected
+	 * @var array
+	 */
+	protected $gp;
+
+	/**
+	 * The cObj
+	 *
+	 * @access protected
+	 * @var tslib_cObj
+	 */
+	protected $cObj;
+
+	/**
+	 * The constructor for an interceptor setting the component manager and the configuration.
+	 *
+	 * @param Tx_GimmeFive_Component_Manager $componentManager
+	 * @param Tx_Formhandler_Configuration $configuration
 	 * @return void
 	 */
-	protected function log($markAsSpam = FALSE) {
-		$classesArray = $this->settings['loggers.'];
-		if (isset($classesArray) && is_array($classesArray)) {
-			foreach ($classesArray as $idx => $tsConfig) {
-				$className = $this->utilityFuncs->getPreparedClassName($tsConfig);
-				if (is_array($tsConfig) && strlen($className) > 0 && intval($this->utilityFuncs->getSingle($tsConfig, 'disable')) !== 1) {
-
-					$this->utilityFuncs->debugMessage('calling_class', array($className));
-					$obj = $this->componentManager->getComponent($className);
-					if ($markAsSpam) {
-						$tsConfig['config.']['markAsSpam'] = 1;
-					}
-					$obj->init($this->gp, $tsConfig['config.']);
-					$obj->process();
-				} else {
-					$this->utilityFuncs->throwException('classesarray_error');
-				}
-			}
-		}
+	public function __construct(Tx_GimmeFive_Component_Manager $componentManager, Tx_Formhandler_Configuration $configuration) {
+		$this->componentManager = $componentManager;
+		$this->configuration = $configuration;
+		$this->cObj = Tx_Formhandler_StaticFuncs::$cObj;
 	}
+
+	/**
+	 * The main method called by the controller
+	 *
+	 * @param array $gp The GET/POST parameters
+	 * @param array $settings The defined TypoScript settings for the finisher
+	 * @return array The probably modified GET/POST parameters
+	 */
+	abstract public function process($gp, $settings);
 
 }
 ?>

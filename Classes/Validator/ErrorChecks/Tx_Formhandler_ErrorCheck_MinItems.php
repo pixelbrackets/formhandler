@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_MinItems.php 62897 2012-05-28 15:32:02Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_MinItems.php 22614 2009-07-21 20:43:47Z fabien_u $
  *                                                                        */
 
 /**
@@ -23,37 +23,30 @@
  */
 class Tx_Formhandler_ErrorCheck_MinItems extends Tx_Formhandler_AbstractErrorCheck {
 
-	public function init($gp, $settings) {
-		parent::init($gp, $settings);
-		$this->mandatoryParameters = array('value');
-	}
-
-	public function check() {
+	/**
+	 * Validates that a specified field is an array and has at least a specified amount of items
+	 *
+	 * @param array &$check The TypoScript settings for this error check
+	 * @param string $name The field name
+	 * @param array &$gp The current GET/POST parameters
+	 * @return string The error string
+	 */
+	public function check(&$check, $name, &$gp) {
 		$checkFailed = '';
-
-		if (isset($this->gp[$this->formFieldName])) {
-			$value = $this->utilityFuncs->getSingle($this->settings['params'], 'value');
-			$removeEmptyValues = $this->utilityFuncs->getSingle($this->settings['params'], 'removeEmptyValues');
-			if (is_array($this->gp[$this->formFieldName])) {
-				$valuesArray = $this->gp[$this->formFieldName];
-				if (intval($removeEmptyValues) === 1) {
-					foreach($valuesArray as $key => $fieldName) {
-						if (empty($fieldName)) {
-							unset($valuesArray[$key]);
-						}
-					}
-				}
-				if (count($valuesArray) < $value) {
-					$checkFailed = $this->getCheckFailed();
+		
+		if(isset($gp[$name]) && !empty($gp[$name])) {
+			$value = $check['params']['value'];
+			if(is_array($gp[$name])) {
+				if(count($gp[$name]) < $value) {
+					$checkFailed = $this->getCheckFailed($check);
 				}
 			} else {
-				$checkFailed = $this->getCheckFailed();
+				$checkFailed = $this->getCheckFailed($check);
 			}
-		} else {
-			$checkFailed = $this->getCheckFailed();
 		}
 		return $checkFailed;
 	}
+
 
 }
 ?>
