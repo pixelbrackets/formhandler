@@ -34,15 +34,17 @@
 // DEFAULT initialization of a module [BEGIN]
 unset($MCONF);
 require_once('conf.php');
-require_once($BACK_PATH . '/init.php');
-require_once($BACK_PATH . '/template.php');
+
+require_once($BACK_PATH . 'init.php');
+require_once($BACK_PATH . 'template.php');
 
 $LANG->includeLLFile('EXT:formhandler/Resources/Language/locallang.xml');
 require_once(PATH_t3lib . 'class.t3lib_scbase.php');
 $BE_USER->modAccess($MCONF, 1);	// This checks permissions and exits if the users has no permission for entry.
 // DEFAULT initialization of a module [END]
 
-require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_GimmeFive_Component_Manager.php');
+require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Utils/Tx_Formhandler_Globals.php');
+require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Formhandler_Component_Manager.php');
 
 /**
  * Module 'Formhandler' for the 'formhandler' extension.
@@ -51,8 +53,16 @@ require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Gimme
  * @package	Tx_Formhandler
  * @subpackage	Controller
  */
-class  tx_formhandler_module1 extends t3lib_SCbase {
+class tx_formhandler_module1 extends t3lib_SCbase {
 	var $pageinfo;
+
+	/**
+	 * Array holding the TypoScript set in userTS or pageTS.
+	 * 
+	 * @access private
+	 * @var array
+	 */
+	private $settings;
 
 	/**
 	 * Initializes the Module
@@ -61,6 +71,9 @@ class  tx_formhandler_module1 extends t3lib_SCbase {
 	function init()	{
 		global $BE_USER, $LANG, $BACK_PATH, $TCA_DESCR, $TCA, $CLIENT, $TYPO3_CONF_VARS;
 
+		$id = intval(t3lib_div::_GP('id'));
+		$tsconfig = t3lib_BEfunc::getModTSconfig($id, 'tx_formhandler_mod1');
+		$this->settings = $tsconfig['properties']['config.'];
 		parent::init();
 
 		/*
@@ -77,13 +90,14 @@ class  tx_formhandler_module1 extends t3lib_SCbase {
 	 */
 	function menuConfig()	{
 		global $LANG;
-		$this->MOD_MENU = Array (
-						'function' => Array (
-							'1' => $LANG->getLL('function1'),
-							'2' => $LANG->getLL('function2'),
-							//'3' => $LANG->getLL('function3'),
-		)
+		$this->MOD_MENU = array (
+			'function' => array (
+				'1' => $LANG->getLL('function1')
+			)
 		);
+		if(intval($this->settings['enableClearLogs']) === 1 || $GLOBALS['BE_USER']->user['admin']) {
+			$this->MOD_MENU['function']['2'] = $LANG->getLL('function2');
+		}
 		parent::menuConfig();
 	}
 
@@ -106,7 +120,19 @@ class  tx_formhandler_module1 extends t3lib_SCbase {
 			// Draw the header.
 			$this->doc = t3lib_div::makeInstance('mediumDoc');
 			$this->doc->backPath = $BACK_PATH;
-			#$this->doc->form='<form action="" method="POST">';
+
+			/** @var $pageRenderer t3lib_PageRenderer */
+			$pageRenderer = $this->doc->getPageRenderer();
+			$pageRenderer->loadExtJS();
+			$pageRenderer->addJsFile($BACK_PATH . '../t3lib/js/extjs/tceforms.js');
+			$pageRenderer->addJsFile($BACK_PATH . '../t3lib/js/extjs/ux/Ext.ux.DateTimePicker.js');
+
+			// Define settings for Date Picker
+			$typo3Settings = array(
+					'datePickerUSmode' => 0,
+					'dateFormat' => array('j.n.Y', 'j.n.Y G:i')
+			);
+			$pageRenderer->addInlineSettingArray('', $typo3Settings);
 
 			// JavaScript
 			$this->doc->JScode = '
@@ -151,6 +177,7 @@ class  tx_formhandler_module1 extends t3lib_SCbase {
 			$this->content.=$this->doc->startPage($LANG->getLL('title'));
 			$this->content.=$this->doc->header($LANG->getLL('title'));
 			$this->content.=$this->doc->spacer(5);
+			$this->content.=$LANG->getLL('no_id');
 			$this->content.=$this->doc->spacer(10);
 		}
 	}
@@ -172,22 +199,23 @@ class  tx_formhandler_module1 extends t3lib_SCbase {
 	 * @return	void
 	 */
 	function moduleContent()	{
-		switch((string)$this->MOD_SETTINGS['function'])	{
+
+		switch ((string)$this->MOD_SETTINGS['function']) {
 			case 1:
 				// Render content:
-				$componentManager = Tx_GimmeFive_Component_Manager::getInstance();
+				$componentManager = Tx_Formhandler_Component_Manager::getInstance();
 				$controllerClass = 'Tx_Formhandler_Controller_Backend';
 				$controller = $componentManager->getComponent($controllerClass);
-				
+				$controller->setId($this->id);
 				$content = $controller->process();
 				$this->content .= $this->doc->section('', $content, 0, 1);
 				break;
 			case 2:
 				// Render content:
-				$componentManager = Tx_GimmeFive_Component_Manager::getInstance();
+				$componentManager = Tx_Formhandler_Component_Manager::getInstance();
 				$controllerClass = 'Tx_Formhandler_Controller_BackendClearLogs';
 				$controller = $componentManager->getComponent($controllerClass);
-	
+				$controller->setId($this->id);
 				$content = $controller->process();
 				$this->content .= $this->doc->section('', $content, 0, 1);
 				break;
@@ -213,7 +241,7 @@ $SOBE = t3lib_div::makeInstance('tx_formhandler_module1');
 $SOBE->init();
 
 // Include files?
-foreach($SOBE->include_once as $INC_FILE)	include_once($INC_FILE);
+foreach ($SOBE->include_once as $INC_FILE)	include_once($INC_FILE);
 
 $SOBE->main();
 $SOBE->printContent();

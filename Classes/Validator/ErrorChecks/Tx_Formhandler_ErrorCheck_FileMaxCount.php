@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileMaxCount.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_ErrorCheck_FileMaxCount.php 70255 2013-01-23 13:58:37Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -23,37 +23,70 @@
  */
 class Tx_Formhandler_ErrorCheck_FileMaxCount extends Tx_Formhandler_AbstractErrorCheck {
 
-	/**
-	 * Validates that up to x files get uploaded via the specified upload field.
-	 *
-	 * @param array &$check The TypoScript settings for this error check
-	 * @param string $name The field name
-	 * @param array &$gp The current GET/POST parameters
-	 * @return string The error string
-	 */
-	public function check(&$check, $name, &$gp) {
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+		$this->mandatoryParameters = array('maxCount');
+	}
+
+	public function check() {
 		$checkFailed = '';
 
-		session_start();
-		$maxCount = $check['params']['maxCount'];
-		if(	is_array($_SESSION['formhandlerFiles'][$name]) &&
-		count($_SESSION['formhandlerFiles'][$name]) >= $maxCount &&
-		$_SESSION['formhandlerSettings']['currentStep'] == $_SESSION['formhandlerSettings']['lastStep']) {
+		$files = $this->globals->getSession()->get('files');
+		$settings = $this->globals->getSession()->get('settings');
+		$currentStep = intval($this->globals->getSession()->get('currentStep'));
+		$lastStep = intval($this->globals->getSession()->get('lastStep'));
+		$maxCount = intval($this->utilityFuncs->getSingle($this->settings['params'], 'maxCount'));
 
-			$checkFailed = $this->getCheckFailed($check);
-		} elseif (is_array($_SESSION['formhandlerFiles'][$name]) &&
-		$_SESSION['formhandlerSettings']['currentStep'] > $_SESSION['formhandlerSettings']['lastStep']) {
+		$uploadedFilesWithSameNameAction = $this->utilityFuncs->getSingle($settings['files.'], 'uploadedFilesWithSameName');
+		if(!$uploadedFilesWithSameNameAction) {
+			$uploadedFilesWithSameNameAction = 'ignore';
+		}
+		if (is_array($files[$this->formFieldName]) &&
+			count($files[$this->formFieldName]) >= $maxCount &&
+			$currentStep === $lastStep) {
 
-			foreach($_FILES as $idx=>$info) {
-				if(strlen($info['name'][$name]) > 0 && count($_SESSION['formhandlerFiles'][$name]) >= $maxCount) {
-					$checkFailed = $this->getCheckFailed($check);
+			$found = FALSE;
+			foreach ($_FILES as $idx=>$info) {
+				if(isset($info['name'][$this->formFieldName])) {
+					if(!is_array($info['name'][$this->formFieldName])) {
+						$info['name'][$this->formFieldName] = array($info['name'][$this->formFieldName]);
+					}
+					if (strlen($info['name'][$this->formFieldName][0]) > 0) {
+						$found = TRUE;
+					}
 				}
 			}
+			if ($found) {
+				foreach($info['name'][$this->formFieldName] as $newFileName) {
 
+					$exists = FALSE;
+					foreach($files[$this->formFieldName] as $fileInfo) {
+						if($fileInfo['name'] === $newFileName) {
+							$exists = TRUE;
+						}
+					}
+					if(!$exists) {
+						$checkFailed = $this->getCheckFailed();
+					} elseif($uploadedFilesWithSameNameAction === 'append') {
+						$checkFailed = $this->getCheckFailed();
+					}
+				}
+			}
+		} else {
+			if(!is_array($files[$this->formFieldName])) {
+				$files[$this->formFieldName] = array();
+			}
+			foreach ($_FILES as $idx=>$info) {
+				if(!is_array($info['name'][$this->formFieldName])) {
+					$info['name'][$this->formFieldName] = array($info['name'][$this->formFieldName]);
+				}
+				if (strlen($info['name'][$this->formFieldName][0]) > 0 && count($info['name'][$this->formFieldName]) + count($files[$this->formFieldName]) > $maxCount) {
+					$checkFailed = $this->getCheckFailed();
+				}
+			}
 		}
 		return $checkFailed;
 	}
-
 
 }
 ?>

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileMinSize.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_ErrorCheck_FileMinSize.php 68656 2012-12-10 15:23:29Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -23,29 +23,36 @@
  */
 class Tx_Formhandler_ErrorCheck_FileMinSize extends Tx_Formhandler_AbstractErrorCheck {
 
-	/**
-	 * Validates that an uploaded file has a minimum file size
-	 *
-	 * @param array &$check The TypoScript settings for this error check
-	 * @param string $name The field name
-	 * @param array &$gp The current GET/POST parameters
-	 * @return string The error string
-	 */
-	public function check(&$check, $name, &$gp) {
-		$checkFailed = '';
-		$minSize = $check['params']['minSize'];
-		foreach($_FILES as $sthg => &$files) {
-			if(	strlen($files['name'][$name]) > 0 &&
-			$minSize &&
-			$files['size'][$name] < $minSize) {
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+		$this->mandatoryParameters = array('minSize');
+	}
 
-				unset($files);
-				$checkFailed = $this->getCheckFailed($check);
+	public function check() {
+		$checkFailed = '';
+		$minSize = $this->utilityFuncs->getSingle($this->settings['params'], 'minSize');
+		foreach ($_FILES as $sthg => &$files) {
+			if(!is_array($files['name'][$this->formFieldName])) {
+				$files['name'][$this->formFieldName] = array($files['name'][$this->formFieldName]);
+			}
+			if(empty($files['name'][$this->formFieldName][0])) {
+				$files['name'][$this->formFieldName] = array();
+			}
+
+			if (count($files['name'][$this->formFieldName]) > 0 && $minSize) {
+				if(!is_array($files['size'][$this->formFieldName])) {
+					$files['size'][$this->formFieldName] = array($files['size'][$this->formFieldName]);
+				}
+				foreach($files['size'][$this->formFieldName] as $size) {
+					if($size < $minSize) {
+						unset($files);
+						$checkFailed = $this->getCheckFailed();
+					}
+				}
 			}
 		}
 		return $checkFailed;
 	}
-
 
 }
 ?>

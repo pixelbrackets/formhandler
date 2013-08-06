@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_StoreUploadedFiles.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_Finisher_StoreUploadedFiles.php 63917 2012-06-26 10:18:24Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -31,8 +31,6 @@
  * </code>
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Finisher
  */
 class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_AbstractFinisher {
 
@@ -42,13 +40,11 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 	 * @return array The probably modified GET/POST parameters
 	 */
 	public function process() {
+		if ($this->settings['finishedUploadFolder']) {
 
-		if($this->settings['finishedUploadFolder']) {
-				
 			//move the uploaded files
 			$this->moveUploadedFiles();
 		}
-
 		return $this->gp;
 	}
 
@@ -58,9 +54,8 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 	 *
 	 * TypoScript example:
 	 *
-	 * 1. Set the temporary upload folder and set cleaning
+	 * 1. Set the temporary upload folder
 	 * <code>
-	 * plugin.Tx_Formhandler.settings.files.clearTempFilesOlderThanHours = 24
 	 * plugin.Tx_Formhandler.settings.files.tmpUploadFolder = uploads/formhandler/tmp
 	 * </code>
 	 *
@@ -75,33 +70,63 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 	 */
 	protected function moveUploadedFiles() {
 
-		$newFolder = $this->settings['finishedUploadFolder'];
-		$newFolder = Tx_Formhandler_StaticFuncs::sanitizePath($newFolder);
-		$uploadPath = Tx_Formhandler_StaticFuncs::getDocumentRoot() . $newFolder;
-	
-		session_start();
-		if(isset($_SESSION['formhandlerFiles']) && is_array($_SESSION['formhandlerFiles']) && strlen($newFolder) > 0 ) {
-			foreach($_SESSION['formhandlerFiles'] as $field => $files) {
+		$newFolder = $this->utilityFuncs->getSingle($this->settings, 'finishedUploadFolder');
+		$newFolder = $this->utilityFuncs->sanitizePath($newFolder);
+		$newFolder = $this->replaceSchemeMarkers($newFolder);
+		$newFolder = $this->utilityFuncs->sanitizePath($newFolder);
+		$uploadPath = $this->utilityFuncs->getDocumentRoot() . $newFolder;
+		if(!file_exists($uploadPath)) {
+			$doCreateNonExistingFolder = intval($this->utilityFuncs->getSingle($this->settings, 'createNonExistingFolder'));
+			if(!isset($this->settings['createNonExistingFolder'])) {
+				$doCreateNonExistingFolder = 1;
+			}
+			if($doCreateNonExistingFolder === 1) {
+				t3lib_div::mkdir_deep($this->utilityFuncs->getDocumentRoot(), $newFolder);
+				$this->utilityFuncs->debugMessage('Creating directory "' . $newFolder . '"');
+			} else {
+				$this->utilityFuncs->throwException('Directory "' . $newFolder . '" doesn\'t exist!');
+			}
+		}
+		$sessionFiles = $this->globals->getSession()->get('files');
+		if (is_array($sessionFiles) && !empty($sessionFiles) && strlen($newFolder) > 0) {
+			foreach ($sessionFiles as $field => $files) {
 				$this->gp[$field] = array();
-				foreach($files as $key => $file) {
-					if($file['uploaded_path'] != $uploadPath) {
+				foreach ($files as $key => $file) {
+					if ($file['uploaded_path'] != $uploadPath) {
 						$newFilename = $this->getNewFilename($file['uploaded_name']);
-	
-						Tx_Formhandler_StaticFuncs::debugMessage('copy_file', ($file['uploaded_path'] . $file['uploaded_name']), ($uploadPath . $newFilename));
+						$filename = substr($newFilename, 0, strrpos($newFilename, '.'));
+						$ext = substr($newFilename, strrpos($newFilename, '.'));
+
+						$suffix = 1;
+
+						//rename if exists
+						while(file_exists($uploadPath . $newFilename)) {
+							$newFilename = $filename . '_' . $suffix . $ext;
+							$suffix++;
+						}
+
+						$this->utilityFuncs->debugMessage(
+							'copy_file', 
+							array(
+								($file['uploaded_path'] . $file['uploaded_name']),
+								($uploadPath . $newFilename)
+							)
+						);
 						copy(($file['uploaded_path'] . $file['uploaded_name']), ($uploadPath . $newFilename));
+						t3lib_div::fixPermissions($uploadPath . $newFilename);
 						unlink(($file['uploaded_path'] . $file['uploaded_name']));
-	
-						$_SESSION['formhandlerFiles'][$field][$key]['uploaded_path'] = $uploadPath;
-						$_SESSION['formhandlerFiles'][$field][$key]['uploaded_name'] = $newFilename;
-						$_SESSION['formhandlerFiles'][$field][$key]['uploaded_folder'] = $newFolder;
-						$_SESSION['formhandlerFiles'][$field][$key]['uploaded_url'] = t3lib_div::getIndpEnv('TYPO3_SITE_URL') . $newFolder . $newFilename;
-						if(!is_array($this->gp[$field])) {
+						$sessionFiles[$field][$key]['uploaded_path'] = $uploadPath;
+						$sessionFiles[$field][$key]['uploaded_name'] = $newFilename;
+						$sessionFiles[$field][$key]['uploaded_folder'] = $newFolder;
+						$sessionFiles[$field][$key]['uploaded_url'] = t3lib_div::getIndpEnv('TYPO3_SITE_URL') . $newFolder . $newFilename;
+						if (!is_array($this->gp[$field])) {
 							$this->gp[$field] = array();
 						}
 						array_push($this->gp[$field], $newFilename);
 					}
 				}
 			}
+			$this->globals->getSession()->set('files', $sessionFiles);
 		}
 	}
 
@@ -110,7 +135,6 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 	 *
 	 * @param string The current filename
 	 * @return string The new filename
-	 *
 	 **/
 	protected function getNewFilename($oldName) {
 		$fileparts = explode('.', $oldName);
@@ -118,8 +142,8 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 		array_pop($fileparts);
 		$filename = implode('.', $fileparts);
 
-		$namingScheme = $this->settings['renameScheme'];
-		if(!$namingScheme) {
+		$namingScheme = $this->utilityFuncs->getSingle($this->settings, 'renameScheme');
+		if (!$namingScheme) {
 			$namingScheme = '[filename]_[time]';
 		}
 		$newFilename = $namingScheme;
@@ -127,33 +151,40 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 		$newFilename = str_replace('[time]', time(), $newFilename);
 		$newFilename = str_replace('[md5]', md5($filename), $newFilename);
 		$newFilename = str_replace('[pid]', $GLOBALS['TSFE']->id, $newFilename);
-		if(is_array($this->settings['schemeMarkers.'])) {
-			foreach($this->settings['schemeMarkers.'] as $markerName => $options) {
-				if(!(strpos($markerName, '.') > 0)) {
+		$newFilename = $this->replaceSchemeMarkers($newFilename);
+
+		//remove ',' from filename, would be handled as file separator 
+		$newFilename = str_replace(',', '', $newFilename);
+		$newFilename = $this->utilityFuncs->doFileNameReplace($newFilename);
+		$newFilename .= $fileext;
+		return $newFilename;
+	}
+
+	protected function replaceSchemeMarkers($str) {
+		$replacedStr = $str;
+		if (is_array($this->settings['schemeMarkers.'])) {
+			foreach ($this->settings['schemeMarkers.'] as $markerName => $options) {
+				if (!(strpos($markerName, '.') > 0)) {
 					$value = $options;
 
 					//use field value
-					if(isset($this->settings['schemeMarkers.'][$markerName.'.']) && !strcmp($options, 'fieldValue')) {
-						
+					if (isset($this->settings['schemeMarkers.'][$markerName . '.']) && !strcmp($options, 'fieldValue')) {
 						$value = $this->gp[$this->settings['schemeMarkers.'][$markerName . '.']['field']];
-
-					} elseif(isset($this->settings['schemeMarkers.'][$markerName . '.'])) {
-
-						//pass gp to the plugin 
-						if(!strcmp($options,'USER') || !strcmp($options,'USER_INT')) {
-							$this->settings['schemeMarkers.'][$markerName . '.']['gp'] = $this->gp;
+						if(is_array($value)) {
+							$separator = $this->utilityFuncs->getSingle($this->settings['schemeMarkers.'][$markerName . '.'], 'separator');
+							if(strlen($separator) === 0) {
+								$separator = '-';
+							}
+							$value = implode($separator, $value);
 						}
-						$value = $this->cObj->cObjGetSingle($this->settings['schemeMarkers.'][$markerName], $this->settings['schemeMarkers.'][$markerName . '.']);
+					} elseif (isset($this->settings['schemeMarkers.'][$markerName . '.'])) {
+						$value = $this->utilityFuncs->getSingle($this->settings['schemeMarkers.'], $markerName);
 					}
-					$newFilename = str_replace('[' . $markerName . ']', $value, $newFilename);
+					$replacedStr = str_replace('[' . $markerName . ']', $value, $replacedStr);
 				}
 			}
 		}
-		//remove ',' from filename, would be handled as file seperator 
-		$newFilename = str_replace(',', '', $newFilename);
-
-		$newFilename .= $fileext;
-		return $newFilename;
+		return $replacedStr;
 	}
 
 }

@@ -11,28 +11,51 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 68708 2012-12-11 13:37:00Z reinhardfuehricht $
  *                                                                        */
 
 /**
  * An interceptor doing XSS checking on GET/POST parameters
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Interceptor
  */
 class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInterceptor {
 
 	/**
 	 * The main method called by the controller
 	 *
-	 * @param array $gp The GET/POST parameters
-	 * @param array $settings The defined TypoScript settings for the finisher
 	 * @return array The probably modified GET/POST parameters
 	 */
-	public function process($gp, $settings) {
+	public function process() {
+		$this->removeChars = array();
 
-		return $this->sanitizeValues($gp);
+		//search for a global setting for character removal
+		$globalSetting = $this->settings['fieldConf.']['global.'];
+		if ($globalSetting['removeChars']) {
+			$sep = ',';
+
+			//user set custom rules via cObject
+			$cObjSettings = $globalSetting['removeChars.'];
+			if (is_array($cObjSettings)) {
+				$list = $this->utilityFuncs->getSingle($globalSetting, 'removeChars');
+
+				//user set custom separator
+				if ($globalSetting['separator']) {
+					$sep = $this->utilityFuncs->getSingle($globalSetting, 'separator');
+				}
+			} else {
+
+				//user entered a comma seperated list
+				$list = $globalSetting['removeChars'];
+			}
+			$this->removeChars = t3lib_div::trimExplode($sep, $list);
+		} elseif (intval($this->utilityFuncs->getSingle($globalSetting['removeChars.'], 'disable')) === 1) {
+
+			//user disabled removal globally
+			$this->removeChars = array();
+		}
+		$this->gp = $this->sanitizeValues($this->gp);
+		return $this->gp;
 	}
 
 	/**
@@ -43,31 +66,60 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 	 */
 	public function sanitizeValues($values) {
 
-		if(!is_array($values)) {
+		if (!is_array($values)) {
 			return array();
 		}
 
-		require_once(t3lib_extMgm::extPath('formhandler') . 'Resources/PHP/filtreatment/Filtreatment.php');
+		if (!class_exists('Filtreatment')) {
+			require_once(t3lib_extMgm::extPath('formhandler') . 'Resources/PHP/filtreatment/Filtreatment.php');
+		}
 		$filter = new Filtreatment();
 		foreach ($values as $key => $value) {
-			if(is_array($value)) {
+			if (!in_array($key, $this->doNotSanitizeFields) && is_array($value)) {
 				$sanitizedArray[$key] = $this->sanitizeValues($value);
-			} elseif(!empty($value)) {
+			} elseif (!in_array($key, $this->doNotSanitizeFields) && strlen(trim($value)) > 0)  {
+				$removeChars = $this->removeChars;
 
-				$value = str_replace("\t", '', $value);
-				$isUTF8 = true;
-				if(!$this->isUTF8($value)) {
-					$isUTF8 = false;
+				//search for a specific setting for this field
+				$fieldSetting = $this->settings['fieldConf.'][$key . '.'];
+				if ($fieldSetting['removeChars']) {
+					$sep = ',';
+
+					//user set custom rules via cObject
+					$cObjSettings = $fieldSetting['removeChars.'];
+					if (is_array($cObjSettings)) {
+						$list = $this->utilityFuncs->getSingle($fieldSetting, 'removeChars');
+
+						//user set custom separator
+						if ($fieldSetting['separator']) {
+							$sep = $this->utilityFuncs->getSingle($fieldSetting, 'separator');
+						}
+					} else {
+
+						//user entered a comma seperated list
+						$list = $fieldSetting['removeChars'];
+					}
+					$removeChars = t3lib_div::trimExplode($sep, $list);
+				} elseif (intval($this->utilityFuncs->getSingle($fieldSetting['removeChars.'], 'disable')) === 1) {
+
+					//user disabled removal for this field
+					$removeChars = array();
 				}
 
-				if(!$isUTF8) {
+				$value = str_replace("\t", '', $value);
+				$value = str_replace($removeChars, ' ', $value);
+
+				$isUTF8 = $this->isUTF8($value);
+				if (!$isUTF8) {
 					$value = utf8_encode($value);
 				}
 				$value = $filter->ft_xss($value, 'UTF-8');
 
-				if(!$isUTF8) {
+				if (!$isUTF8) {
 					$value = utf8_decode($value);
 				}
+				$sanitizedArray[$key] = $value;
+			} else {
 				$sanitizedArray[$key] = $value;
 			}
 		}
@@ -86,38 +138,49 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 		$b = 0;
 		$bits = 0;
 		$len = strlen($str);
-		for($i = 0; $i < $len; $i++){
+		for($i = 0; $i < $len; $i++) {
 			$c = ord($str[$i]);
-			if($c > 128){
-				if(($c >= 254)) {
-					return false;
-				} elseif($c >= 252) {
+			if ($c > 128){
+				if (($c >= 254)) {
+					return FALSE;
+				} elseif ($c >= 252) {
 					$bits = 6;
-				} elseif($c >= 248) {
+				} elseif ($c >= 248) {
 					$bits = 5;
-				} elseif($c >= 240) {
+				} elseif ($c >= 240) {
 					$bits = 4;
-				} elseif($c >= 224) {
+				} elseif ($c >= 224) {
 					$bits = 3;
-				} elseif($c >= 192) {
+				} elseif ($c >= 192) {
 					$bits = 2;
 				} else {
-					return false;
+					return FALSE;
 				}
-				if(($i + $bits) > $len) {
-					return false;
+				if (($i + $bits) > $len) {
+					return FALSE;
 				}
 				while($bits > 1) {
 					$i++;
 					$b = ord($str[$i]);
-					if($b < 128 || $b > 191) {
-						return false;
+					if ($b < 128 || $b > 191) {
+						return FALSE;
 					}
 					$bits--;
 				}
 			}
 		}
-		return true;
+		return TRUE;
+	}
+
+	/* (non-PHPdoc)
+	 * @see Classes/Component/Tx_Formhandler_AbstractComponent#init($gp, $settings)
+	*/
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+		$this->doNotSanitizeFields = array();
+		if($this->settings['doNotSanitizeFields']) {
+			$this->doNotSanitizeFields = t3lib_div::trimExplode(',', $this->utilityFuncs->getSingle($this->settings, 'doNotSanitizeFields'));
+		}
 	}
 
 }

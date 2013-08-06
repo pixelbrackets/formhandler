@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_BetweenItems.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_ErrorCheck_BetweenItems.php 62904 2012-05-28 17:04:44Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -23,30 +23,33 @@
  */
 class Tx_Formhandler_ErrorCheck_BetweenItems extends Tx_Formhandler_AbstractErrorCheck {
 
-	/**
-	 * Validates that a specified field is an array and has an item count between two specified values
-	 *
-	 * @param array &$check The TypoScript settings for this error check
-	 * @param string $name The field name
-	 * @param array &$gp The current GET/POST parameters
-	 * @return string The error string
-	 */
-	public function check(&$check, $name, &$gp) {
-		$checkFailed = '';
-		$min = (int) $check['params']['minValue'];
-		$max = (int) $check['params']['maxValue'];
-		if(	isset($gp[$name]) &&
-			!empty($gp[$name]) &&
-			is_array($gp[$name]) &&
-			!empty($min) &&
-			!empty($max) &&
-			(count($gp[$name]) < $min || count($gp[$name]) > $max)) {
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+		$this->mandatoryParameters = array('minValue', 'maxValue');
+	}
 
-			$checkFailed = $this->getCheckFailed($check);
+	public function check() {
+		$checkFailed = '';
+		$min = intval($this->utilityFuncs->getSingle($this->settings['params'], 'minValue'));
+		$max = intval($this->utilityFuncs->getSingle($this->settings['params'], 'maxValue'));
+		$removeEmptyValues = $this->utilityFuncs->getSingle($this->settings['params'], 'removeEmptyValues');
+		if (isset($this->gp[$this->formFieldName]) && is_array($this->gp[$this->formFieldName])) {
+			$valuesArray = $this->gp[$this->formFieldName];
+			if (intval($removeEmptyValues) === 1) {
+				foreach($valuesArray as $key => $fieldName) {
+					if (empty($fieldName)) {
+						unset($valuesArray[$key]);
+					}
+				}
+			}
+			if (count($valuesArray) < $min || count($valuesArray) > $min) {
+				$checkFailed = $this->getCheckFailed();
+			}
+		} elseif($min > 0) {
+			$checkFailed = $this->getCheckFailed();
 		}
 		return $checkFailed;
 	}
-
 
 }
 ?>

@@ -11,17 +11,16 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_CSV.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_Generator_CSV.php 66171 2012-09-19 15:00:13Z reinhardfuehricht $
  *                                                                        */
 
 /**
- * Class to generate CSV files in Backend and Frontend
+ * Class to generate CSV files in Backend
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Generator
  * @uses export2CSV in csv.lib.php
  */
+require_once(t3lib_extMgm::extPath('formhandler') . 'Resources/PHP/parsecsv.lib.php');
 class Tx_Formhandler_Generator_CSV {
 
 	/**
@@ -33,22 +32,21 @@ class Tx_Formhandler_Generator_CSV {
 	protected $csv;
 
 	/**
-	 * The GimmeFive component manager
+	 * The Formhandler component manager
 	 *
 	 * @access protected
-	 * @var Tx_GimmeFive_Component_Manager
+	 * @var Tx_Formhandler_Component_Manager
 	 */
 	protected $componentManager;
 
 	/**
 	 * Default Constructor
 	 *
-	 * @param Tx_GimmeFive_Component_Manager $componentManager The component manager of GimmeFive
+	 * @param Tx_Formhandler_Component_Manager $componentManager The component manager of Formhandler
 	 * @return void
 	 */
-	public function __construct(Tx_GimmeFive_Component_Manager $componentManager) {
+	public function __construct(Tx_Formhandler_Component_Manager $componentManager) {
 		$this->componentManager = $componentManager;
-
 	}
 
 	/**
@@ -59,78 +57,102 @@ class Tx_Formhandler_Generator_CSV {
 	 * @see Tx_Formhandler_Controller_Backend::generateCSV()
 	 * @return void
 	 */
-	public function generateModuleCSV($records, $exportParams = array()) {
+	public function generateModuleCSV($records, $exportParams = array(), $delimiter = ',', $enclosure = '"', $encoding = 'UTF-8') {
 
-		//require class for $this->csv
-		require_once('../../../Resources/PHP/csv.lib.php');
 		$data = array();
+		$dataSorted = array();
 
 		//build data array
-		foreach($records as $record) {
-			if(!is_array($record['params'])) {
+		foreach ($records as $idx => $record) {
+			if (!is_array($record['params'])) {
 				$record['params'] = array();
 			}
-			foreach($record['params'] as &$param) {
-				if(is_array($param)) {
+			foreach ($record['params'] as $subIdx => &$param) {
+				if (is_array($param)) {
 					$param = implode(';', $param);
 				}
 			}
+			if (count($exportParams) == 0 || in_array('pid', $exportParams)) {
+				$record['params']['pid'] = $record['pid'];
+			}
+			if (count($exportParams) == 0 || in_array('submission_date', $exportParams)) {
+				$record['params']['submission_date'] = date('d.m.Y H:i:s', $record['crdate']);
+			}
+			if (count($exportParams) == 0 || in_array('ip', $exportParams)) {
+				$record['params']['ip'] = $record['ip'];
+			}
 			$data[] = $record['params'];
 		}
-		if(count($exportParams) > 0) {
-			foreach($data as &$params) {
-				foreach($params as $key => $value) {
-					if(!in_array($key, $exportParams)) {
+		if (count($exportParams) > 0) {
+			foreach ($data as $idx => &$params) {
+
+				// fill missing fields with empty value
+				foreach ($exportParams as $key => $exportParam) {
+					if (!array_key_exists($exportParam, $params)) {
+						$params[$exportParam] = '';
+					}
+				}
+
+				// remove unwanted fields
+				foreach ($params as $key => $value) {
+					if (!in_array($key, $exportParams)) {
 						unset($params[$key]);
 					}
 				}
 			}
 		}
 
-		//init csv object
-		$this->csv = new export2CSV(',', "\n");
+		// sort data
+		$dataSorted = array();
+		foreach ($data as $idx => $array) {
+			$dataSorted[] = $this->sortArrayByArray($array, $exportParams);
+		}
+		$data = $dataSorted;
 
-		//generate file
-		$this->csv = $this->csv->create_csv_file($data);
-		header('Content-type: application/eml');
-		header('Content-Disposition: attachment; filename=formhandler.csv');
-		echo $this->csv;
+		// create new parseCSV object.
+		$csv = new parseCSV();
+		$csv->delimiter = $csv->output_delimiter = $delimiter;
+		$csv->enclosure = $enclosure;
+		$csv->input_encoding = $this->getInputCharset();
+		$csv->output_encoding = $encoding;
+		$csv->convert_encoding = FALSE;
+		if(strtolower($csv->input_encoding) !== strtolower($csv->output_encoding)) {
+			$csv->convert_encoding = TRUE;
+		}
+		$csv->output('formhandler.csv', $data, $exportParams);
 		die();
 	}
 
 	/**
-	 * Function to generate a CSV file from submitted form values. This function is called by Tx_Formhandler_Finisher_Confirmation
+	 * Sorts the CSV data
 	 *
-	 * @param array $params The values to export to CSV
-	 * @param array $exportParams A list of fields to export. If not set all fields are exported
-	 * @see Tx_Formhandler_Finisher_Confirmation::process()
-	 * @return void
+	 * @return array The sorted array
 	 */
-	public function generateFrontendCSV($params, $exportParams = array()) {
-		//require class for $this->csv
-		require_once('typo3conf/ext/formhandler/Resources/PHP/csv.lib.php');
-
-		//build data
-		foreach($params as $key => &$value) {
-			if(is_array($value)) {
-				$value = implode(',', $value);
+	private function sortArrayByArray($array, $orderArray) {
+		$ordered = array();
+		foreach ($orderArray as $idx => $key) {
+			if (array_key_exists($key, $array)) {
+				$ordered[$key] = $array[$key];
+				unset($array[$key]);
 			}
-			if(count($exportParams) > 0 && !in_array($key, $exportParams)) {
-				unset($params[$key]);
-			}
-			$value = str_replace('"', '""', $value);
 		}
+		return $ordered + $array;
+	}
 
-		//init csv object
-		$this->csv = new export2CSV(',', "\n");
-		$data[0] = $params;
-
-		//generate file
-		$this->csv = $this->csv->create_csv_file($data);
-		header('Content-type: application/eml');
-		header('Content-Disposition: attachment; filename=formhandler.csv');
-		echo $this->csv;
-		die();
+	/**
+	* Get charset used by TYPO3
+	*
+	* @return string Charset
+	*/
+	private function getInputCharset() {
+		if (is_object($GLOBALS['LANG']) && $GLOBALS['LANG']->charSet) {
+			$charset = $GLOBALS['LANG']->charSet;
+		} elseif ($GLOBALS['TYPO3_CONF_VARS']['BE']['forceCharset']) {
+			$charset = $GLOBALS['TYPO3_CONF_VARS']['BE']['forceCharset'];
+		} else	{
+			$charset = 'utf-8';
+		}
+		return $charset;
 	}
 }
 ?>

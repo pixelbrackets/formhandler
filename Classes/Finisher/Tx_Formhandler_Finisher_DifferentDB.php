@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_DifferentDB.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_Finisher_DifferentDB.php 62988 2012-05-31 07:19:56Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -32,8 +32,7 @@
  *
  * Further configuration equals the configuration of Tx_Formhandler_Finisher_DB.
  *
- * @package	Tx_Formhandler
- * @subpackage	Finisher
+ * @author	Reinhard Führicht <rf@typoheads.at>
  * @see Tx_Formhandler_Finisher_DB
  */
 class Tx_Formhandler_Finisher_DifferentDB extends Tx_Formhandler_Finisher_DB {
@@ -96,64 +95,44 @@ class Tx_Formhandler_Finisher_DifferentDB extends Tx_Formhandler_Finisher_DB {
 	protected function save(&$queryFields) {
 
 		//if adodb is installed
-		if(t3lib_extMgm::isLoaded('adodb')) {
-			require_once(t3lib_extMgm::extPath('adodb') . 'adodb/adodb.inc.php');
-				
-			//build sql
-				
+		if (t3lib_extMgm::isLoaded('adodb')) {
+
 			//insert query
-			if(!$this->doUpdate) {
-				foreach($queryFields as $dbfield=>$value) {
-					$fields[$dbfield] = $value;
-					if(!is_numeric($value)) {
-						$fields[$dbfield] = "'" . $value . "'";
-					}
-				}
-				$sql = 'INSERT INTO ' . $this->table . ' (' . (implode(',', array_keys($fields))) . ') VALUES (' . (implode(',', $fields)) . ')';
+			if (!$this->doUpdate) {
+				$query = $GLOBALS['TYPO3_DB']->INSERTquery($this->table, $queryFields);
+				$this->utilityFuncs->debugMessage('sql_request', array($query));
 
 				//update query
 			} else {
 
 				//check if uid of record to update is in GP
-				$uid = $this->gp['uid'];
-				if(!$uid) {
-					$uid = $this->gp[$this->key];
-				}
-				if($uid) {
-					$fields = array();
-					foreach($queryFields as $dbfield => $value) {
-						if(is_numeric($value)) {
-							$fields[] = $dbfield . '=' . $value;
-						} else {
-							$fields[] = $dbfield . "='" . $value . "'";
-						}
-					}
-					$fields = implode(',', $fields);
-					$sql = 'UPDATE ' . $this->table . ' SET (' . $fields . ') WHERE ' . $this->key . '=' . $uid;
+				$uid = $this->getUpdateUid();
+				$uid = $GLOBALS['TYPO3_DB']->fullQuoteStr($uid, $this->table);
+				if ($uid) {
+					$query = $GLOBALS['TYPO3_DB']->UPDATEquery($this->table, $this->key . '=' . $uid, $queryFields);
+					$this->utilityFuncs->debugMessage('sql_request', array($query));
 				} else {
-					Tx_Formhandler_StaticFuncs::debugMessage('no_update_possible');
+					$this->utilityFuncs->debugMessage('no_update_possible', array(), 2);
 				}
 			}
-				
+
 			//open connection
 			$conn = &NewADOConnection($this->driver);
 			$host = $this->host;
-			if($this->port) {
+			if ($this->port) {
 				$host .= ':' . $this->port;
 			}
-			if($this->db) {
+			if ($this->db) {
 				$conn->Connect($host, $this->user, $this->password, $this->db);
 			} else {
 				$conn->Connect($host, $this->user, $this->password);
 			}
-				
+
 			//insert data
-			$conn->Execute($sql);
-				
+			$conn->Execute($query);
+
 			//close connection
 			$conn->Close();
-		} else {
-			Tx_Formhandler_StaticFuncs::throwException('extension_required', 'adodb', 'Tx_Formhandler_Finisher_DifferentDB');
 		}
 	}
 
@@ -163,17 +142,26 @@ class Tx_Formhandler_Finisher_DifferentDB extends Tx_Formhandler_Finisher_DB {
 	 * @see Tx_Formhandler_Finisher_DB::init
 	 * @return void
 	 */
-	protected function init() {
-		parent::init();
-		$this->driver = $this->settings['driver'];
-		$this->db = $this->settings['db'];
-		$this->host = $this->settings['host'];
-		$this->port = $this->settings['port'];
-		$this->user = $this->settings['username'];
-		$this->password = $this->settings['password'];
-		if(!$this->driver) {
-			throw new Exception('No driver given!');
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+
+		//if adodb is installed
+		if (t3lib_extMgm::isLoaded('adodb')) {
+			require_once(t3lib_extMgm::extPath('adodb') . 'adodb/adodb.inc.php');
+
+			$this->driver = $this->utilityFuncs->getSingle($this->settings, 'driver');
+			$this->db = $this->utilityFuncs->getSingle($this->settings, 'db');
+			$this->host = $this->utilityFuncs->getSingle($this->settings, 'host');
+			$this->port = $this->utilityFuncs->getSingle($this->settings, 'port');
+			$this->user = $this->utilityFuncs->getSingle($this->settings, 'username');
+			$this->password = $this->utilityFuncs->getSingle($this->settings, 'password');
+			if (!$this->driver) {
+				throw new Exception('No driver given!');
+			}
+		} else {
+			$this->utilityFuncs->throwException('extension_required', 'adodb', 'Tx_Formhandler_Finisher_DifferentDB');
 		}
+
 	}
 
 }

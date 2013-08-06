@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_Equals.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_ErrorCheck_Equals.php 50192 2011-07-27 18:42:39Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -23,30 +23,26 @@
  */
 class Tx_Formhandler_ErrorCheck_Equals extends Tx_Formhandler_AbstractErrorCheck {
 
-	/**
-	 * Validates that a specified field equals a specified word
-	 *
-	 * @param array &$check The TypoScript settings for this error check
-	 * @param string $name The field name
-	 * @param array &$gp The current GET/POST parameters
-	 * @return string The error string
-	 */
-	public function check(&$check, $name, &$gp) {
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+		$this->mandatoryParameters = array('word');
+	}
+
+	public function check() {
 		$checkFailed = '';
-		$formValue = trim($gp[$name]);
-		
-		if(isset($gp[$name]) && !empty($formValue)) {
-			$checkValue = $this->getCheckValue($check['params']['word'], $check['params']['word.']);
-			if(strcasecmp($formValue, $checkValue)) {
-					
+		$formValue = trim($this->gp[$this->formFieldName]);
+
+		if (isset($this->gp[$this->formFieldName]) && strlen(trim($this->gp[$this->formFieldName])) > 0) {
+			$checkValue = $this->utilityFuncs->getSingle($this->settings['params'], 'word');
+			if (strcasecmp($formValue, $checkValue)) {
+
 					//remove userfunc settings
-				unset($check['params']['word.']);
-				$checkFailed = $this->getCheckFailed($check);
+				unset($this->settings['params']['word.']);
+				$checkFailed = $this->getCheckFailed();
 			}
 		}
 		return $checkFailed;
 	}
-
 
 }
 ?>

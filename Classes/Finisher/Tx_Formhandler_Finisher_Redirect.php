@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Redirect.php 23289 2009-08-12 11:54:05Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Redirect.php 60132 2012-03-30 13:36:38Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -26,13 +26,8 @@
  * </code>
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Finisher
  */
 class Tx_Formhandler_Finisher_Redirect extends Tx_Formhandler_AbstractFinisher {
-
-
-
 
 	/**
 	 * The main method called by the controller
@@ -41,18 +36,14 @@ class Tx_Formhandler_Finisher_Redirect extends Tx_Formhandler_AbstractFinisher {
 	 */
 	public function process() {
 
-
 		//read redirect page
-		$emailRedirect = $this->settings['redirectPage'];
-
-		$url = '';
-
-		if(!isset($emailRedirect)) {
-			return;
+		$redirectPage = $this->utilityFuncs->getSingle($this->settings, 'redirectPage');
+		if (!isset($redirectPage)) {
+			return $this->gp;
 		}
+		$this->globals->getSession()->reset();
 
-		Tx_Formhandler_Staticfuncs::doRedirect($emailRedirect, $this->settings['correctRedirectUrl']);
-		exit();
+		$this->utilityFuncs->doRedirectBasedOnSettings($this->settings, $this->gp);
 	}
 
 	/**
@@ -62,11 +53,11 @@ class Tx_Formhandler_Finisher_Redirect extends Tx_Formhandler_AbstractFinisher {
 	 * @param array The TypoScript configuration
 	 * @return void
 	 */
-	public function loadConfig($gp,$tsConfig) {
+	public function init($gp, $tsConfig) {
 		$this->gp = $gp;
 		$this->settings = $tsConfig;
-		$redirect = Tx_Formhandler_StaticFuncs::pi_getFFvalue($this->cObj->data['pi_flexform'], 'redirect_page', 'sMISC');
-		if($redirect) {
+		$redirect = $this->utilityFuncs->pi_getFFvalue($this->cObj->data['pi_flexform'], 'redirect_page', 'sMISC');
+		if ($redirect) {
 			$this->settings['redirectPage'] = $redirect;
 		}
 	}

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_NotDefaultValue.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_ErrorCheck_NotDefaultValue.php 50192 2011-07-27 18:42:39Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -24,31 +24,23 @@
  */
 class Tx_Formhandler_ErrorCheck_NotDefaultValue extends Tx_Formhandler_AbstractErrorCheck {
 
-	/**
-	 * Validates that a specified field doesn't equal a specified default value.
-	 * This default value could have been set via a PreProcessor.
-	 *
-	 * @param array &$check The TypoScript settings for this error check
-	 * @param string $name The field name
-	 * @param array &$gp The current GET/POST parameters
-	 * @return string The error string
-	 */
-	public function check(&$check, $name, &$gp) {
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+		$this->mandatoryParameters = array('defaultValue');
+	}
+
+	public function check() {
 		$checkFailed = '';
-		if(isset($gp[$name]) && !empty($gp[$name])) {
-			$defaultValue = $check['params']['defaultValue'];
-			if(is_array($check['params']['defaultValue.'])) {
-				$defaultValue = $this->cObj->cObjGetSingle($check['params']['defaultValue'], $check['params']['defaultValue.']);
-			}
+		if (isset($this->gp[$this->formFieldName]) && strlen(trim($this->gp[$this->formFieldName])) > 0) {
+			$defaultValue = $this->utilityFuncs->getSingle($this->settings['params'], 'defaultValue');
 			if (strlen($defaultValue) > 0) {
-				if (!strcmp($defaultValue, $gp[$name])) {
-					$checkFailed = $this->getCheckFailed($check);
+				if (!strcmp($defaultValue, $this->gp[$this->formFieldName])) {
+					$checkFailed = $this->getCheckFailed();
 				}
 			}
 		}
 		return $checkFailed;
 	}
-
 
 }
 ?>

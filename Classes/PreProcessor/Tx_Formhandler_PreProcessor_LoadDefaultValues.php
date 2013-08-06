@@ -11,9 +11,8 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_PreProcessor_LoadDefaultValues.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_PreProcessor_LoadDefaultValues.php 58497 2012-02-25 19:00:37Z reinhardfuehricht $
  *                                                                        */
-
 
 /**
  * This PreProcessor adds the posibility to load default values.
@@ -40,25 +39,20 @@
  * plugin.Tx_Formhandler.settings.predef.multistep_example.2.validators.1.config.fieldConf.[field].errorcheck.1.notDefaultValue.defaultValue < plugin.Tx_Formhandler.settings.predef.multistep_example.preProcessors.1.config.1.[field].defaultValue
  *
  * @author	Johannes Feustel
- * @package	Tx_Formhandler
- * @subpackage	PreProcessor
  */
 
 class Tx_Formhandler_PreProcessor_LoadDefaultValues extends Tx_Formhandler_AbstractPreProcessor {
 
-	public function process(&$gp, $settings) {
-		$this->gp = $gp;
-
-		foreach ($settings as $step => $stepSettings){
-			$step= preg_replace('/\.$/', '', $step);
+	public function process() {
+		foreach ($this->settings as $step => $stepSettings){
+			$step = preg_replace('/\.$/', '', $step);
 
 			if ($step == 1){
 				$this->loadDefaultValuesToGP($stepSettings);
-			} elseif(is_numeric($step)) {
+			} elseif (is_numeric($step)) {
 				$this->loadDefaultValuesToSession($stepSettings, $step);
 			}
 		}
-
 		return $this->gp;
 	}
 
@@ -72,20 +66,7 @@ class Tx_Formhandler_PreProcessor_LoadDefaultValues extends Tx_Formhandler_Abstr
 	function loadDefaultValuesToGP($settings) {
 
 		if (is_array($settings)) {
-			foreach (array_keys($settings) as $fN) {
-				$fN = preg_replace('/\.$/', '', $fN);
-
-				if (!isset($this->gp[$fN])) {
-					if($settings[$fN . '.']['defaultValue'] && $settings[$fN . '.']['defaultValue.']) {
-						$this->gp[$fN] = $this->cObj->cObjGetSingle($settings[$fN . '.']['defaultValue'],$settings[$fN . '.']['defaultValue.']);
-					} elseif($settings[$fN . '.']['defaultValue.']) {
-						$this->gp[$fN] = $this->cObj->TEXT($settings[$fN . '.']['defaultValue.']);
-					} elseif ($settings[$fN . '.']['defaultValue'] || $settings[$fN . '.']['defaultValue'] == 0) {
-						$this->gp[$fN] = $settings[$fN . '.']['defaultValue'];
-					}
-						
-				}
-			}
+			$this->setDefaultValues($settings, $this->gp);
 		}
 	}
 
@@ -97,25 +78,36 @@ class Tx_Formhandler_PreProcessor_LoadDefaultValues extends Tx_Formhandler_Abstr
 	 * @param int $step
 	 */
 	private function loadDefaultValuesToSession($settings, $step){
-
-		session_start();
-
 		if (is_array($settings) && $step) {
-			foreach (array_keys($settings) as $fN) {
-				$fN = preg_replace('/\.$/', '', $fN);
-				if (!isset($_SESSION['formhandlerValues'][$step][$fN])) {
-					if($settings[$fN . '.']['defaultValue'] && $settings[$fN . '.']['defaultValue.']) {
-						$_SESSION['formhandlerValues'][$step][$fN] =  $this->cObj->cObjGetSingle($settings[$fN . '.']['defaultValue'],$settings[$fN.'.']['defaultValue.']);
-					} elseif($settings[$fN . '.']['defaultValue.']) {
-						$_SESSION['formhandlerValues'][$step][$fN] =  $this->cObj->TEXT($settings[$fN . '.']['defaultValue.']);
-					} elseif ($settings[$fN . '.']['defaultValue'] || $settings[$fN . '.']['defaultValue'] == 0) {
-						$_SESSION['formhandlerValues'][$step][$fN] =  $settings[$fN . '.']['defaultValue'];
+			$values = $this->globals->getSession()->get('values');
+			$this->setDefaultValues($settings, $values[$step]);
+			$this->globals->getSession()->set('values', $values);
+		}
+	}
+
+	/**
+	 * Recursive method to set the GP values 
+	 *
+	 * @return void
+	 * @param array $fields
+	 * @param array &$currentLevelGP
+	 */
+	protected function setDefaultValues($fields, &$currentLevelGP) {
+		$firstLevelFields = array_keys($fields);
+		if(is_array($firstLevelFields)) {
+			foreach ($firstLevelFields as $idx => $fieldName) {
+				$fieldName = preg_replace('/\.$/', '', $fieldName);
+				if(!isset($fields[$fieldName . '.']['defaultValue']) && is_array($fields[$fieldName . '.'])) {
+					$this->setDefaultValues($fields[$fieldName . '.'], $currentLevelGP[$fieldName]);
+				} elseif (!isset($currentLevelGP[$fieldName])) {
+					$currentLevelGP[$fieldName] = $this->utilityFuncs->getSingle($fields[$fieldName . '.'], 'defaultValue');
+					if ($fields[$fieldName . '.']['defaultValue.']['separator']) {
+						$separator = $this->utilityFuncs->getSingle($fields[$fieldName . '.']['defaultValue.'], 'separator');
+						$currentLevelGP[$fieldName] = t3lib_div::trimExplode($separator, $currentLevelGP[$fieldName]);
 					}
-						
 				}
 			}
 		}
-
 	}
 }
 

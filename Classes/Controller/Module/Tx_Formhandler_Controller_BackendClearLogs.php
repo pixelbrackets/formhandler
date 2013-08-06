@@ -16,17 +16,14 @@
  * Controller for Backend Module of Formhandler handling the "clear log" option
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Controller
  */
 class Tx_Formhandler_Controller_BackendClearLogs extends Tx_Formhandler_AbstractController {
 
-
 	/**
-	 * The GimmeFive component manager
+	 * The Formhandler component manager
 	 *
 	 * @access protected
-	 * @var Tx_GimmeFive_Component_Manager
+	 * @var Tx_Formhandler_Component_Manager
 	 */
 	protected $componentManager;
 
@@ -42,14 +39,24 @@ class Tx_Formhandler_Controller_BackendClearLogs extends Tx_Formhandler_Abstract
 	/**
 	 * The constructor for a finisher setting the component manager and the configuration.
 	 *
-	 * @param Tx_GimmeFive_Component_Manager $componentManager
+	 * @param Tx_Formhandler_Component_Manager $componentManager
 	 * @param Tx_Formhandler_Configuration $configuration
 	 * @return void
 	 */
-	public function __construct(Tx_GimmeFive_Component_Manager $componentManager, Tx_Formhandler_Configuration $configuration) {
+	public function __construct(Tx_Formhandler_Component_Manager $componentManager, Tx_Formhandler_Configuration $configuration, Tx_Formhandler_UtilityFuncs $utilityFuncs) {
 		$this->componentManager = $componentManager;
 		$this->configuration = $configuration;
+		$this->utilityFuncs = $utilityFuncs;
+	}
 
+	/**
+	 * Sets the given ID as the current page ID.
+	 *
+	 * @param int $id
+	 * @return void
+	 */
+	public function setId($id) {
+		$this->id = $id;
 	}
 
 	/**
@@ -60,6 +67,10 @@ class Tx_Formhandler_Controller_BackendClearLogs extends Tx_Formhandler_Abstract
 	 */
 	protected function init() {
 		global $LANG;
+
+		$tsconfig = t3lib_BEfunc::getModTSconfig($this->id, 'tx_formhandler_mod1');
+		$this->settings = $tsconfig['properties']['config.'];
+
 		$LANG->includeLLFile('EXT:formhandler/Resources/Language/locallang.xml');
 		$templatePath = t3lib_extMgm::extPath('formhandler') . 'Resources/HTML/backend/';
 		$templateFile = $templatePath . 'template.html';
@@ -72,67 +83,67 @@ class Tx_Formhandler_Controller_BackendClearLogs extends Tx_Formhandler_Abstract
 	 * @return string rendered view
 	 */
 	public function process() {
-		
+		global $LANG;
+		$content = '';
+
 		//init
 		$this->init();
 
-		//init gp params
-		$params = t3lib_div::_GP('formhandler');
-		
-		if(isset($params['clearTables']) && is_array($params['clearTables'])) {
-			$this->clearTables($params['clearTables']);
+		if(intval($this->settings['enableClearLogs']) !== 1 && !$GLOBALS['BE_USER']->user['admin']) {
+			return;
 		}
 
-		return $this->getOverview();
+		$row = $GLOBALS['TYPO3_DB']->exec_SELECTgetSingleRow('COUNT(*) as rowCount', 'tx_formhandler_log', '1=1');
+		$rowCount = $row['rowCount'];
+
+		//init gp params
+		$params = t3lib_div::_GP('formhandler');
+		if (isset($params['doDelete']) && intval($params['doDelete']) === 1) {
+			$messageHeader = $LANG->getLL('clear-logs-success-header');
+			$messageText = sprintf($LANG->getLL('clear-logs-success-message'), intval($rowCount));
+			$message = t3lib_div::makeInstance('t3lib_FlashMessage', $messageText, $messageHeader);
+			$content = $message->render();
+			$this->clearTables();
+			$rowCount = 0;
+		}
+
+		$content .= $this->getOverview($rowCount);
+		return $content;
 	}
-	
+
 	/**
 	 * Truncates tables.
 	 *
 	 * @param array The names of the tables to truncate
 	 * @return void
 	 */
-	protected function clearTables($tablesArray) {
-		foreach($tablesArray as $table) {
-			$GLOBALS['TYPO3_DB']->sql_query('TRUNCATE ' . $table);
-		}
+	protected function clearTables() {
+		$GLOBALS['TYPO3_DB']->sql_query('TRUNCATE tx_formhandler_log');
 	}
-	
+
 	/**
 	 * Returns HTML code for an overview table showing all found tables and how many rows are in them.
 	 *
 	 * @global $LANG
 	 * @return string
 	 */
-	protected function getOverview() {
+	protected function getOverview($rowCount) {
 		global $LANG;
-		$existingTables = $GLOBALS['TYPO3_DB']->admin_get_tables();
-		$code = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###CLEAR_LOGS###');
+		$code = $this->utilityFuncs->getSubpart($this->templateCode, '###CLEAR_LOGS###');
 		$markers = array();
 		$markers['###URL###'] = $_SERVER['PHP_SELF'];
-		$markers['###LLL:table###'] = $LANG->getLL('table');
-		$markers['###LLL:total_rows###'] = $LANG->getLL('total_rows');
-		
+		$markers['###UID###'] = $this->id;
+
 		$markers['###TABLES###'] = '';
-		foreach($existingTables as $table => $tableSettings) {
-			
-			if(strpos($table, 'tx_formhandler_') > -1) {
-				$res = $GLOBALS['TYPO3_DB']->sql_query('SELECT COUNT(*) as rowCount FROM ' . $table);
-				if($res) {
-					$rowCode = Tx_Formhandler_StaticFuncs::getSubpart($this->templateCode, '###CLEAR_LOGS_TABLE###');
-					$tableMarkers = array();
-					$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
-					$tableMarkers['###TABLE###'] = $table;
-					$tableMarkers['###ROW_COUNT###'] = $row['rowCount'];
-					$GLOBALS['TYPO3_DB']->sql_free_result($res);
-					$markers['###TABLES###'] .= Tx_Formhandler_StaticFuncs::substituteMarkerArray($rowCode, $tableMarkers);
-				}
-				
-			}
-			
+		if($rowCount > 0) {
+			$markers['###LLL:clear-logs-message###'] = sprintf($LANG->getLL('clear-logs-message'), intval($rowCount));
+			$markers['###LLL:clear###'] = $LANG->getLL('clear');
+		} else {
+			$code = $this->utilityFuncs->getSubpart($this->templateCode, '###NO_LOGS###');
+			$markers['###LLL:clear-logs-message###'] = $LANG->getLL('no-logs-message');
 		}
-		$markers['###LLL:clear###'] = $LANG->getLL('clear_selected_tables');
-		return Tx_Formhandler_StaticFuncs::substituteMarkerArray($code, $markers);
+		
+		return $this->utilityFuncs->substituteMarkerArray($code, $markers);
 	}
 
 }

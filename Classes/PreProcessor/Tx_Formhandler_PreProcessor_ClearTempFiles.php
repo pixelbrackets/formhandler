@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_PreProcessor_ClearTempFiles.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_PreProcessor_ClearTempFiles.php 65719 2012-08-29 09:55:45Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -38,65 +38,58 @@ class Tx_Formhandler_PreProcessor_ClearTempFiles extends Tx_Formhandler_Abstract
 	 * @param array $settings The defined TypoScript settings for the finisher
 	 * @return array The probably modified GET/POST parameters
 	 */
-	public function process(&$gp, $settings) {
-		$this->init($gp, $settings);
-		$this->olderThanValue = $this->settings['clearTempFilesOlderThan.']['value'];
-		$this->olderThanUnit = $this->settings['clearTempFilesOlderThan.']['unit'];
-		if(!empty($this->olderThanValue) && is_numeric($this->olderThanValue)) {
-			$uploadFolder = Tx_Formhandler_StaticFuncs::getTempUploadFolder();
-			$this->clearTempFiles($uploadFolder, $this->olderThanValue, $this->olderThanValue);
+	public function process() {
+		$olderThanValue = $this->utilityFuncs->getSingle($this->settings['clearTempFilesOlderThan.'], 'value');
+		$olderThanUnit = $this->utilityFuncs->getSingle($this->settings['clearTempFilesOlderThan.'], 'unit');
+		if (strlen($olderThanValue) > 0 && is_numeric($olderThanValue)) {
+			$this->clearTempFiles($olderThanValue, $olderThanUnit);
 		}
 		return $this->gp;
 	}
-	
-	protected function init($gp, $settings) {
-		$this->gp = $gp;
-		$this->settings = $settings;
-	}
-	
+
 	/**
 	 * Deletes all files older than a specific time in a temporary upload folder.
 	 * Settings for the threshold time and the folder are made in TypoScript.
 	 *
-	 * Here is an example:
-	 * <code>
-	 * plugin.Tx_Formhandler.settings.files.clearTempFilesOlderThanHours = 24
-	 * plugin.Tx_Formhandler.settings.files.tmpUploadFolder = uploads/formhandler/tmp
-	 * </code>
-	 *
-	 * @param integer $olderThan Delete files older than $olderThan hours.
+	 * @param integer $olderThanValue Delete files older than this value.
+	 * @param string $olderThanUnit The unit for $olderThan. May be seconds|minutes|hours|days
 	 * @return void
 	 * @author	Reinhard Führicht <rf@typoheads.at>
 	 */
-	protected function clearTempFiles($uploadFolder, $olderThanValue, $olderThanUnit) {
-		if(!$olderThanValue) {
+	protected function clearTempFiles($olderThanValue, $olderThanUnit) {
+		if (!$olderThanValue) {
 			return;
 		}
 
-		//build absolute path to upload folder
-		$path = Tx_Formhandler_StaticFuncs::getDocumentRoot() . $uploadFolder;
+		$uploadFolders = $this->utilityFuncs->getAllTempUploadFolders();
 
-		//read files in directory
-		$tmpFiles = t3lib_div::getFilesInDir($path);
+		foreach($uploadFolders as $uploadFolder) {
 
-		Tx_Formhandler_StaticFuncs::debugMessage('cleaning_temp_files', $path);
+			//build absolute path to upload folder
+			$path = $this->utilityFuncs->getDocumentRoot() . $uploadFolder;
 
-		//calculate threshold timestamp
-		//hours * 60 * 60 = millseconds
-		$threshold = Tx_Formhandler_StaticFuncs::getTimestamp($olderThanValue, $olderThanUnit);
+			//read files in directory
+			$tmpFiles = t3lib_div::getFilesInDir($path);
 
-		//for all files in temp upload folder
-		foreach($tmpFiles as $file) {
+			$this->utilityFuncs->debugMessage('cleaning_temp_files', array($path));
 
-			//if creation timestamp is lower than threshold timestamp
-			//delete the file
-			$creationTime = filemtime($path . $file);
+			//calculate threshold timestamp
+			$threshold = $this->utilityFuncs->getTimestamp($olderThanValue, $olderThanUnit);
 
-			//fix for different timezones
-			$creationTime += date('O') / 100 * 60;
-			if($creationTime < $threshold) {
-				unlink($path . $file);
-				Tx_Formhandler_StaticFuncs::debugMessage('deleting_file', $file);
+			//for all files in temp upload folder
+			foreach ($tmpFiles as $idx => $file) {
+
+				//if creation timestamp is lower than threshold timestamp
+				//delete the file
+				$creationTime = filemtime($path . $file);
+	
+				//fix for different timezones
+				$creationTime += date('O') / 100 * 60;
+	
+				if ($creationTime < $threshold) {
+					unlink($path . $file);
+					$this->utilityFuncs->debugMessage('deleting_file', array($file));
+				}
 			}
 		}
 	}

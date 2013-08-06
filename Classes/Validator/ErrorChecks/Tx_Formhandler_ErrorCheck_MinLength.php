@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_MinLength.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_ErrorCheck_MinLength.php 50192 2011-07-27 18:42:39Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -23,27 +23,23 @@
  */
 class Tx_Formhandler_ErrorCheck_MinLength extends Tx_Formhandler_AbstractErrorCheck {
 
-	/**
-	 * Validates that a specified field is a string and at least a specified count of characters long
-	 *
-	 * @param array &$check The TypoScript settings for this error check
-	 * @param string $name The field name
-	 * @param array &$gp The current GET/POST parameters
-	 * @return string The error string
-	 */
-	public function check(&$check, $name, &$gp) {
-		$checkFailed = '';
-		$min = $check['params']['value'];
-		if(	isset($gp[$name]) &&
-		!empty($gp[$name]) &&
-		!empty($min) &&
-		strlen(trim($gp[$name])) < $min) {
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+		$this->mandatoryParameters = array('value');
+	}
 
-			$checkFailed = $this->getCheckFailed($check);
+	public function check() {
+		$checkFailed = '';
+		$min = $this->utilityFuncs->getSingle($this->settings['params'], 'value');
+		if (isset($this->gp[$this->formFieldName]) &&
+			mb_strlen(trim($this->gp[$this->formFieldName]), $GLOBALS['TSFE']->renderCharset) > 0 &&
+			intVal($min) > 0 &&
+			mb_strlen(trim($this->gp[$this->formFieldName]), $GLOBALS['TSFE']->renderCharset) < intval($min)) {
+
+			$checkFailed = $this->getCheckFailed();
 		}
 		return $checkFailed;
 	}
-
 
 }
 ?>

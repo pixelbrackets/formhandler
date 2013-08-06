@@ -11,18 +11,16 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_StoreGP.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_Finisher_StoreGP.php 67354 2012-10-22 14:01:36Z reinhardfuehricht $
  *                                                                        */
 
 /**
- * This finisher stores GP to session for further use in other plugins and update $_SESSION 
+ * This finisher stores GP to session for further use in other plugins and update session 
  * to not loose changes in gp made by other finishers (e.g. insert_id from Finisher_DB)
  * Automaically called if plugin.Tx_Formhandler.settings.predef.example.storeGP = 1 is set
  * No further configuration.
  *
  * @author Johannes Feustel
- * @package	Tx_Formhandler
- * @subpackage	Finisher
  */
 class Tx_Formhandler_Finisher_StoreGP extends Tx_Formhandler_AbstractFinisher {
 
@@ -36,7 +34,7 @@ class Tx_Formhandler_Finisher_StoreGP extends Tx_Formhandler_AbstractFinisher {
 		//store in Session for further use by other plugins
 		$this->storeUserGPinSession();
 
-		//update $_SESSION['formhandlerValues']
+		//update values in session
 		$this->updateSession();
 
 		return $this->gp;
@@ -48,28 +46,31 @@ class Tx_Formhandler_Finisher_StoreGP extends Tx_Formhandler_AbstractFinisher {
 	 * @return void
 	 */
 	protected function storeUserGPinSession() {
-		foreach ($this->gp as $key => $value) {
-			$GLOBALS['TSFE']->fe_user->setKey('ses', $key, $value);
+		$sessionKey = 'finisher-storegp';
+		if($this->settings['sessionKey']) {
+			$sessionKey = $this->utilityFuncs->getSingle($this->settings, 'sessionKey');
 		}
+		$dataToStoreInSession = $this->gp;
+		$GLOBALS['TSFE']->fe_user->setKey('ses', $sessionKey, $dataToStoreInSession);
+		$GLOBALS['TSFE']->fe_user->storeSessionData();
 	}
 
 	/**
 	 * Stores $this->gp parameters in SESSION
-	 * actually only needed for finisher_confirmation
+	 * actually only needed for finisher_submittedok
 	 *
 	 * @return void
 	 */
 	protected function updateSession() {
-		session_start();
 
-		//reset session
-		unset($_SESSION['formhandlerValues']);
+		$newValues = array();
 
 		//set the variables in session
 		//no need to seperate steps in finishers, so simply store to step 1
-		foreach($this->gp as $key => $value) {
-			$_SESSION['formhandlerValues'][1][$key] = $value;
+		foreach ($this->gp as $key => $value) {
+			$newValues[1][$key] = $value;
 		}
+		$this->globals->getSession()->set('values', $newValues);
 	}
 
 }
