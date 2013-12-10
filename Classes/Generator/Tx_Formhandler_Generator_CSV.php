@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_CSV.php 36376 2010-08-05 09:19:56Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Generator_CSV.php 37698 2010-09-06 07:46:06Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -61,8 +61,7 @@ class Tx_Formhandler_Generator_CSV {
 	 */
 	public function generateModuleCSV($records, $exportParams = array()) {
 
-		//require class for $this->csv
-		require_once('../../../Resources/PHP/csv.lib.php');
+		require_once(t3lib_extMgm::extPath('formhandler') . 'Resources/PHP/parsecsv.lib.php');
 		$data = array();
 		$dataSorted = array();
 
@@ -80,6 +79,15 @@ class Tx_Formhandler_Generator_CSV {
 		}
 		if(count($exportParams) > 0) {
 			foreach($data as &$params) {
+				
+				// fill missing fields with empty value
+				foreach($exportParams as $key => $param) {
+					if(!array_key_exists($param, $params)) {
+						$params[$param] = '';
+					}
+				}
+				
+				// remove unwanted fields
 				foreach($params as $key => $value) {
 					if(!in_array($key, $exportParams)) {
 						unset($params[$key]);
@@ -95,14 +103,9 @@ class Tx_Formhandler_Generator_CSV {
 		}
 		$data = $dataSorted;
 
-		//init csv object
-		$this->csv = new export2CSV(',', "\n");
-
-		//generate file
-		$this->csv = $this->csv->create_csv_file($data);
-		header('Content-type: application/eml');
-		header('Content-Disposition: attachment; filename=formhandler.csv');
-		echo $this->csv;
+		// create new parseCSV object.
+		$csv = new parseCSV();
+		$csv->output('formhandler.csv', $data, $exportParams);
 		die();
 	}
 
@@ -115,8 +118,7 @@ class Tx_Formhandler_Generator_CSV {
 	 * @return void
 	 */
 	public function generateFrontendCSV($params, $exportParams = array()) {
-		//require class for $this->csv
-		require_once('typo3conf/ext/formhandler/Resources/PHP/csv.lib.php');
+		require_once(t3lib_extMgm::extPath('formhandler') . 'Resources/PHP/parsecsv.lib.php');
 
 		//build data
 		foreach($params as $key => &$value) {
@@ -129,15 +131,9 @@ class Tx_Formhandler_Generator_CSV {
 			$value = str_replace('"', '""', $value);
 		}
 
-		//init csv object
-		$this->csv = new export2CSV(',', "\n");
-		$data[0] = $params;
-
-		//generate file
-		$this->csv = $this->csv->create_csv_file($data);
-		header('Content-type: application/eml');
-		header('Content-Disposition: attachment; filename=formhandler.csv');
-		echo $this->csv;
+		// create new parseCSV object.
+		$csv = new parseCSV();
+		$csv->output('formhandler.csv', $data, $exportParams);
 		die();
 	}
 	

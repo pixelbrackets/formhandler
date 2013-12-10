@@ -51,36 +51,37 @@ class Tx_GimmeFive_Component_Manager {
 		spl_autoload_register(array($this, 'loadClass'));
 	}
 
-    private function __clone() {}
-    
-	/**
-     * Loads the TypoScript config/setup for the formhandler on the current page.
-     */
-    private function loadTypoScriptConfig() {
-    	if(!is_array(Tx_Formhandler_Globals::$overrideSettings['settings.'])) {
-	  		$sysPageObj = t3lib_div::makeInstance('t3lib_pageSelect');
-			if(!$GLOBALS['TSFE']->sys_page) {
-				$GLOBALS['TSFE']->sys_page = $sysPageObj;
-			}
-			$rootLine = $sysPageObj->getRootLine($GLOBALS['TSFE']->id);
-			$TSObj = t3lib_div::makeInstance('t3lib_tsparser_ext');
-			$TSObj->tt_track = 0;
-			$TSObj->init();
-			$TSObj->runThroughTemplates($rootLine);
-			$TSObj->generateConfig();
-			$conf = $TSObj->setup['plugin.']['Tx_Formhandler.']['settings.'];
-		} else {
-			$conf = Tx_Formhandler_Globals::$overrideSettings['settings.'];
-		}
-		
-	
-		if(Tx_Formhandler_Globals::$predef && is_array($conf['predef.'][Tx_Formhandler_Globals::$predef])) {
-			$conf = $conf['predef.'][Tx_Formhandler_Globals::$predef];
-		}
+	private function __clone() {}
 
-		$this->tsConf = $conf;
-    }
-   	
+	/**
+	 * Loads the TypoScript config/setup for the formhandler on the current page.
+	*/
+	private function loadTypoScriptConfig() {
+		$conf = array();
+		if(!is_array(Tx_Formhandler_Globals::$overrideSettings['settings.'])) {
+			$sysPageObj = t3lib_div::makeInstance('t3lib_pageSelect');
+				if(!$GLOBALS['TSFE']->sys_page) {
+					$GLOBALS['TSFE']->sys_page = $sysPageObj;
+				}
+				$rootLine = $sysPageObj->getRootLine($GLOBALS['TSFE']->id);
+				$TSObj = t3lib_div::makeInstance('t3lib_tsparser_ext');
+				$TSObj->tt_track = 0;
+				$TSObj->init();
+				$TSObj->runThroughTemplates($rootLine);
+				$TSObj->generateConfig();
+				if($TSObj->setup['plugin.']['Tx_Formhandler.']['settings.']['additionalIncludePaths.']) {
+					$conf = $TSObj->setup['plugin.']['Tx_Formhandler.']['settings.']['additionalIncludePaths.'];
+				}
+				if(Tx_Formhandler_Globals::$predef && is_array($TSObj->setup['plugin.']['Tx_Formhandler.']['settings.']['predef.'][Tx_Formhandler_Globals::$predef]['additionalIncludePaths.'])) {
+					$conf = array_merge($conf, $TSObj->setup['plugin.']['Tx_Formhandler.']['settings.']['predef.'][Tx_Formhandler_Globals::$predef]['additionalIncludePaths.']);
+				}
+			} elseif(Tx_Formhandler_Globals::$overrideSettings['settings.']['additionalIncludePaths.']) {
+				$conf = Tx_Formhandler_Globals::$overrideSettings['settings.']['additionalIncludePaths.'];
+			}
+
+		$this->additionalIncludePaths = $conf;
+	}
+
 	/**
 	 * Returns a component object from the cache. If there is no object stored already, a new one is created and stored in the cache.
 	 *
@@ -377,8 +378,8 @@ class Tx_GimmeFive_Component_Manager {
 			}
 			
 			
-			if(is_array($this->tsConf['additionalIncludePaths.'])) {
-				foreach($this->tsConf['additionalIncludePaths.'] as $dir) {
+			if(is_array($this->additionalIncludePaths)) {
+				foreach($this->additionalIncludePaths as $dir) {
 					
 					$temp = array();
 					$temp = $this->buildArrayOfClassFiles($dir);

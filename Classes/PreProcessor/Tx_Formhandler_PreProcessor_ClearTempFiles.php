@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_PreProcessor_ClearTempFiles.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_PreProcessor_ClearTempFiles.php 38453 2010-09-22 13:10:01Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -48,12 +48,7 @@ class Tx_Formhandler_PreProcessor_ClearTempFiles extends Tx_Formhandler_Abstract
 		}
 		return $this->gp;
 	}
-	
-	protected function init($gp, $settings) {
-		$this->gp = $gp;
-		$this->settings = $settings;
-	}
-	
+
 	/**
 	 * Deletes all files older than a specific time in a temporary upload folder.
 	 * Settings for the threshold time and the folder are made in TypoScript.
