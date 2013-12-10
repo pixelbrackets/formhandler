@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_MinItems.php 50192 2011-07-27 18:42:39Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_MinItems.php 53970 2011-11-09 17:53:39Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -40,6 +40,8 @@ class Tx_Formhandler_ErrorCheck_MinItems extends Tx_Formhandler_AbstractErrorChe
 			} else {
 				$checkFailed = $this->getCheckFailed();
 			}
+		} else {
+			$checkFailed = $this->getCheckFailed();
 		}
 		return $checkFailed;
 	}

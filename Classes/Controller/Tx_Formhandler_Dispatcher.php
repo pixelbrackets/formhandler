@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Dispatcher.php 49882 2011-07-18 08:27:10Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Dispatcher.php 52892 2011-10-11 15:07:31Z reinhardfuehricht $
  *                                                                        */
 
 require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Formhandler_Component_Manager.php');
@@ -72,7 +72,9 @@ class Tx_Formhandler_Dispatcher extends tslib_pibase {
 			$templateFile = $this->pi_getFFvalue($this->cObj->data['pi_flexform'], 'template_file', 'sDEF');
 			$langFile = $this->pi_getFFvalue($this->cObj->data['pi_flexform'], 'lang_file', 'sDEF');
 			$predef = $this->pi_getFFvalue($this->cObj->data['pi_flexform'], 'predefined', 'sDEF');
-
+			if($setup['usePredef']) {
+				$predef = $setup['usePredef'];
+			}
 			$this->globals->setPredef($predef);
 			$this->globals->setCObj($this->cObj);
 			$this->globals->setOverrideSettings($setup);
@@ -110,6 +112,7 @@ class Tx_Formhandler_Dispatcher extends tslib_pibase {
 			$result = '<div style="color:red; font-weight: bold">' . $e->getMessage() . '</div>';
 			if ($this->globals->getSession() && $this->globals->getSession()->get('debug')) {
 				$result .= '<div style="color:red; font-weight: bold">File: ' . $e->getFile() . '(' . $e->getLine() . ')</div>';
+				$result .= '<div style="color:red; font-weight: bold">' . $e->getTraceAsString() . '</div>';
 			}
 		}
 		if ($this->globals->getSession() && $this->globals->getSession()->get('debug')) {

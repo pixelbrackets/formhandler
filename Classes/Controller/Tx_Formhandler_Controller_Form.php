@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Controller_Form.php 52415 2011-09-23 09:40:56Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Controller_Form.php 53507 2011-10-28 09:46:49Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -249,15 +249,27 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		}
 
 		$this->parseConditions();
+		
+		if ($this->currentStep > $this->lastStep) {
+			$this->loadSettingsForStep($this->lastStep);
+		} else {
+			$this->loadSettingsForStep($this->currentStep);
+		}
 
 		//run init interceptors
-		if(t3lib_div::int_from_ver(TYPO3_version) >= t3lib_div::int_from_ver('4.5.3')) {
-			$this->addFormhandlerClass($this->settings['initInterceptors.'], 'Interceptor_FormProtection');
-		}
 		$this->addFormhandlerClass($this->settings['initInterceptors.'], 'Interceptor_Filtreatment');
 		$output = $this->runClasses($this->settings['initInterceptors.']);
 		if (strlen($output) > 0) {
 			return $output;
+		}
+		
+		//Parse conditions again. An interceptor might have added additional values.
+		$this->parseConditions();
+		
+		if ($this->currentStep > $this->lastStep) {
+			$this->loadSettingsForStep($this->lastStep);
+		} else {
+			$this->loadSettingsForStep($this->currentStep);
 		}
 
 		$this->globals->setRandomID($this->gp['randomID']);
@@ -437,9 +449,6 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$this->storeSettingsInSession();
 
 		//run save interceptors
-		if(t3lib_div::int_from_ver(TYPO3_version) >= t3lib_div::int_from_ver('4.5.3')) {
-			$this->addFormhandlerClass($this->settings['initInterceptors.'], 'Interceptor_FormProtection');
-		}
 		$this->addFormhandlerClass($this->settings['saveInterceptors.'], 'Interceptor_Filtreatment');
 		$output = $this->runClasses($this->settings['saveInterceptors.']);
 		if (strlen($output) > 0) {
@@ -456,11 +465,6 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		//run finishers
 		if (isset($this->settings['finishers.']) && is_array($this->settings['finishers.']) && intval($this->settings['finishers.']['disable']) !== 1) {
 			ksort($this->settings['finishers.']);
-
-			//if storeGP is set include Finisher_storeGP, stores GET / POST in the session
-			if ($this->utilityFuncs->pi_getFFvalue($this->cObj->data['pi_flexform'], 'store_gp', 'sMISC')){
-				$this->addFormhandlerClass($this->settings['finishers.'], 'Finisher_StoreGP');
-			}
 
 			foreach ($this->settings['finishers.'] as $idx => $tsConfig) {
 				if ($idx !== 'disabled') {
@@ -512,14 +516,15 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		}
 
 		//run init interceptors
-		if(t3lib_div::int_from_ver(TYPO3_version) >= t3lib_div::int_from_ver('4.5.3')) {
-			$this->addFormhandlerClass($this->settings['initInterceptors.'], 'Interceptor_FormProtection');
-		}
 		$this->addFormhandlerClass($this->settings['initInterceptors.'], 'Interceptor_Filtreatment');
 		$output = $this->runClasses($this->settings['initInterceptors.']);
 		if (strlen($output) > 0) {
 			return $output;
 		}
+		
+		//Parse conditions again. An interceptor might have added additional values.
+		$this->parseConditions();
+		$this->loadSettingsForStep($this->currentStep);
 
 		//display form
 		$content = $this->view->render($this->gp, $this->errors);
@@ -1127,7 +1132,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	protected function loadSettingsForStep($step) {
 		//merge settings with specific settings for current step
 		if (isset($this->settings[$step . '.']) && is_array($this->settings[$step . '.'])) {
-			$this->settings = array_merge($this->settings, $this->settings[$step . '.']);
+			$this->settings = t3lib_div::array_merge_recursive_overrule($this->settings, $this->settings[$step . '.']);
 		}
 		$this->globals->getSession()->set('settings', $this->settings);
 	}

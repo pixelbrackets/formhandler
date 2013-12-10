@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_UtilityFuncs.php 52414 2011-09-23 09:34:40Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_UtilityFuncs.php 53508 2011-10-28 10:10:07Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -499,8 +499,9 @@ class Tx_Formhandler_UtilityFuncs {
 		} elseif (count($printfArgs) > 0) {
 			$message = vsprintf($message, $printfArgs);
 		}
+		$data = $this->recursiveHtmlSpecialChars($data);
 		foreach($this->globals->getDebuggers() as $idx => $debugger) {
-			$debugger->addToDebugLog($message, $severity, $data);
+			$debugger->addToDebugLog(htmlspecialchars($message), $severity, $data);
 		}
 	}
 
@@ -755,6 +756,21 @@ class Tx_Formhandler_UtilityFuncs {
 		}
 		$fileName = str_replace($search, $replace, $fileName);
 		return $fileName;
+	}
+	
+	public function recursiveHtmlSpecialChars($values) {
+		if(is_array($values)) {
+			foreach($values as &$value) {
+				if(is_array($value)) {
+					$value = $this->recursiveHtmlSpecialChars($value);
+				} else {
+					$value = htmlspecialchars($value);
+				}
+			}
+		} else {
+			$values = htmlspecialchars($values);
+		}
+		return $values;
 	}
 
 }
