@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Form.php 68705 2012-12-11 11:38:51Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Form.php 68977 2012-12-20 15:45:29Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -122,6 +122,10 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 
 		//remove markers that were not substituted
 		$content = $this->utilityFuncs->removeUnfilledMarkers($this->template);
+
+		if(is_array($this->settings['stdWrap.'])) {
+			$content = $this->cObj->stdWrap($content, $this->settings['stdWrap.']);
+		}
 		if(intval($this->settings['disableWrapInBaseClass']) !== 1) {
 			$content = $this->pi_wrapInBaseClass($content);
 		}
@@ -1008,6 +1012,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 					if (strlen($singleWrap) > 0 && strstr($singleWrap,'|')) {
 						$errorMessage = str_replace('|', $errorMessage, $singleWrap);
 					}
+					$errorMessage = $this->utilityFuncs->wrap($errorMessage, $this->settings['singleErrorTemplate.'], 'singleWrap');
 					$errorMessages[] = $errorMessage;
 				} else {
 					$this->utilityFuncs->debugMessage('no_error_message', array('error_' . $field . '_' . $type), 2);

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Controller_Form.php 68705 2012-12-11 11:38:51Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Controller_Form.php 68976 2012-12-20 15:40:57Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -808,8 +808,8 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 										$uploadedUrl = t3lib_div::getIndpEnv('TYPO3_SITE_URL') . $uploadFolder . $uploadedFileName;
 										$uploadedUrl = str_replace('//', '/', $uploadedUrl);
 										$tmp['uploaded_url'] = $uploadedUrl;
-										$tmp['size'] = $files['size'][$field];
-										$tmp['type'] = $files['type'][$field];
+										$tmp['size'] = $files['size'][$field][$idx];
+										$tmp['type'] = $files['type'][$field][$idx];
 										if (!is_array($tempFiles[$field]) && strlen($field) > 0) {
 											$tempFiles[$field] = array();
 										}
