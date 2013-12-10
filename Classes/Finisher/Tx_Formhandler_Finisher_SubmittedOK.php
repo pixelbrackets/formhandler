@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Confirmation.php 27790 2009-12-17 09:28:42Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_SubmittedOK.php 27790 2009-12-17 09:28:42Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -45,7 +45,6 @@ class Tx_Formhandler_Finisher_SubmittedOK extends Tx_Formhandler_AbstractFinishe
 	public function process() {
 		
 		//set session value to prevent another validation or finisher circle. Formhandler will call only this Finisher if the user reloads the page.
-		session_start();
 		Tx_Formhandler_Session::set('submittedOK', TRUE);
 		
 		$action = $this->gp['action'];
@@ -61,7 +60,7 @@ class Tx_Formhandler_Finisher_SubmittedOK extends Tx_Formhandler_AbstractFinishe
 		$view = $this->componentManager->getComponent('Tx_Formhandler_View_SubmittedOK');
 			
 		//show TEMPLATE_SUBMITTEDOK
-		$view->setTemplate($this->templateFile, ('SUBMITTEDOK' . $this->settings['templateSuffix']));
+		$view->setTemplate($this->templateFile, ('SUBMITTEDOK' . Tx_Formhandler_Globals::$templateSuffix));
 		if(!$view->hasTemplate()) {
 			$view->setTemplate($this->templateFile, 'SUBMITTEDOK');
 			if(!$view->hasTemplate()) {

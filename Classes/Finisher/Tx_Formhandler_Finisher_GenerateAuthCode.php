@@ -61,9 +61,9 @@ class Tx_Formhandler_Finisher_GenerateAuthCode extends Tx_Formhandler_AbstractFi
 				// first look for TS-setting 'authCodePage', second look for redirect_page-setting, third use actual page
 				$authCodePage = ''; 
 				if(isset($this->settings['authCodePage'])) {
-					$this->settings['authCodePage'];
+					$authCodePage = $this->settings['authCodePage'];
 				} else {
-					Tx_Formhandler_StaticFuncs::pi_getFFvalue($this->cObj->data['pi_flexform'], 'redirect_page', 'sMISC');
+					$authCodePage = Tx_Formhandler_StaticFuncs::pi_getFFvalue($this->cObj->data['pi_flexform'], 'redirect_page', 'sMISC');
 				}
 				if(!$authCodePage) {
 					$authCodePage = $GLOBALS['TSFE']->id;
@@ -80,7 +80,7 @@ class Tx_Formhandler_Finisher_GenerateAuthCode extends Tx_Formhandler_AbstractFi
 				// create the link, using typolink function, use baseUrl if set, else use t3lib_div::getIndpEnv('TYPO3_SITE_URL')
 				$this->gp['authCodeUrl'] = '';
 				if(isset($GLOBALS['TSFE']->baseUrl)) {
-					$this->gp['authCodeUrl'] = $GLOBALS['TSFE']->baseUrl;
+					$this->gp['authCodeUrl'] = $GLOBALS['TSFE']->baseUrl . $this->cObj->getTypoLink_URL($authCodePage, $paramsArray);
 				} else {
 					$this->gp['authCodeUrl'] = t3lib_div::getIndpEnv('TYPO3_SITE_URL') . $this->cObj->getTypoLink_URL($authCodePage, $paramsArray);
 				}

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractView.php 30986 2010-03-10 18:34:49Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractView.php 32490 2010-04-22 15:13:08Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -88,14 +88,6 @@ abstract class Tx_Formhandler_AbstractView extends tslib_pibase {
 	protected $subparts;
 
 	/**
-	 * The Typolink configuration for this view
-	 *
-	 * @access protected
-	 * @var array
-	 */
-	protected $typolinkConf;
-
-	/**
 	 * The template code
 	 *
 	 * @access protected
@@ -141,9 +133,6 @@ abstract class Tx_Formhandler_AbstractView extends tslib_pibase {
 		$this->componentManager = $componentManager;
 		$this->configuration = $configuration;
 		$this->cObj = Tx_Formhandler_Globals::$cObj;
-		$this->typolinkConf['parameter.']['current'] = 1;
-		$this->typolinkConf['additionalParams'] = $this->cObj->stdWrap($typolinkConf['additionalParams'], $typolinkConf['additionalParams.']);
-		unset($this->typolinkConf['additionalParams.']);
 
 		$this->pi_loadLL();
 		$this->initializeView();

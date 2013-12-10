@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_PreProcessor_LoadDefaultValues.php 30981 2010-03-10 18:06:41Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_PreProcessor_LoadDefaultValues.php 36837 2010-08-16 13:46:15Z mabolek $
  *                                                                        */
 
 
@@ -74,16 +74,13 @@ class Tx_Formhandler_PreProcessor_LoadDefaultValues extends Tx_Formhandler_Abstr
 		if (is_array($settings)) {
 			foreach (array_keys($settings) as $fN) {
 				$fN = preg_replace('/\.$/', '', $fN);
-
+				
 				if (!isset($this->gp[$fN])) {
-					if($settings[$fN . '.']['defaultValue'] && $settings[$fN . '.']['defaultValue.']) {
-						$this->gp[$fN] = Tx_Formhandler_StaticFuncs::getSingle($settings[$fN . '.'], 'defaultValue');
-					} elseif($settings[$fN . '.']['defaultValue.']) {
-						$this->gp[$fN] = $this->cObj->TEXT($settings[$fN . '.']['defaultValue.']);
-					} elseif ($settings[$fN . '.']['defaultValue'] || $settings[$fN . '.']['defaultValue'] == 0) {
-						$this->gp[$fN] = $settings[$fN . '.']['defaultValue'];
+					$this->gp[$fN] = Tx_Formhandler_StaticFuncs::getSingle($settings[$fN . '.'], 'defaultValue');
+					if($settings[$fN . '.']['defaultValue.']['separator']) {
+						$separator = $settings[$fN . '.']['defaultValue.']['separator'];
+						$this->gp[$fN] = t3lib_div::trimExplode($separator, $this->gp[$fN]);
 					}
-						
 				}
 			}
 		}
@@ -98,25 +95,24 @@ class Tx_Formhandler_PreProcessor_LoadDefaultValues extends Tx_Formhandler_Abstr
 	 */
 	private function loadDefaultValuesToSession($settings, $step){
 
-		session_start();
-
 		if (is_array($settings) && $step) {
 			$values = Tx_Formhandler_Session::get('values');
 			foreach (array_keys($settings) as $fN) {
 				$fN = preg_replace('/\.$/', '', $fN);
+				
 				if (!isset($values[$step][$fN])) {
-					if($settings[$fN . '.']['defaultValue'] && $settings[$fN . '.']['defaultValue.']) {
-						$values[$step][$fN] = Tx_Formhandler_StaticFuncs::getSingle($settings[$fN . '.'], 'defaultValue');
-					} elseif($settings[$fN . '.']['defaultValue.']) {
-						$values[$step][$fN] =  $this->cObj->TEXT($settings[$fN . '.']['defaultValue.']);
-					} elseif ($settings[$fN . '.']['defaultValue'] || $settings[$fN . '.']['defaultValue'] == 0) {
-						$values[$step][$fN] =  $settings[$fN . '.']['defaultValue'];
+					$values[$step][$fN] = Tx_Formhandler_StaticFuncs::getSingle($settings[$fN . '.'], 'defaultValue');
+					if($settings[$fN . '.']['defaultValue.']['separator']) {
+						$separator = $settings[$fN . '.']['defaultValue.']['separator'];
+						$values[$step][$fN] = t3lib_div::trimExplode($separator, $this->gp[$fN]);
 					}
-						
 				}
-			}
-		}
 
+			}
+			Tx_Formhandler_Session::set('values', $values);
+							
+		}
+		
 	}
 }
 

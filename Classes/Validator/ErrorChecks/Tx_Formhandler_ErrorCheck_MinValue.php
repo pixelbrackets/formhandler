@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_MinValue.php 30983 2010-03-10 18:24:18Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_MinValue.php 36522 2010-08-09 08:58:58Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -33,7 +33,7 @@ class Tx_Formhandler_ErrorCheck_MinValue extends Tx_Formhandler_AbstractErrorChe
 	 */
 	public function check(&$check, $name, &$gp) {
 		$checkFailed = '';
-		$min = $check['params']['value'];
+		$min = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'value');
 		if(	isset($gp[$name]) &&
 			intval($gp[$name]) >= 0 &&
 			intval($min) >= 0 &&

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_PDF.php 30986 2010-03-10 18:34:49Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Generator_PDF.php 36376 2010-08-05 09:19:56Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -142,8 +142,8 @@ class Tx_Formhandler_Generator_PDF {
 			$this->pdf->SetFont('Arial', '', 12);
 			$this->pdf->Cell(300, 100, 'No valid records found! Try to select more fields to export!', 0, 0, 'L');
 		}
-		$this->pdf->Output();
-
+		$this->pdf->Output('formhandler.pdf','I');
+		exit;
 	}
 
 	/**

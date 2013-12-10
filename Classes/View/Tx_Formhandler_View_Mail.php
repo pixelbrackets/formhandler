@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Mail.php 30750 2010-03-04 11:07:40Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Mail.php 36528 2010-08-09 13:04:41Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -31,10 +31,7 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 	 * @return string content
 	 */
 	public function render($gp, $errors) {
-
 		
-		session_start();
-
 		//set GET/POST parameters
 		$this->gp = array();
 		$this->gp = $gp;
@@ -50,7 +47,12 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 			$this->langFiles = Tx_Formhandler_Globals::$langFiles;
 		}
 
-		if($errors['mode'] != 'plain') {
+		$componentSettings = $this->getComponentSettings();
+		if($componentSettings[$errors['mode']][$errors['suffix'] . '.']['arrayValueSeparator']) {
+			$this->settings['arrayValueSeparator'] = $componentSettings[$errors['mode']][$errors['suffix'] . '.']['arrayValueSeparator'];
+			$this->settings['arrayValueSeparator.'] = $componentSettings[$errors['mode']][$errors['suffix'] . '.']['arrayValueSeparator.'];
+		}
+		if($errors['suffix'] != 'plain') {
 			$this->sanitizeMarkers();
 		}
 		

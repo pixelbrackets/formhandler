@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Mail.php 31246 2010-03-19 11:54:25Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Mail.php 36528 2010-08-09 13:04:41Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -97,7 +97,8 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		$view->setPredefined($this->predefined);
 		$view->setComponentSettings($this->settings);
 		$templateCode = Tx_Formhandler_Globals::$templateCode;
-		$view->setTemplate($templateCode, ('EMAIL_' . strtoupper($mode) . '_' . strtoupper($suffix) . $this->settings['templateSuffix']));
+
+		$view->setTemplate($templateCode, ('EMAIL_' . strtoupper($mode) . '_' . strtoupper($suffix) . Tx_Formhandler_Globals::$templateSuffix));
 		if(!$view->hasTemplate()) {
 			$view->setTemplate($templateCode, ('EMAIL_' . strtoupper($mode) . '_' . strtoupper($suffix)));
 			if(!$view->hasTemplate()) {
@@ -105,7 +106,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			}
 		}
 		
-		return $view->render($this->gp, array('mode' => $suffix));
+		return $view->render($this->gp, array('mode' => $mode, 'suffix' => $suffix));
 	}
 
 	/**
@@ -140,7 +141,6 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		$emailClass = Tx_Formhandler_StaticFuncs::prepareClassName($emailClass);
 		$emailObj = $this->componentManager->getComponent($emailClass);
 		$emailObj->init($this->gp, $this->settings['mailer.']['config.']);
-		#print_r($emailObj);
 
 		//set e-mail options
 		$emailObj->setSubject($mailSettings['subject']);
@@ -371,11 +371,12 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	private function parseList($settings, $type, $key) {
 		if(isset($this->emailSettings[$type][$key])) {
 			$parsed = $this->explodeList($this->emailSettings[$type][$key]);
-		} else if(isset($settings[$key . '.']) && is_array($settings[$key . '.'])) {
+		} elseif(isset($settings[$key . '.']) && is_array($settings[$key . '.'])) {
 			$parsed = Tx_Formhandler_StaticFuncs::getSingle($settings, $key);
 		} else {
 			$parsed = $this->explodeList($settings[$key]);
 		}
+		
 		return $parsed;
 	}
 
@@ -393,7 +394,6 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		} elseif($settings[$key]) {
 			$files = t3lib_div::trimExplode(',', $settings[$key]);
 			$parsed = array();
-			session_start();
 			$sessionFiles = Tx_Formhandler_Session::get('files');
 			foreach($files as $file) {
 				if(isset($sessionFiles[$file])) {
@@ -500,7 +500,9 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			'return_path',
 			'attachment',
 			'attachPDF',
-			'htmlEmailAsAttachment'
+			'htmlEmailAsAttachment',
+			'plain.',
+			'html.'
 		);
 
 		$emailSettings['admin'] = $this->parseEmailSettingsByType($emailSettings['admin.'], 'admin', $options);
@@ -584,6 +586,16 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 					case 'filePrefix':
 						if(isset($currentSettings['filePrefix'])) {
 							$emailSettings['filePrefix'] = $currentSettings['filePrefix'];
+						}
+					break;
+					case 'plain.':
+						if(isset($currentSettings['plain.'])) {
+							$emailSettings['plain.'] = $currentSettings['plain.'];
+						}
+					break;
+					case 'html.':
+						if(isset($currentSettings['html.'])) {
+							$emailSettings['html.'] = $currentSettings['html.'];
 						}
 					break;
 				}

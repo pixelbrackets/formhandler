@@ -1,121 +1,139 @@
 <?php
-/*                                                                        *
- * This script is part of the TYPO3 project - inspiring people to share!  *
-*                                                                        *
-* TYPO3 is free software; you can redistribute it and/or modify it under *
-* the terms of the GNU General Public License version 2 as published by  *
-* the Free Software Foundation.                                          *
-*                                                                        *
-* This script is distributed in the hope that it will be useful, but     *
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHAN-    *
-* TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
-* Public License for more details.                                       *
-*
-*                                                                        */
 
-/**
- * A class validating a field via AJAX.
- *
- * @author	Reinhard Führicht <rf@typoheads.at>
- */
 require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Utils/Tx_Formhandler_Globals.php');
-require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Utils/Tx_Formhandler_UtilityFuncs.php');
-require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Formhandler_Component_Manager.php');
-
+require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Utils/Tx_Formhandler_Session.php');
+require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_GimmeFive_Component_Manager.php');
 class Tx_Formhandler_Utils_AjaxValidate {
-
-	/**
-	 * Main method of the class.
-	 *
-	 * @return string The HTML list of remaining files to be displayed in the form
-	 */
+	
 	public function main() {
 		$this->init();
-		if ($this->fieldname) {
-			$this->globals->setCObj($GLOBALS['TSFE']->cObj);
-			$randomID = htmlspecialchars(t3lib_div::_GP('randomID'));
-			$this->globals->setRandomID($randomID);
-			$this->componentManager = Tx_Formhandler_Component_Manager::getInstance();
-			if(!$this->globals->getSession()) {
-				$ts = $GLOBALS['TSFE']->tmpl->setup['plugin.']['Tx_Formhandler.']['settings.'];
-				$sessionClass = $this->utilityFuncs->getPreparedClassName($ts['session.'], 'Session_PHP');
-				$this->globals->setSession($this->componentManager->getComponent($sessionClass));
-			}
+
+		if($this->fieldname) {
+			$randomID = t3lib_div::_GP('randomID');
+			Tx_Formhandler_Globals::$randomID = $randomID;
+			
+			$this->componentManager = Tx_GimmeFive_Component_Manager::getInstance();
+		
 			$validator = $this->componentManager->getComponent('Tx_Formhandler_Validator_Ajax');
-			$errors = array();
-			$valid = $validator->validateAjax($this->fieldname, $this->value, $errors);
-			$this->settings = $this->globals->getSession()->get('settings');
-			$content = '';
-			if ($valid) {
-				$content = $this->utilityFuncs->getSingle($this->settings['ajax.']['config.'], 'ok');
-				if(strlen($content) === 0) {
-					$content = '<img src="' . t3lib_extMgm::extRelPath('formhandler') . 'Resources/Images/ok.png' . '" />';
-				} else {
-					$gp = array(
-						$_GET['field'] => $_GET['value']
-					);
-					$view = $this->initView($content);
-					$content = $view->render($gp, $errors);
-					$content = '<span class="success">' . $content . '</span>';
-				}
-			} else {
-				$content = $this->utilityFuncs->getSingle($this->settings['ajax.']['config.'], 'notOk');
-				if(strlen($content) === 0) {
-					$content = '<img src="' . t3lib_extMgm::extRelPath('formhandler') . 'Resources/Images/notok.png' . '" />';
-				} else {
-					$view = $this->initView($content);
-					$gp = array(
-						$_GET['field'] => $_GET['value']
-					);
-					$content = $view->render($gp, $errors);
-					$content = '<span class="error">' . $content . '</span>';
-				}
-			}
-			print $content;
+			
+			print $validator->validateAjax($this->fieldname, $this->value);
 		}
 	}
-
-	/**
-	 * Initialize the class. Read GET parameters
-	 *
-	 * @return void
-	 */
+	
 	protected function init() {
-		$this->fieldname = htmlspecialchars(stripslashes($_GET['field']));
-		$this->value = htmlspecialchars(stripslashes($_GET['value']));
-		if (isset($_GET['pid'])) {
-			$this->id = intval($_GET['pid']);
-		} else {
-			$this->id = intval($_GET['id']);
-		}
+		$this->fieldname = $_GET['field'];
+		$this->value = $_GET['value'];
+		$this->id = intval($_GET['id']);
+		
 		tslib_eidtools::connectDB();
-		$this->globals = Tx_Formhandler_Globals::getInstance();
-		$this->globals->setAjaxMode(TRUE);
-		$this->utilityFuncs = Tx_Formhandler_UtilityFuncs::getInstance();
-		$this->utilityFuncs->initializeTSFE($this->id);
+		$this->initializeTSFE($this->id);
 	}
+	
+	protected function initializeTSFE($pid, $feUserObj = '') {
+		global $TSFE, $TYPO3_CONF_VARS;
 
-	/**
-	 * Initialize the AJAX validation view.
-	 *
-	 * @param string $content The raw content
-	 * @return Tx_Formhandler_View_AjaxValidation The view class
-	 */
-	protected function initView($content) {
-		$viewClass = 'Tx_Formhandler_View_AjaxValidation';
-		$view = $this->componentManager->getComponent($viewClass);
-		$view->setLangFiles($this->utilityFuncs->readLanguageFiles(array(), $this->settings));
-		$view->setSettings($this->settings);
-		$templateName = 'AJAX';
-		$template = str_replace('###fieldname###', htmlspecialchars($_GET['field']), $content);
-		$template = '###TEMPLATE_' . $templateName . '###' . $template . '###TEMPLATE_' . $templateName . '###';
-		$view->setTemplate($template, 'AJAX');
-		return $view;
+			// include necessary classes:
+			// Note: BEfunc is needed from t3lib_tstemplate
+		require_once(PATH_t3lib . 'class.t3lib_page.php');
+		require_once(PATH_t3lib . 'class.t3lib_tstemplate.php');
+		require_once(PATH_t3lib . 'class.t3lib_befunc.php');
+		require_once(PATH_tslib . 'class.tslib_fe.php');
+		require_once(PATH_t3lib . 'class.t3lib_userauth.php');
+		require_once(PATH_tslib . 'class.tslib_feuserauth.php');
+		require_once(PATH_tslib . 'class.tslib_content.php');
+		require_once(PATH_tslib . 'class.tslib_fe.php');
+
+			// create object instances:
+		$TSFE = t3lib_div::makeInstance('tslib_fe', $TYPO3_CONF_VARS, $pid, 0, TRUE);
+
+		$TSFE->sys_page = t3lib_div::makeInstance('t3lib_pageSelect');
+		$TSFE->tmpl = t3lib_div::makeInstance('t3lib_tstemplate');
+		$TSFE->tmpl->init();
+
+			// fetch rootline and extract ts setup:
+		$TSFE->rootLine = $TSFE->sys_page->getRootLine(intval($pid));
+		$TSFE->getConfigArray();
+
+			// then initialize fe user
+		$TSFE->initFEuser();
+		$TSFE->fe_user->fetchGroupData();
+
+			// initialize the backend user
+		//$this->initializeBackendUser();
+
+			// Include the TCA
+		$TSFE->includeTCA();
+
+			// Get the page
+		$TSFE->fetch_the_id();
+		$TSFE->getPageAndRootline();
+		$TSFE->initTemplate();
+		$TSFE->tmpl->getFileName_backPath = PATH_site;
+		$TSFE->forceTemplateParsing = TRUE;
+		$TSFE->getConfigArray();
+		$TSFE->newCObj();
+
+			// Get the Typoscript as its inherited from parent pages
+		$template = t3lib_div::makeInstance('t3lib_tsparser_ext'); // Defined global here!
+		$template->init();
+
+		$sys_page = t3lib_div::makeInstance('t3lib_pageSelect');
+		$rootLine = $sys_page->getRootLine($pid);
+		$template->runThroughTemplates($rootLine); // This generates the constants/config + hierarchy info for the template.
+
+		$template->generateConfig();
+
+			// Save the setup
+		$this->setup = $template->setup;
 	}
+	
+	protected function initializeBackendUser() {
+		global $BE_USER, $TYPO3_DB, $TSFE, $LANG;
 
+			// @todo	What's the point here? To prevent looping?
+		if ($this->initBE) {
+			return;
+		}
+		$this->initBE = TRUE;
+
+		$GLOBALS['BE_USER'] = NULL;
+
+			// If the backend cookie is set, we proceed and check if a backend user is logged in.
+		if ($_COOKIE['be_typo_user']) {
+			require_once (PATH_t3lib . 'class.t3lib_befunc.php');
+			require_once (PATH_t3lib . 'class.t3lib_userauthgroup.php');
+			require_once (PATH_t3lib . 'class.t3lib_beuserauth.php');
+			require_once (PATH_t3lib . 'class.t3lib_tsfebeuserauth.php');
+
+			// the value this->formfield_status is set to empty in order to disable login-attempts to the backend account through this script
+			// @todo 	Comment says its set to empty, but where does that happen?
+				
+			$GLOBALS['BE_USER'] = t3lib_div::makeInstance('t3lib_tsfeBeUserAuth');
+			$GLOBALS['BE_USER']->OS = TYPO3_OS;
+			$GLOBALS['BE_USER']->lockIP = $GLOBALS['TYPO3_CONF_VARS']['BE']['lockIP'];
+			$GLOBALS['BE_USER']->start();
+			$GLOBALS['BE_USER']->unpack_uc('');
+			if ($GLOBALS['BE_USER']->user['uid']) {
+				$GLOBALS['BE_USER']->fetchGroupData();
+				$GLOBALS['TSFE']->beUserLogin = TRUE;
+			}
+			if ($GLOBALS['BE_USER']->checkLockToIP() && $GLOBALS['BE_USER']->checkBackendAccessSettingsFromInitPhp() && $GLOBALS['BE_USER']->user['uid']) {
+				$GLOBALS['BE_USER']->initializeAdminPanel();
+				$GLOBALS['BE_USER']->initializeFrontendEdit();
+			} else {
+				$GLOBALS['BE_USER'] = '';
+				$GLOBALS['TSFE']->beUserLogin = FALSE;
+			}
+		}
+
+		require_once(t3lib_extMgm::extPath('lang') . 'lang.php');
+		$GLOBALS['LANG'] = t3lib_div::makeInstance('language');
+		$GLOBALS['LANG']->init($GLOBALS['BE_USER']->uc['lang']);
+	}
+	
 }
 
-$validator = t3lib_div::makeInstance('Tx_Formhandler_Utils_AjaxValidate');
-$validator->main();
+$output = t3lib_div::makeInstance('Tx_Formhandler_Utils_AjaxValidate');
+$output->main();
 
 ?>

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_Date.php 30983 2010-03-10 18:24:18Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_Date.php 36522 2010-08-09 08:58:58Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -36,7 +36,7 @@ class Tx_Formhandler_ErrorCheck_Date extends Tx_Formhandler_AbstractErrorCheck {
 
 		if(isset($gp[$name]) && strlen(trim($gp[$name])) > 0) {
 			# find out separator
-			$pattern = $check['params']['pattern'];
+			$pattern = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'pattern');
 			preg_match('/^[d|m|y]*(.)[d|m|y]*/i', $pattern, $res);
 			$sep = $res[1];
 	
@@ -65,7 +65,7 @@ class Tx_Formhandler_ErrorCheck_Date extends Tx_Formhandler_AbstractErrorCheck {
 	 * Internal method to normalize a specified date pattern for internal use
 	 *
 	 * @param string $pattern The pattern
-	 * @param string $sep The seperator character
+	 * @param string $sep The separator character
 	 * @return string The normalized pattern
 	 */
 	protected function normalizeDatePattern($pattern,$sep) {
@@ -77,6 +77,7 @@ class Tx_Formhandler_ErrorCheck_Date extends Tx_Formhandler_AbstractErrorCheck {
 		$pattern = str_replace('M', 'm', $pattern);
 		$pattern = str_replace('YYYY', 'y', $pattern);
 		$pattern = str_replace('YY', 'y', $pattern);
+		$pattern = str_replace('Y', 'y', $pattern);
 		return $pattern;
 	}
 }

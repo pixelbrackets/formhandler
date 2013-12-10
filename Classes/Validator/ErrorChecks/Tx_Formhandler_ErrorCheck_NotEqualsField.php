@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_NotEqualsField.php 30983 2010-03-10 18:24:18Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_NotEqualsField.php 36522 2010-08-09 08:58:58Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -36,7 +36,7 @@ class Tx_Formhandler_ErrorCheck_NotEqualsField extends Tx_Formhandler_AbstractEr
 		$checkFailed = '';
 
 		if(isset($gp[$name]) && strlen(trim($gp[$name])) > 0) {
-			$comparisonValue = $gp[$check['params']['field']];
+			$comparisonValue = $gp[Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'field')];
 	
 			if (strcmp($comparisonValue, $gp[$name]) == 0) {
 				$checkFailed = $this->getCheckFailed($check);

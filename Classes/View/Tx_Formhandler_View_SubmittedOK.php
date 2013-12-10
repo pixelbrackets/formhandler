@@ -11,11 +11,11 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_SubmittedOK.php 29965 2010-02-12 11:50:30Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_SubmittedOK.php 32274 2010-04-16 13:30:54Z reinhardfuehricht $
  *                                                                        */
 
 /**
- * A view for Finisher_Confirmation used by Formhandler
+ * A view for Finisher_SubmittedOK used by Formhandler
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
  * @package	Tx_Formhandler
@@ -34,13 +34,14 @@ class Tx_Formhandler_View_SubmittedOK extends Tx_Formhandler_View_Form {
 	 */
 	protected function fillDefaultMarkers() {
 		parent::fillDefaultMarkers();
-		if($this->settings['formValuesPrefix']) {
-			$params[$this->settings['formValuesPrefix']] = $this->gp;
+		if(Tx_Formhandler_Globals::$formValuesPrefix) {
+			$params[Tx_Formhandler_Globals::$formValuesPrefix] = $this->gp;
 		} else {
 			$params = $this->gp;
 		}
 		$params['type'] = 98;
-		$label = trim($GLOBALS['TSFE']->sL('LLL:' . $this->langFile . ':print'));
+		$label = Tx_Formhandler_StaticFuncs::getTranslatedMessage($this->langFiles, 'print');
+		
 		if(strlen($label) == 0) {
 			$label = 'print';
 		}

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Configuration.php 29104 2010-01-20 14:15:50Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Configuration.php 35676 2010-07-15 09:26:51Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -45,9 +45,14 @@ class Tx_Formhandler_Configuration implements ArrayAccess {
 	 * @return void
 	 */
 	public function __construct() {
-		$this->setup = $GLOBALS['TSFE']->tmpl->setup['plugin.'][$this->getPrefixedPackageKey() . '.'];
-		if(is_array(Tx_Formhandler_Globals::$overrideSettings)) {
-			$this->setup = t3lib_div::array_merge_recursive_overrule($this->setup, Tx_Formhandler_Globals::$overrideSettings);
+		if(TYPO3_MODE === 'FE') {
+			$this->setup = $GLOBALS['TSFE']->tmpl->setup['plugin.'][$this->getPrefixedPackageKey() . '.'];
+			if(!is_array($this->setup)) {
+				Tx_Formhandler_StaticFuncs::throwException('missing_config');
+			}
+			if(is_array(Tx_Formhandler_Globals::$overrideSettings)) {
+				$this->setup = t3lib_div::array_merge_recursive_overrule($this->setup, Tx_Formhandler_Globals::$overrideSettings);
+			}
 		}
 	}
 

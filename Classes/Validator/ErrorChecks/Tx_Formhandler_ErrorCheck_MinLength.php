@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_MinLength.php 30983 2010-03-10 18:24:18Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_MinLength.php 36867 2010-08-17 08:06:14Z mabolek $
  *                                                                        */
 
 /**
@@ -33,11 +33,11 @@ class Tx_Formhandler_ErrorCheck_MinLength extends Tx_Formhandler_AbstractErrorCh
 	 */
 	public function check(&$check, $name, &$gp) {
 		$checkFailed = '';
-		$min = $check['params']['value'];
+		$min = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'value');
 		if(	isset($gp[$name]) &&
-			strlen(trim($gp[$name])) > 0 &&
+			mb_strlen(trim($gp[$name]), $GLOBALS['TSFE']->renderCharset) > 0 &&
 			intVal($min) > 0 &&
-			strlen(trim($gp[$name])) < intval($min)) {
+			mb_strlen(trim($gp[$name]), $GLOBALS['TSFE']->renderCharset) < intval($min)) {
 
 			$checkFailed = $this->getCheckFailed($check);
 		}

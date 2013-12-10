@@ -57,17 +57,27 @@ class Tx_GimmeFive_Component_Manager {
      * Loads the TypoScript config/setup for the formhandler on the current page.
      */
     private function loadTypoScriptConfig() {
-    	$sysPageObj = t3lib_div::makeInstance('t3lib_pageSelect');
-		if(!$GLOBALS['TSFE']->sys_page) {
-			$GLOBALS['TSFE']->sys_page = $sysPageObj;
+    	if(!is_array(Tx_Formhandler_Globals::$overrideSettings['settings.'])) {
+	  		$sysPageObj = t3lib_div::makeInstance('t3lib_pageSelect');
+			if(!$GLOBALS['TSFE']->sys_page) {
+				$GLOBALS['TSFE']->sys_page = $sysPageObj;
+			}
+			$rootLine = $sysPageObj->getRootLine($GLOBALS['TSFE']->id);
+			$TSObj = t3lib_div::makeInstance('t3lib_tsparser_ext');
+			$TSObj->tt_track = 0;
+			$TSObj->init();
+			$TSObj->runThroughTemplates($rootLine);
+			$TSObj->generateConfig();
+			$conf = $TSObj->setup['plugin.']['Tx_Formhandler.']['settings.'];
+		} else {
+			$conf = Tx_Formhandler_Globals::$overrideSettings['settings.'];
 		}
-		$rootLine = $sysPageObj->getRootLine($GLOBALS['TSFE']->id);
-		$TSObj = t3lib_div::makeInstance('t3lib_tsparser_ext');
-		$TSObj->tt_track = 0;
-		$TSObj->init();
-		$TSObj->runThroughTemplates($rootLine);
-		$TSObj->generateConfig();
-		$conf = $TSObj->setup['plugin.']['Tx_Formhandler.']['settings.'];
+		
+	
+		if(Tx_Formhandler_Globals::$predef && is_array($conf['predef.'][Tx_Formhandler_Globals::$predef])) {
+			$conf = $conf['predef.'][Tx_Formhandler_Globals::$predef];
+		}
+
 		$this->tsConf = $conf;
     }
    	
@@ -365,6 +375,7 @@ class Tx_GimmeFive_Component_Manager {
 			if ($this->classFiles === NULL || empty($this->classFiles)) {
 				$this->classFiles = $this->buildArrayOfClassFiles($classNameParts[1]);
 			}
+			
 			
 			if(is_array($this->tsConf['additionalIncludePaths.'])) {
 				foreach($this->tsConf['additionalIncludePaths.'] as $dir) {
