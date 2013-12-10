@@ -2,37 +2,30 @@
 //============================================================+
 // File name   : tcpdf_config.php
 // Begin       : 2004-06-11
-// Last Update : 2013-02-06
+// Last Update : 2009-03-18
 //
 // Description : Alternative configuration file for TCPDF.
-// Author      : Nicola Asuni - Tecnick.com LTD - Manor Coach House, Church Hill, Aldershot, Hants, GU12 4RQ, UK - www.tecnick.com - info@tecnick.com
-// License     : GNU-LGPL v3 (http://www.gnu.org/copyleft/lesser.html)
-// -------------------------------------------------------------------
-// Copyright (C) 2004-2013  Nicola Asuni - Tecnick.com LTD
 //
-// This file is part of TCPDF software library.
+// Author: Nicola Asuni
 //
-// TCPDF is free software: you can redistribute it and/or modify it
-// under the terms of the GNU Lesser General Public License as
-// published by the Free Software Foundation, either version 3 of the
-// License, or (at your option) any later version.
-//
-// TCPDF is distributed in the hope that it will be useful, but
-// WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-// See the GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with TCPDF.  If not, see <http://www.gnu.org/licenses/>.
-//
-// See LICENSE.TXT file for more information.
+// (c) Copyright:
+//               Nicola Asuni
+//               Tecnick.com s.r.l.
+//               Via Della Pace, 11
+//               09044 Quartucciu (CA)
+//               ITALY
+//               www.tecnick.com
+//               info@tecnick.com
 //============================================================+
 
 /**
  * Alternative configuration file for TCPDF.
  * @author Nicola Asuni
+ * @copyright 2004-2008 Nicola Asuni - Tecnick.com S.r.l (www.tecnick.com) Via Della Pace, 11 - 09044 - Quartucciu (CA) - ITALY - www.tecnick.com - info@tecnick.com
  * @package com.tecnick.tcpdf
- * @version 4.9.005
+ * @version 4.0.014
+ * @link http://tcpdf.sourceforge.net
+ * @license http://www.gnu.org/copyleft/lesser.html LGPL
  * @since 2004-10-27
  */
 
@@ -42,14 +35,11 @@ if ((!isset($_SERVER['DOCUMENT_ROOT'])) OR (empty($_SERVER['DOCUMENT_ROOT']))) {
 		$_SERVER['DOCUMENT_ROOT'] = str_replace( '\\', '/', substr($_SERVER['SCRIPT_FILENAME'], 0, 0-strlen($_SERVER['PHP_SELF'])));
 	} elseif(isset($_SERVER['PATH_TRANSLATED'])) {
 		$_SERVER['DOCUMENT_ROOT'] = str_replace( '\\', '/', substr(str_replace('\\\\', '\\', $_SERVER['PATH_TRANSLATED']), 0, 0-strlen($_SERVER['PHP_SELF'])));
-	} else {
-		// define here your DOCUMENT_ROOT path if the previous fails (e.g. '/var/www')
-		$_SERVER['DOCUMENT_ROOT'] = '/';
+	}	else {
+		// define here your DOCUMENT_ROOT path if the previous fails
+		$_SERVER['DOCUMENT_ROOT'] = '/var/www';
 	}
 }
-
-// be sure that the end slash is present
-$_SERVER['DOCUMENT_ROOT'] = str_replace('//', '/', $_SERVER['DOCUMENT_ROOT'].'/');
 
 // Automatic calculation for the following K_PATH_MAIN constant
 $k_path_main = str_replace( '\\', '/', realpath(substr(dirname(__FILE__), 0, 0-strlen('config'))));
@@ -71,7 +61,7 @@ if (isset($_SERVER['HTTP_HOST']) AND (!empty($_SERVER['HTTP_HOST']))) {
 		$k_path_url = 'http://';
 	}
 	$k_path_url .= $_SERVER['HTTP_HOST'];
-	$k_path_url .= str_replace( '\\', '/', substr(K_PATH_MAIN, (strlen($_SERVER['DOCUMENT_ROOT']) - 1)));
+	$k_path_url .= str_replace( '\\', '/', substr($_SERVER['PHP_SELF'], 0, -24));
 }
 
 /**
@@ -184,7 +174,7 @@ define ('PDF_MARGIN_RIGHT', 15);
 /**
  * default main font name
  */
-define ('PDF_FONT_NAME_MAIN', 'freesans');
+define ('PDF_FONT_NAME_MAIN', 'helvetica');
 
 /**
  * default main font size
@@ -194,7 +184,7 @@ define ('PDF_FONT_SIZE_MAIN', 10);
 /**
  * default data font name
  */
-define ('PDF_FONT_NAME_DATA', 'freesans');
+define ('PDF_FONT_NAME_DATA', 'helvetica');
 
 /**
  * default data font size
@@ -204,12 +194,12 @@ define ('PDF_FONT_SIZE_DATA', 8);
 /**
  * default monospaced font name
  */
-define ('PDF_FONT_MONOSPACED', 'freemono');
+define ('PDF_FONT_MONOSPACED', 'courier');
 
 /**
- * ratio used to adjust the conversion of pixels to user units
+ * Ratio used to scale the images
  */
-define ('PDF_IMAGE_SCALE_RATIO', 1.25);
+define ('PDF_IMAGE_SCALE_RATIO', 4);
 
 /**
  * magnification factor for titles
@@ -231,22 +221,7 @@ define('K_TITLE_MAGNIFICATION', 1.3);
  */
 define('K_SMALL_RATIO', 2/3);
 
-/**
- * set to true to enable the special procedure used to avoid the overlappind of symbols on Thai language
- */
-define('K_THAI_TOPCHARS', true);
-
-/**
- * if true allows to call TCPDF methods using HTML syntax
- * IMPORTANT: For security reason, disable this feature if you are printing user HTML content.
- */
-define('K_TCPDF_CALLS_IN_HTML', true);
-
-/**
- * if true adn PHP version is greater than 5, then the Error() method throw new exception instead of terminating the execution.
- */
-define('K_TCPDF_THROW_EXCEPTION_ERROR', false);
-
 //============================================================+
-// END OF FILE
+// END OF FILE                                                 
 //============================================================+
+?>

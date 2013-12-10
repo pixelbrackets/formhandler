@@ -11,29 +11,15 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_ClearCache.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_ClearCache.php 22614 2009-07-21 20:43:47Z fabien_u $
  *                                                                        */
 
 /**
- * This finisher clears the cache. 
- * If no further configuration is set the current page's cache will be cleared.
- * Alternatively a pidList can be set:
- * 
- * Example configuration:
- *
- * <code>
- * finishers.1.class = Tx_Formhandler_Finisher_ClearCache
- *
- * # The cache of page 15 will be cleared 
- * finishers.1.config.pidList = 15
- * 
- * # cObject is supported...
- * finishers.1.config.pidList = TEXT
- * finishers.1.config.pidList.data = GP:someparameter
-
- * </code>
+ * This finisher clears the cache for the current page. It needs no further configuration.
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
+ * @package	Tx_Formhandler
+ * @subpackage	Finisher
  */
 class Tx_Formhandler_Finisher_ClearCache extends Tx_Formhandler_AbstractFinisher {
 
@@ -43,14 +29,10 @@ class Tx_Formhandler_Finisher_ClearCache extends Tx_Formhandler_AbstractFinisher
 	 * @return array The probably modified GET/POST parameters
 	 */
 	public function process() {
-		$pidList = $this->utilityFuncs->getSingle($this->settings, 'pidList');
-		if (empty($pidList)) {
-			$pidList = $GLOBALS['TSFE']->id;
-		}
 
-		$this->utilityFuncs->debugMessage('Clearing Cache', array($pidList));
-
-		$GLOBALS['TSFE']->clearPageCacheContent_pidList($pidList);
+		require_once('t3lib/class.t3lib_tcemain.php');
+		$tce = t3lib_div::makeInstance('t3lib_tcemain');
+		$tce->clear_cacheCmd($GLOBALS['TSFE']->id);
 		return $this->gp;
 	}
 }

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Mail.php 58488 2012-02-25 18:26:23Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Mail.php 22614 2009-07-21 20:43:47Z fabien_u $
  *                                                                        */
 
 /**
@@ -22,8 +22,6 @@
  * @subpackage	View
  */
 class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
-	
-	protected $currentMailSettings;
 
 	/**
 	 * Main method called by the controller.
@@ -33,68 +31,72 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 	 * @return string content
 	 */
 	public function render($gp, $errors) {
-		$this->currentMailSettings = $errors;
-		$content = '';
-		if($this->subparts['template']) {
-			$this->settings = $this->globals->getSettings();
-			$content = parent::render($gp, array());
-		}
-		return $content;
-	}
-	
-	public function pi_wrapInBaseClass($content) {
-		return $content;
-	}
-	
-	protected function fillValueMarkers() {
-		$componentSettings = $this->getComponentSettings();
-		if ($componentSettings[$this->currentMailSettings['mode']][$this->currentMailSettings['suffix'] . '.']['arrayValueSeparator']) {
-			$this->settings['arrayValueSeparator'] = $componentSettings[$this->currentMailSettings['mode']][$this->currentMailSettings['suffix'] . '.']['arrayValueSeparator'];
-			$this->settings['arrayValueSeparator.'] = $componentSettings[$this->currentMailSettings['mode']][$this->currentMailSettings['suffix'] . '.']['arrayValueSeparator.'];
-		}
 
-		/*
-		 * getValueMarkers() will call htmlSpecialChars on all values before adding them to the marker array.
-		 * In case of a plain text email, this is unwanted behavior.
-		 */
-		$doEncode = TRUE;
-		if ($this->currentMailSettings['suffix'] === 'plain') {
-			$doEncode = FALSE;
-		}
-		$markers = $this->getValueMarkers($this->gp, 0, 'value_', $doEncode);
 
-		if ($this->currentMailSettings['suffix'] !== 'plain') {
-			$markers = $this->sanitizeMarkers($markers);
+		session_start();
+
+		//set GET/POST parameters
+		$this->gp = $gp;
+
+		//set template
+		$this->template = $this->subparts['template'];
+
+		//set settings
+		$this->settings = $this->parseSettings();
+
+		//set language file
+		if(!$this->langFile) {
+			$this->readLangFile();
 		}
 		
-		$this->template = $this->cObj->substituteMarkerArray($this->template, $markers);
+		if($errors['mode'] != 'plain') {
+			$this->sanitizeMarkers();
+		}
+		
+		//substitute ISSET markers
+		$this->substituteIssetSubparts();
 
-		//remove remaining VALUE_-markers
-		//needed for nested markers like ###LLL:tx_myextension_table.field1.i.###value_field1###### to avoid wrong marker removal if field1 isn't set
-		$this->template = preg_replace('/###value_.*?###/i', '', $this->template);
+		//fill TypoScript markers
+		if(is_array($this->settings['markers.'])) {
+			$this->fillTypoScriptMarkers();
+		}
+
+		//fill default markers
+		$this->fillDefaultMarkers();
+
+		//fill value_[fieldname] markers
+		$this->fillValueMarkers();
+
+		//fill LLL:[language_key] markers
+		$this->fillLangMarkers();
+
+
+		//remove markers that were not substituted
+		$content = Tx_Formhandler_StaticFuncs::removeUnfilledMarkers($this->template);
+
+
+		return trim($content);
 	}
-
+	
 	/**
 	 * Sanitizes GET/POST parameters by processing the 'checkBinaryCrLf' setting in TypoScript
 	 *
-	 * @return array The markers
+	 * @return void
 	 */
-	protected function sanitizeMarkers($markers) {
-		$componentSettings = $this->getComponentSettings();
-		$checkBinaryCrLf = $componentSettings['checkBinaryCrLf'];
-		if (strlen($checkBinaryCrLf) > 0) {
+	protected function sanitizeMarkers() {
+		$checkBinaryCrLf = $this->settings['checkBinaryCrLf'];
+		if ($checkBinaryCrLf != '') {
 			$paramsToCheck = t3lib_div::trimExplode(',', $checkBinaryCrLf);
-			foreach ($markers as $markerName => &$value) {
+			foreach($paramsToCheck as &$val) {
 				
-				$fieldName = str_replace(array('value_', 'VALUE_', '###'), '', $markerName);
-				if(in_array($fieldName, $paramsToCheck)) {
-					$value = str_replace (chr(13), '', $value);
-					$value = str_replace ('\\', '', $value);
-					$value = nl2br($value);
-				}
+				$val = str_replace (chr(13), '<br />', $val);
+				$val = str_replace ('\\', '', $val);
+
 			}
 		}
-		return $markers;
+		foreach($this->gp as $field => &$value) {
+			$value = nl2br($value);
+		}
 	}
 
 }

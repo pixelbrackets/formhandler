@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_AntiSpamFormTime.php 60132 2012-03-30 13:36:38Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_AntiSpamFormTime.php 22614 2009-07-21 20:43:47Z fabien_u $
  *                                                                        */
 
 /**
@@ -32,75 +32,136 @@
  * saveInterceptors.1.config.maxTime.unit = minutes
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
+ * @package	Tx_Formhandler
+ * @subpackage	Interceptor
  */
 class Tx_Formhandler_Interceptor_AntiSpamFormTime extends Tx_Formhandler_AbstractInterceptor {
 
 	/**
 	 * The main method called by the controller
 	 *
+	 * @param array $gp The GET/POST parameters
+	 * @param array $settings The defined TypoScript settings for the finisher
 	 * @return array The probably modified GET/POST parameters
 	 */
-	public function process() {
+	public function process($gp, $settings) {
+		$this->gp = $gp;
+		$this->settings = $settings;
 		$isSpam = $this->doCheck();
-		if ($isSpam) {
-			$this->log(TRUE);
-			if ($this->settings['redirectPage']) {
-				$this->globals->getSession()->reset();
-				$this->utilityFuncs->doRedirectBasedOnSettings($this->settings, $this->gp);
-				return 'Lousy spammer!';
+		if($isSpam) {
+			$this->log();
+			if($this->settings['redirectPage']) {
+				$this->doRedirect($this->settings['redirectPage']);
 			} else {
-
-				//set view
-				$viewClass = 'Tx_Formhandler_View_AntiSpam';
-				if($this->settings['view']) {
-					$viewClass = $this->utilityFuncs->getSingle($this->settings, 'view');
-				}
-				$viewClass = $this->utilityFuncs->prepareClassName($viewClass);
-				$view = $this->componentManager->getComponent($viewClass);
-				$view->setLangFiles($this->globals->getLangFiles());
+				$view = $this->componentManager->getComponent('Tx_Formhandler_View_AntiSpam');
+				$view->setLangFile($this->langFile);
 				$view->setPredefined($this->predefined);
-
-				$templateCode = $this->globals->getTemplateCode();
-				if($this->settings['templateFile']) {
-					$templateCode = $this->utilityFuncs->readTemplateFile(FALSE, $this->settings);
-				}
+				
+				$templateCode = $this->getTemplate();
 				$view->setTemplate($templateCode, 'ANTISPAM');
-				if (!$view->hasTemplate()) {
-					$this->utilityFuncs->throwException('spam_detected');
+				if(!$view->hasTemplate()) {
+					Tx_Formhandler_StaticFuncs::throwException('SPAM!!!!!!');
 					return 'Lousy spammer!';
 				}
-				$content = $view->render($this->gp, array());
-				$this->globals->getSession()->reset();
-				return $content;
+				
+				return $view->render($this->gp, array());
+				
+				
+				
 			}
 		}
+		
 		return $this->gp;
 	}
-
+	
+	/**
+	 * Loads the template file.
+	 *
+	 * @return string The template code
+	 */
+	protected function getTemplate() {
+		$templateFile = $this->settings['templateFile'];
+		if(isset($this->settings['templateFile.']) && is_array($this->settings['templateFile.'])) {
+			$templateFile = $this->cObj->cObjGetSingle($this->settings['templateFile'], $this->settings['templateFile.']);
+		} else {
+			$templateFile = Tx_Formhandler_StaticFuncs::resolvePath($templateFile);
+		}
+		$template = t3lib_div::getURL($templateFile);
+		
+		return $template;
+	}
+	
 	/**
 	 * Performs checks if the submitted form should be treated as Spam.
 	 *
 	 * @return boolean
 	 */
 	protected function doCheck() {
-		$value = $this->utilityFuncs->getSingle($this->settings['minTime.'], 'value');
-		$unit = $this->utilityFuncs->getSingle($this->settings['minTime.'], 'unit');
-		$minTime = $this->utilityFuncs->convertToSeconds($value, $unit);
-
-		$value = $this->utilityFuncs->getSingle($this->settings['maxTime.'], 'value');
-		$unit = $this->utilityFuncs->getSingle($this->settings['maxTime.'], 'unit');
-		$maxTime = $this->utilityFuncs->convertToSeconds($value, $unit);
+		
+		$value = $this->settings['minTime.']['value'];
+		$unit = $this->settings['minTime.']['unit'];
+		$minTime = Tx_Formhandler_StaticFuncs::convertToSeconds($value, $unit);
+		
+		
+		$value = $this->settings['maxTime.']['value'];
+		$unit = $this->settings['maxTime.']['unit'];
+		$maxTime = Tx_Formhandler_StaticFuncs::convertToSeconds($value, $unit);
 		$spam = FALSE;
-		if (!isset($this->gp['formtime']) || 
-			!is_numeric($this->gp['formtime'])) {
-
+		if (	!isset($this->gp['formtime']) || 
+				!is_numeric($this->gp['formtime'])) {
+					
 			$spam = TRUE;
-		} elseif ($minTime && time() - intval($this->gp['formtime']) < $minTime) {
+		} elseif($minTime && time() - intval($this->gp['formtime']) < $minTime) {
 			$spam = TRUE;
-		} elseif ($maxTime && time() - intval($this->gp['formtime']) > $maxTime) {
+		} elseif($maxTime && time() - intval($this->gp['formtime']) > $maxTime) {
 			$spam = TRUE;
 		}
 		return $spam;
+	}
+	
+	/**
+	 * Logs to the database. Records will be marked red in backend module.
+	 *
+	 * @return void
+	 */
+	protected function log() {
+		$logger = $this->componentManager->getComponent('Tx_Formhandler_Logger_DB');
+		$logger->log($this->gp, array('markAsSpam' => 1));
+	}
+	
+	/**
+	 * Redirects to a specified page or URL.
+	 *
+	 * @return void
+	 */
+	protected function doRedirect($redirect) {
+		$url = '';
+
+		if(!isset($redirect)) {
+			return;
+		}
+
+		//if redirect_page was page id
+		if (is_numeric($redirect)) {
+
+			// these parameters have to be added to the redirect url
+			$addparams = array();
+			if (t3lib_div::_GP('L')) {
+				$addparams['L'] = t3lib_div::_GP('L');
+			}
+				
+			$url = $this->cObj->getTypoLink_URL($redirect, '', $addparams);
+				
+			//else it may be a full URL
+		} else {
+			$url = $redirect;
+		}
+
+		
+		if($url) {
+			header('Location: ' . t3lib_div::locationHeaderUrl($url));
+		}
+		exit();
 	}
 
 }

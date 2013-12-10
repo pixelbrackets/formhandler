@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_Date.php 70472 2013-01-30 09:51:59Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_Date.php 22614 2009-07-21 20:43:47Z fabien_u $
  *                                                                        */
 
 /**
@@ -23,41 +23,61 @@
  */
 class Tx_Formhandler_ErrorCheck_Date extends Tx_Formhandler_AbstractErrorCheck {
 
-	public function init($gp, $settings) {
-		parent::init($gp, $settings);
-		$this->mandatoryParameters = array('pattern');
-	}
-
-	public function check() {
+	/**
+	 * Validates that a specified field's value is a valid date
+	 *
+	 * @param array &$check The TypoScript settings for this error check
+	 * @param string $name The field name
+	 * @param array &$gp The current GET/POST parameters
+	 * @return string The error string
+	 */
+	public function check(&$check, $name, &$gp) {
 		$checkFailed = '';
 
-		if (isset($this->gp[$this->formFieldName]) && strlen(trim($this->gp[$this->formFieldName])) > 0) {
-
-			// find out separator
-			$pattern = $this->utilityFuncs->getSingle($this->settings['params'], 'pattern');
-			preg_match('/^[d|m|y]*(.)[d|m|y]*/i', $pattern, $res);
+		if(isset($gp[$name]) && !empty($gp[$name])) {
+			# find out separator
+			$pattern = $check['params']['pattern'];
+			eregi('^[d|m|y]*(.)[d|m|y]*', $pattern, $res);
 			$sep = $res[1];
-
-			// normalisation of format
-			$pattern = $this->utilityFuncs->normalizeDatePattern($pattern, $sep);
-
-			// find out correct positions of "d","m","y"
+	
+			# normalisation of format
+			$pattern = $this->normalizeDatePattern($pattern, $sep);
+	
+			# find out correct positioins of "d","m","y"
 			$pos1 = strpos($pattern, 'd');
 			$pos2 = strpos($pattern, 'm');
 			$pos3 = strpos($pattern, 'y');
-			$dateCheck = t3lib_div::trimExplode($sep, $this->gp[$this->formFieldName]);
-			if (sizeof($dateCheck) !== 3) {
-				$checkFailed = $this->getCheckFailed();
-			} elseif (intval($dateCheck[0]) === 0 || intval($dateCheck[1]) === 0 || intval($dateCheck[2]) === 0) {
-				$checkFailed = $this->getCheckFailed();
-			} elseif (!checkdate($dateCheck[$pos2], $dateCheck[$pos1], $dateCheck[$pos3])) {
-				$checkFailed = $this->getCheckFailed();
-			} elseif (strlen($dateCheck[$pos3]) !== 4) {
-				$checkFailed = $this->getCheckFailed();
+			$dateCheck = t3lib_div::trimExplode($sep, $gp[$name]);
+			if(sizeof($dateCheck) != 3) {
+				$checkFailed = $this->getCheckFailed($check);
+			} elseif(intval($dateCheck[0]) == 0 || intval($dateCheck[1]) == 0 || intval($dateCheck[2]) == 0) {
+				$checkFailed = $this->getCheckFailed($check);
+			} elseif(!checkdate($dateCheck[$pos2], $dateCheck[$pos1], $dateCheck[$pos3])) {
+				$checkFailed = $this->getCheckFailed($check);
+			} elseif(strlen($dateCheck[$pos3]) != 4) {
+				$checkFailed = $this->getCheckFailed($check);
 			}
 		}
 		return $checkFailed;
 	}
 
+	/**
+	 * Internal method to normalize a specified date pattern for internal use
+	 *
+	 * @param string $pattern The pattern
+	 * @param string $sep The seperator character
+	 * @return string The normalized pattern
+	 */
+	protected function normalizeDatePattern($pattern,$sep) {
+		$pattern = strtoupper($pattern);
+		$pattern = str_replace($sep, '', $pattern);
+		$pattern = str_replace('DD', 'd', $pattern);
+		$pattern = str_replace('D', 'd', $pattern);
+		$pattern = str_replace('MM', 'm', $pattern);
+		$pattern = str_replace('M', 'm', $pattern);
+		$pattern = str_replace('YYYY', 'y', $pattern);
+		$pattern = str_replace('YY', 'y', $pattern);
+		return $pattern;
+	}
 }
 ?>

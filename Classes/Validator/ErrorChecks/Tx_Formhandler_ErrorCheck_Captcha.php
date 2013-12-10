@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_Captcha.php 67837 2012-11-14 09:11:59Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_Captcha.php 22614 2009-07-21 20:43:47Z fabien_u $
  *                                                                        */
 
 /**
@@ -23,29 +23,27 @@
  */
 class Tx_Formhandler_ErrorCheck_Captcha extends Tx_Formhandler_AbstractErrorCheck {
 
-	public function check() {
+	/**
+	 * Validates that a specified field's value matches the generated word of the extension "captcha"
+	 *
+	 * @param array &$check The TypoScript settings for this error check
+	 * @param string $name The field name
+	 * @param array &$gp The current GET/POST parameters
+	 * @return string The error string
+	 */
+	public function check(&$check, $name, &$gp) {
 		$checkFailed = '';
 
-		// get captcha string
+			// get captcha sting
 		session_start();
-
-		// make sure that an anticipated answer to the captcha actually exists
-		if ( isset( $_SESSION['tx_captcha_string'] ) && $_SESSION['tx_captcha_string'] > '' ) {
-			$captchaStr = $_SESSION['tx_captcha_string'];
-
-			// make sure the answer given to the captcha is not empty
-			if ($captchaStr != $this->gp[$this->formFieldName] || strlen(trim($this->gp[$this->formFieldName])) === 0) {
-				$checkFailed = $this->getCheckFailed();
-			}
-		} else {
-			$checkFailed = $this->getCheckFailed();
-		}
-
-		if(!$this->globals->isAjaxMode()) {
-			$_SESSION['tx_captcha_string'] = '';
+		$captchaStr = $_SESSION['tx_captcha_string'];
+		$_SESSION['tx_captcha_string'] = '';
+		if ($captchaStr != $gp[$name]) {
+			$checkFailed = $this->getCheckFailed($check);
 		}
 		return $checkFailed;
 	}
+
 
 }
 ?>

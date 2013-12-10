@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_Integer.php 50192 2011-07-27 18:42:39Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_Integer.php 22614 2009-07-21 20:43:47Z fabien_u $
  *                                                                        */
 
 /**
@@ -23,16 +23,26 @@
  */
 class Tx_Formhandler_ErrorCheck_Integer extends Tx_Formhandler_AbstractErrorCheck {
 
-	public function check() {
+	/**
+	 * Validates that a specified field is a valid integer.
+	 *
+	 * @param array &$check The TypoScript settings for this error check
+	 * @param string $name The field name
+	 * @param array &$gp The current GET/POST parameters
+	 * @return string The error string
+	 */
+	public function check(&$check, $name, &$gp) {
 		$checkFailed = '';
-		if (isset($this->gp[$this->formFieldName]) && strlen(trim($this->gp[$this->formFieldName])) > 0) {
-			$valid = preg_match('/^-{0,1}[0-9]+$/', $this->gp[$this->formFieldName]);
-			if (!$valid) {
-				$checkFailed = $this->getCheckFailed();
+		if(isset($gp[$name]) && !empty($gp[$name])) {
+			$ereg = '^-{0,1}[0-9]+$';
+			$valid = ereg($ereg, $gp[$name]);
+			if(!$valid) {
+				$checkFailed = $this->getCheckFailed($check);
 			}
 		}
 		return $checkFailed;
 	}
+
 
 }
 ?>
