@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Mail.php 22854 2009-07-28 18:15:27Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Mail.php 23782 2009-08-31 09:01:07Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -82,7 +82,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		//send emails
 		$this->sendMail('admin');
 		$this->sendMail('user');
-
+		
 		return $this->gp;
 	}
 
@@ -106,7 +106,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 				Tx_Formhandler_StaticFuncs::debugMessage('no_mail_template', $mode, $suffix);
 			}
 		}
-
+		
 		return $view->render($this->gp, array('mode' => $suffix));
 	}
 
@@ -154,12 +154,28 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		} 
 		
 		$mailSettings = $this->settings[$type];
-		$template['plain'] = $this->parseTemplate($type, 'plain');
-		$template['html'] = $this->parseTemplate($type, 'html');
+		$plain = $this->parseTemplate($type, 'plain');
+		if(strlen(trim($plain)) > 0) {
+			$template['plain'] = $plain;
+		}
+		$html = $this->parseTemplate($type, 'html');
+		if(strlen(trim($html)) > 0) {
+			$template['html'] = $html;
+		}
 
 		//init mailer object
-		require_once(PATH_t3lib . 'class.t3lib_htmlmail.php');
-		$emailObj = t3lib_div::makeInstance('t3lib_htmlmail');
+		$version = TYPO3_version;
+		$version = preg_replace('/[a-zA-Z]*[0-9]{0,1}$/','',$version);
+		
+		/*if(version_compare($version, '4.3.0', '>=')) {
+			
+			require_once(PATH_t3lib . 'class.t3lib_htmlmail.php');
+			$emailObj = t3lib_div::makeInstance('t3lib_htmlmail');
+		} else {*/
+			require_once(t3lib_extMgm::extPath('formhandler') . 'Resources/PHP/class.formhandler_htmlmail.php');
+			$emailObj = t3lib_div::makeInstance('formhandler_htmlmail');
+		//}
+		
 		$emailObj->start();
 
 		//set e-mail options
@@ -183,7 +199,19 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		if(isset($mailSettings['cc_email']) && is_array($mailSettings['cc_email'])) {
 			$cc = implode(',', $mailSettings['cc_email']);
 		}
+		if($mailSettings['cc_name']) {
+			$cc = $mailSettings['cc_name'] . ' <' . $cc . '>'; 
+		}
 		$emailObj->recipient_copy = $cc;
+		
+		$bcc = $mailSettings['bcc_email'];
+		if(isset($mailSettings['bcc_email']) && is_array($mailSettings['bcc_email'])) {
+			$bcc = implode(',', $mailSettings['bcc_email']);
+		}
+		if($mailSettings['bcc_name']) {
+			$bcc = $mailSettings['bcc_name'] . ' <' . $bcc . '>'; 
+		}
+		$emailObj->recipient_blindcopy = $bcc;
 		
 		$returnPath = $mailSettings['return_path'];
 		if(isset($mailSettings['return_path']) && is_array($mailSettings['return_path'])) {
@@ -194,11 +222,14 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		if($mailSettings['email_header']) {
 			$emailObj->add_header($mailSettings['header']);
 		}
-		if($template['plain']) {
+		
+		if(strlen(trim($template['plain'])) > 0) {
 			$emailObj->setPlain($template['plain']);
+		} else {
+			$emailObj->setPlain(NULL);
 		}
 
-		if($template['html']) {
+		if(strlen(trim($template['html'])) > 0) {
 			if($mailSettings['htmlEmailAsAttachment']) {
 				$prefix = 'formhandler_';
 				if(isset($mailSettings['filePrefix.']['html'])) {
@@ -251,6 +282,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 				if (strstr($mailto, '@') && !eregi("\r", $mailto) && !eregi("\n", $mailto)) {
 					$sent = false;
 					if($doSend) {
+						$emailObj->recipient = $mailto;
 						$sent = $emailObj->send($mailto);
 					}
 				}
@@ -259,19 +291,21 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			if($sent) {
 				Tx_Formhandler_StaticFuncs::debugMessage('mail_sent', $mailto);
 				Tx_Formhandler_StaticFuncs::debugMessage('mail_subject', $emailObj->subject);
-				Tx_Formhandler_StaticFuncs::debugMessage('mail_sender', ($emailObj->from_name . ' <' . $emailObj->from_email . '>'), false);
-				Tx_Formhandler_StaticFuncs::debugMessage('mail_replyto', ($emailObj->replyto_name . ' <' . $emailObj->replyto_email . '>'), false);
+				Tx_Formhandler_StaticFuncs::debugMessage('mail_sender', ($emailObj->from_name . ' &lt;' . $emailObj->from_email . '&gt;'), false);
+				Tx_Formhandler_StaticFuncs::debugMessage('mail_replyto', ($emailObj->replyto_name . ' &lt;' . $emailObj->replyto_email . '&gt;'), false);
 				Tx_Formhandler_StaticFuncs::debugMessage('mail_returnpath', $emailObj->returnPath, false);
 				Tx_Formhandler_StaticFuncs::debugMessage('mail_cc', $emailObj->recipient_copy, false);
+				Tx_Formhandler_StaticFuncs::debugMessage('mail_bcc', $emailObj->recipient_blindcopy, false);
 				Tx_Formhandler_StaticFuncs::debugMessage('mail_plain', $template['plain'], false);
 				Tx_Formhandler_StaticFuncs::debugMessage('mail_html', $template['html'], false);
 			} else {
 				Tx_Formhandler_StaticFuncs::debugMessage('mail_not_sent',$mailto);
 				Tx_Formhandler_StaticFuncs::debugMessage('mail_subject', $emailObj->subject);
-				Tx_Formhandler_StaticFuncs::debugMessage('mail_sender', ($emailObj->from_name . ' <' . $emailObj->from_email . '>'), false);
-				Tx_Formhandler_StaticFuncs::debugMessage('mail_replyto', ($emailObj->replyto_name . ' <' . $emailObj->replyto_email . '>'), false);
+				Tx_Formhandler_StaticFuncs::debugMessage('mail_sender', ($emailObj->from_name . ' &lt;' . $emailObj->from_email . '&gt;'), false);
+				Tx_Formhandler_StaticFuncs::debugMessage('mail_replyto', ($emailObj->replyto_name . ' &lt;' . $emailObj->replyto_email . '&gt;'), false);
 				Tx_Formhandler_StaticFuncs::debugMessage('mail_returnpath', $emailObj->returnPath, false);
-				Tx_Formhandler_StaticFuncs::debugMessage('mail_cc', $emailObj->recipient_copy, false);
+				Tx_Formhandler_StaticFuncs::debugMessage('mail_cc', str_replace('>', '&gt;', str_replace('<', '&lt;', $emailObj->recipient_copy)), false);
+				Tx_Formhandler_StaticFuncs::debugMessage('mail_bcc', str_replace('>', '&gt;', str_replace('<', '&lt;', $emailObj->recipient_blindcopy)), false);
 				Tx_Formhandler_StaticFuncs::debugMessage('mail_plain', $template['plain'], false);
 				Tx_Formhandler_StaticFuncs::debugMessage('mail_html', $template['html'], false);
 			}
@@ -479,6 +513,9 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			'replyto_email',
 			'replyto_name',
 			'cc_email',
+			'cc_name',
+			'bcc_email',
+			'bcc_name',
 			'to_name',
 			'return_path',
 			'attachment',
@@ -520,6 +557,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 					case 'sender_email':
 					case 'replyto_email':
 					case 'cc_email':
+					case 'bcc_email':
 					case 'return_path':
 						$emailSettings[$option] = $this->parseList($currentSettings, $type, $option);
 						break;
@@ -527,6 +565,8 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 					case 'subject':
 					case 'sender_name':
 					case 'replyto_name':
+					case 'cc_name':
+					case 'bcc_name':
 						$emailSettings[$option] = $this->parseValue($currentSettings, $type, $option);
 						break;
 

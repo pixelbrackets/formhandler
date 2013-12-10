@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Form.php 22816 2009-07-27 16:34:06Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Form.php 23543 2009-08-21 09:03:39Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -83,8 +83,13 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 	public function render($gp,$errors) {
 
 		session_start();
-
+		
 		//set GET/POST parameters
+		/*$this->gp = array();
+		foreach($gp as $k=>&$v) {
+			$this->gp[$k] = $v;
+			if(is_array)
+		}*/
 		$this->gp = $gp;
 
 		//set template
@@ -164,7 +169,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 	protected function markersCountAsSet($conditionValue) {
 
 		// Find first || or && or !
-		$pattern = '/(_*([A-Za-z0-9]+)_*(\|\||&&)_*([^_]+)_*)|(_*(!)_*([A-Za-z0-9]+))/';
+		$pattern = '/(_*([a-zA-Z0-9\-]+)_*(\|\||&&)_*([^_]+)_*)|(_*(!)_*([a-zA-Z0-9\-]+))/';
 
 		session_start();
 		// recurse if there are more
@@ -208,9 +213,10 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 
 			// set for odd ISSET_xyz, else reset
 			if(preg_match($pattern, $line, $matches)) {
+				//print_r($matches);
 				if(!$flags[$matches[1]]) { // set
 					$flags[$matches[1]] = true;
-
+					//print $matches[1].'<br />';
 					// set nowrite flag if required until the next ISSET_xyz
 					// (only if not already set by envelop)
 					if((!$this->markersCountAsSet($matches[1])) && (!$nowrite)) {
@@ -353,6 +359,9 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		$markers['###TIMESTAMP###'] = time();
 		$markers['###ABS_URL###'] = t3lib_div::locationHeaderUrl('') . $path;
 		
+		if($this->gp['generated_authCode']) {
+			$markers['###auth_code###'] = $this->gp['generated_authCode'];
+		}
 		
 		$markers['###ip###'] = t3lib_div::getIndpEnv('REMOTE_ADDR');
 		$markers['###submission_date###'] = date('d.m.Y H:i:s', time());
@@ -544,7 +553,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 										$markers['###' . $replacedFieldname . '_remainingCount###'] = $remaining;
 										break;
 									case 'fileMinCount':
-										$maxCount = $fieldSettings['errorCheck.'][$key.'.']['minCount'];
+										$minCount = $fieldSettings['errorCheck.'][$key.'.']['minCount'];
 										$markers['###' . $replacedFieldname . '_minCount###'] = $minCount;
 										break;
 									case 'required':
@@ -843,6 +852,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		if (is_array($this->gp)) {
 			foreach($this->gp as $k => $v) {
 				if (!ereg('EMAIL_', $k)) {
+					
 					if (is_array($v)) {
 						$v = implode(',', $v);
 					}
@@ -856,12 +866,14 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 					} else {
 						$markers['###value_' . $k . '###'] = '';
 					}
+				
 					$markers['###' . $k . '###'] = $markers['###value_' . $k . '###'];
 					$markers['###' . strtoupper($k) . '###'] = $markers['###value_' . $k . '###'];
 					$markers['###' . (strtoupper('VALUE_' . $k)) . '###'] = $markers['###value_' . $k . '###'];
 				} //if end
 			} // foreach end
 		} // if end
+		
 		$this->template = $this->cObj->substituteMarkerArray($this->template, $markers);
 
 		//remove remaining VALUE_-markers

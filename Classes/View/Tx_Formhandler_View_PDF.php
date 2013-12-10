@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_PDF.php 23076 2009-08-04 07:04:10Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_PDF.php 23309 2009-08-12 15:05:33Z reinhardfuehricht $
  *          
  *                                                                        
  *                                                                       */
@@ -53,14 +53,12 @@ class Tx_Formhandler_View_PDF extends Tx_Formhandler_View_Form {
 		if ($checkBinaryCrLf != '') {
 			$paramsToCheck = t3lib_div::trimExplode(',', $checkBinaryCrLf);
 			foreach($paramsToCheck as &$val) {
-				
-				$val = str_replace (chr(13), '<br />', $val);
-				$val = str_replace ('\\', '', $val);
-
+				if(!is_array($val)) {
+					$val = str_replace (chr(13), '<br />', $val);
+					$val = str_replace ('\\', '', $val);
+					$val = nl2br($val);
+				}
 			}
-		}
-		foreach($this->gp as $field => &$value) {
-			$value = nl2br($value);
 		}
 	}
 }

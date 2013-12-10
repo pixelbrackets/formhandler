@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Validator_Default.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_Validator_Default.php 23307 2009-08-12 14:34:30Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -131,6 +131,7 @@ class Tx_Formhandler_Validator_Default extends Tx_Formhandler_AbstractValidator 
 							Tx_Formhandler_StaticFuncs::debugMessage('check_not_found', 'Tx_Formhandler_ErrorCheck_' . $classNameFix);
 						}
 						if(empty($restrictErrorChecks) || in_array($check['check'], $restrictErrorChecks)) {
+							Tx_Formhandler_StaticFuncs::debugMessage('calling_class', 'Tx_Formhandler_ErrorCheck_' . $classNameFix);
 							$checkFailed = $errorCheckObject->check($check, $name, $this->gp);
 							if(strlen($checkFailed) > 0) {
 								if(!is_array($errors[$name])) {

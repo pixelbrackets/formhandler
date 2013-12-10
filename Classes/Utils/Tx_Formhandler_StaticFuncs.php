@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_StaticFuncs.php 22854 2009-07-28 18:15:27Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_StaticFuncs.php 23789 2009-08-31 10:13:44Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -146,7 +146,7 @@ class Tx_Formhandler_StaticFuncs {
 				$templateFile = t3lib_div::getURL(Tx_Formhandler_StaticFuncs::resolvePath($templateFile));
 			}
 		} else {
-			if(strpos($templateFile, "\n") == -1) {
+			if(strpos($templateFile, "\n") === FALSE) {
 				$templateFile = t3lib_div::getURL(Tx_Formhandler_StaticFuncs::resolvePath($templateFile));
 			}
 		}
@@ -172,6 +172,42 @@ class Tx_Formhandler_StaticFuncs {
 		}
 		$langFile = Tx_Formhandler_StaticFuncs::convertToRelativePath($langFile);
 		return $langFile;
+	}
+	
+	/**
+	 * Redirects to a specified page or URL.
+	 *
+	 * @param mixed $redirect Page id or URL to redirect to
+	 * @param boolean $correctRedirectUrl replace &amp; with & in URL 
+	 * @return void
+	 */
+	static public function doRedirect($redirect, $correctRedirectUrl) {
+	
+		//if redirect_page was page id
+		if (is_numeric($redirect)) {
+
+			// these parameters have to be added to the redirect url
+			$addparams = array();
+			if (t3lib_div::_GP('L')) {
+				$addparams['L'] = t3lib_div::_GP('L');
+			}
+
+			$url = Tx_Formhandler_StaticFuncs::$cObj->getTypoLink_URL($redirect, $addparams);
+
+			//else it may be a full URL
+		} else {
+			$url = $redirect;
+		}
+
+		//correct the URL by replacing &amp;
+		session_start();
+		if ($correctRedirectUrl) {
+			$url = str_replace('&amp;', '&', $url);
+		}
+
+		if($url) {
+			header("Location: ".t3lib_div::locationHeaderUrl($url));
+		}
 	}
 
 	/**
@@ -369,12 +405,54 @@ class Tx_Formhandler_StaticFuncs {
 		}
 		return $mixed;
 	}
+	
+	/**
+	 * Method to print a debug header to screen and open a section for message
+	 *
+	 * @param string $key The message or key in language file (locallang_debug.xml) to print
+	 * @return void
+	 * @static
+	 */
+	static public function debugBeginSection($key) {
+		session_start();
+		if($_SESSION['formhandlerSettings']['debugMode']) {
+			$message = Tx_Formhandler_Messages::getDebugMessage($key);
+			if(strlen($message) == 0) {
+				$message = Tx_Formhandler_Messages::formatDebugHeader($key);
+				
+			} else {
+				if(func_num_args() > 1) {
+					$args = func_get_args();
+					array_shift($args);
+					if(is_bool($args[count($args) - 1])) {
+						array_pop($args);
+					}
+					$message = vsprintf($message, $args);
+				}
+				$message = Tx_Formhandler_Messages::formatDebugHeader($message);
+				
+			}
+			print $message . '<div style="border:1px solid #ccc; padding:7px; background:#dedede;">' . "\n";
+		}
+	}
+	
+	/**
+	 * Method to print an end tag for an opened debug section
+	 *
+	 * @return void
+	 * @static
+	 */
+	static public function debugEndSection() {
+		session_start();
+		if($_SESSION['formhandlerSettings']['debugMode']) {
+			print '</div>' . "\n";
+		}
+	}
 
 	/**
 	 * Method to print a debug message to screen
 	 *
-	 * @param string $message The message to print
-	 * @param boolean $extended Print a header style message or default output
+	 * @param string $key The message or key in language file (locallang_debug.xml) to print
 	 * @return void
 	 * @static
 	 */
@@ -383,14 +461,19 @@ class Tx_Formhandler_StaticFuncs {
 		if($_SESSION['formhandlerSettings']['debugMode']) {
 			$message = Tx_Formhandler_Messages::getDebugMessage($key);
 			if(strlen($message) == 0) {
-				print $key . '<br />';
+				$message = Tx_Formhandler_Messages::formatDebugMessage($key);
+				print $message;
 			} else {
 				if(func_num_args() > 1) {
 					$args = func_get_args();
 					array_shift($args);
+					if(is_bool($args[count($args) - 1])) {
+						array_pop($args);
+					}
 					$message = vsprintf($message, $args);
 				}
-				print $message . '<br />';
+				$message = Tx_Formhandler_Messages::formatDebugMessage($message);
+				print $message;
 			}
 		}
 	}
@@ -426,11 +509,12 @@ class Tx_Formhandler_StaticFuncs {
 	 */
 	static public function debugArray($arr) {
 		if(!is_array($arr)) {
-			return;
+			$arr = array();
 		}
 		session_start();
 		if($_SESSION['formhandlerSettings']['debugMode']) {
 				t3lib_div::print_array($arr);
+				print '<br />';
 		}
 	}
 
@@ -454,7 +538,7 @@ class Tx_Formhandler_StaticFuncs {
 	 */
 	static public function resolvePath($path) {
 		$path = explode('/', $path);
-		if(strpos($path[0], 'EXT') > -1) {
+		if(strpos($path[0], 'EXT') === 0) {
 			$parts = explode(':', $path[0]);
 			$path[0] = t3lib_extMgm::extPath($parts[1]);
 		}
@@ -472,7 +556,7 @@ class Tx_Formhandler_StaticFuncs {
 	 */
 	static public function resolveRelPath($path) {
 		$path = explode('/', $path);
-		if(strpos($path[0], 'EXT') > -1) {
+		if(strpos($path[0], 'EXT') === 0) {
 			$parts = explode(':', $path[0]);
 			$path[0] = t3lib_extMgm::extRelPath($parts[1]);
 		}
@@ -490,7 +574,7 @@ class Tx_Formhandler_StaticFuncs {
 	 */
 	static public function resolveRelPathFromSiteRoot($path) {
 		$path = explode('/', $path);
-		if(strpos($path[0], 'EXT') > -1) {
+		if(strpos($path[0], 'EXT') === 0) {
 			$parts = explode(':', $path[0]);
 			$path[0] = t3lib_extMgm::extRelPath($parts[1]);
 		}
@@ -526,13 +610,10 @@ class Tx_Formhandler_StaticFuncs {
 			$uploadFolder = Tx_Formhandler_StaticFuncs::sanitizePath($uploadFolder);
 		}
 
-		//if the set directory doesn't exist, print a message
-		#if(!is_dir(Tx_Formhandler_StaticFuncs::getDocumentRoot().$uploadFolder)) {
-		#		Tx_Formhandler_StaticFuncs::debugMessage("Folder: '".Tx_Formhandler_StaticFuncs::getDocumentRoot().$uploadFolder."' doesn't exist!");
-		#	}
+		//if the set directory doesn't exist, print a message and try to create
 		if(!is_dir(Tx_Formhandler_StaticFuncs::getTYPO3Root() . $uploadFolder)) {
-			//Tx_Formhandler_StaticFuncs::debugMessage('folder_doesnt_exist', Tx_Formhandler_StaticFuncs::getTYPO3Root() . $uploadFolder);
-			print t3lib_div::mkdir_deep(Tx_Formhandler_StaticFuncs::getTYPO3Root() . '/',$uploadFolder);
+			Tx_Formhandler_StaticFuncs::debugMessage('folder_doesnt_exist', Tx_Formhandler_StaticFuncs::getTYPO3Root() . '/' . $uploadFolder);
+			t3lib_div::mkdir_deep(Tx_Formhandler_StaticFuncs::getTYPO3Root() . '/',$uploadFolder);
 		}
 		return $uploadFolder;
 	}

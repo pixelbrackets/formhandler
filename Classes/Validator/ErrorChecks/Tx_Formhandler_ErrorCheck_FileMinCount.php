@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileMinCount.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_ErrorCheck_FileMinCount.php 23292 2009-08-12 12:27:50Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -36,21 +36,19 @@ class Tx_Formhandler_ErrorCheck_FileMinCount extends Tx_Formhandler_AbstractErro
 
 		session_start();
 		$minCount = $check['params']['minCount'];
-		if(	is_array($_SESSION['formhandlerFiles'][$name]) &&
-		count($_SESSION['formhandlerFiles'][$name]) < $minCount &&
-		$_SESSION['formhandlerSettings']['currentStep'] == $_SESSION['formhandlerSettings']['lastStep']) {
-				
-			$checkFailed = $this->getCheckFailed($check);
-		} elseif (is_array($_SESSION['formhandlerFiles'][$name]) &&
+		if (is_array($_SESSION['formhandlerFiles'][$name]) &&
 		$_SESSION['formhandlerSettings']['currentStep'] > $_SESSION['formhandlerSettings']['lastStep']) {
-				
+			
 			foreach($_FILES as $idx => $info) {
-				if(strlen($info['name'][$name]) > 0 && count($_SESSION['formhandlerFiles'][$name]) < $minCount) {
+				if(strlen($info['name'][$name]) > 0 && count($_SESSION['formhandlerFiles'][$name]) < ($minCount - 1)) {
+					$checkFailed = $this->getCheckFailed($check);
+				} elseif(strlen($info['name'][$name]) == 0 && count($_SESSION['formhandlerFiles'][$name]) < $minCount) {
 					$checkFailed = $this->getCheckFailed($check);
 				}
 			}
-				
+
 		}
+
 		return $checkFailed;
 	}
 
