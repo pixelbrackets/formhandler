@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_IPBlocking.php 23289 2009-08-12 11:54:05Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_IPBlocking.php 24857 2009-09-28 09:36:08Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -69,15 +69,9 @@ class Tx_Formhandler_Interceptor_IPBlocking extends Tx_Formhandler_AbstractInter
 	/**
 	 * The main method called by the controller
 	 *
-	 * @param array $gp The GET/POST parameters
-	 * @param array $settings The defined TypoScript settings for the finisher
 	 * @return array The probably modified GET/POST parameters
 	 */
-	public function process($gp, $settings) {
-		$this->gp = $gp;
-		$this->settings = $settings;
-
-
+	public function process() {
 		$ipTimebaseValue = $this->settings['ip.']['timebase.']['value'];
 		$ipTimebaseUnit = $this->settings['ip.']['timebase.']['unit'];
 		$ipMaxValue = $this->settings['ip.']['threshold'];

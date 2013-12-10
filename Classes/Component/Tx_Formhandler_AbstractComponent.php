@@ -1,25 +1,22 @@
 <?php
-/*                                                                       *
-* This script is part of the TYPO3 project - inspiring people to share!  *
-*                                                                        *
-* TYPO3 is free software; you can redistribute it and/or modify it under *
-* the terms of the GNU General Public License version 2 as published by  *
-* the Free Software Foundation.                                          *
-*                                                                        *
-* This script is distributed in the hope that it will be useful, but     *
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHAN-    *
-* TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
-* Public License for more details.                                       *
-*                                                                        */
 
-/**
- * Abstract component class for any usable Formhandler component.
- * This class extends the abstract class and adds some useful variables and methods.
- *
- * @author	Reinhard Führicht <rf@typoheads.at>
- * @abstract
- */
-abstract class Tx_Formhandler_AbstractComponent extends Tx_Formhandler_AbstractClass {
+abstract class Tx_Formhandler_AbstractComponent {
+	
+	/**
+	 * The GimmeFive component manager
+	 *
+	 * @access protected
+	 * @var Tx_GimmeFive_Component_Manager
+	 */
+	protected $componentManager;
+
+	/**
+	 * The global Formhandler configuration
+	 *
+	 * @access protected
+	 * @var Tx_Formhandler_Configuration
+	 */
+	protected $configuration;
 
 	/**
 	 * The GET/POST parameters
@@ -30,21 +27,26 @@ abstract class Tx_Formhandler_AbstractComponent extends Tx_Formhandler_AbstractC
 	protected $gp;
 
 	/**
-	 * Settings
-	 * 
+	 * The cObj
+	 *
 	 * @access protected
-	 * @var array
+	 * @var tslib_cObj
 	 */
-	protected $settings;
+	protected $cObj;
 
-	/**	
-	 * Initialize the class variables
+	/**
+	 * The constructor for an interceptor setting the component manager and the configuration.
 	 *
-	 * @param array $gp GET and POST variable array
-	 * @param array $settings Typoscript configuration for the component (component.1.config.*)
-	 *
+	 * @param Tx_GimmeFive_Component_Manager $componentManager
+	 * @param Tx_Formhandler_Configuration $configuration
 	 * @return void
 	 */
+	public function __construct(Tx_GimmeFive_Component_Manager $componentManager, Tx_Formhandler_Configuration $configuration) {
+		$this->componentManager = $componentManager;
+		$this->configuration = $configuration;
+		$this->cObj = Tx_Formhandler_Globals::$cObj;
+	}
+	
 	public function init($gp, $settings) {
 		$this->gp = $gp;
 		$this->settings = $settings;
@@ -53,14 +55,12 @@ abstract class Tx_Formhandler_AbstractComponent extends Tx_Formhandler_AbstractC
 	/**
 	 * The main method called by the controller
 	 *
+	 * @param array $gp The GET/POST parameters
+	 * @param array $settings The defined TypoScript settings for the finisher
 	 * @return array The probably modified GET/POST parameters
 	 */
 	abstract public function process();
-
-	public function validateConfig() {
-		return TRUE;
-	}
-
+	
 }
 
 ?>

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_BetweenItems.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_ErrorCheck_BetweenItems.php 24681 2009-09-22 09:22:10Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -36,11 +36,9 @@ class Tx_Formhandler_ErrorCheck_BetweenItems extends Tx_Formhandler_AbstractErro
 		$min = (int) $check['params']['minValue'];
 		$max = (int) $check['params']['maxValue'];
 		if(	isset($gp[$name]) &&
-			!empty($gp[$name]) &&
 			is_array($gp[$name]) &&
-			!empty($min) &&
-			!empty($max) &&
-			(count($gp[$name]) < $min || count($gp[$name]) > $max)) {
+			(count($gp[$name]) < intVal($min) || 
+			count($gp[$name]) > intVal($max))) {
 
 			$checkFailed = $this->getCheckFailed($check);
 		}

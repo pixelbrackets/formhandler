@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: tx_Formhandler_Dispatcher.php 22854 2009-07-28 18:15:27Z reinhardfuehricht $
+ * $Id: tx_Formhandler_Dispatcher.php 24857 2009-09-28 09:36:08Z reinhardfuehricht $
  *                                                                        */
 
 require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_GimmeFive_Component_Manager.php');
@@ -20,7 +20,7 @@ require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Gimme
 require_once(PATH_tslib.'class.tslib_pibase.php');
 
 /**
- * The Dispatcher instatiates the Component Manager and delegates the process to the given controller.
+ * The Dispatcher instantiates the Component Manager and delegates the process to the given controller.
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
  * @package	Tx_Formhandler
@@ -74,7 +74,7 @@ class tx_Formhandler_Dispatcher extends tslib_pibase {
 		$this->pi_USER_INT_obj = 1;
 		$this->componentManager = Tx_GimmeFive_Component_Manager::getInstance();
 
-		Tx_Formhandler_StaticFuncs::$cObj = $this->cObj;
+		Tx_Formhandler_Globals::$cObj = $this->cObj;
 
 		//handle AJAX stuff
 		$this->handleAjax();

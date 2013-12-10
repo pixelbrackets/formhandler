@@ -5,16 +5,9 @@ plugin.Tx_Formhandler.settings.predef.mastertemplate_example {
 	debug = 0
 	addErrorAnchors = 1
 	templateFile = EXT:formhandler/Examples/MasterTemplate/template.html
-	
-	# single master template
 	masterTemplateFile = EXT:formhandler/Examples/MasterTemplate/master_template.html
-	
-	#multiple master templates
-	#masterTemplateFile.1 = EXT:formhandler/Examples/MasterTemplate/master_template.html
-	#masterTemplateFile.2 = fileadmin/templates/ext/formhandler/mymastemplate.html
-	
 	langFile.1 = EXT:formhandler/Examples/MasterTemplate/lang.xml
-	cssFile.1 = EXT:formhandler/Examples/MasterTemplate/styles.css
+	stylesheetFile = EXT:formhandler/Examples/MasterTemplate/styles.css
 	formValuesPrefix = formhandler
 
 	# HTML wrapping by validation error
@@ -36,18 +29,9 @@ plugin.Tx_Formhandler.settings.predef.mastertemplate_example {
 		singleWrap = <li style="color:red;">|</li>
 	}
 	files {
-		uploadFolder = uploads/formhandler/
+		clearTempFilesOlderThanHours = 24
+		uploadFolder = uploads/formhandler/tmp2/
 		enableAjaxFileRemoval = 1
-	}
-
-	preProcessors {
-		1.class = PreProcessor_ClearTempFiles
-		1.config {
-			clearTempFilesOlderThan {
-				value = 24
-				unit = hours
-			}
-		}
 	}
 
 	# Validators configuration
@@ -113,7 +97,7 @@ plugin.Tx_Formhandler.settings.predef.mastertemplate_example {
 					}
 					bodytext {
 						mapping = subject
-						separator = ,
+						seperator = ,
 					}
 					hidden = 1
 					pid = 39
@@ -157,7 +141,7 @@ plugin.Tx_Formhandler.settings.predef.mastertemplate_example {
 				}
 		 	}
 		}
-		3.class = Tx_Formhandler_Finisher_SubmittedOK
+		3.class = Tx_Formhandler_Finisher_Confirmation
 		3.config {
 			returns = 1
 			actions {
