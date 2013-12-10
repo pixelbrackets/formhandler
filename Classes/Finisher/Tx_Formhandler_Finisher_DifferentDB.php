@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_DifferentDB.php 59048 2012-03-07 17:16:22Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_DifferentDB.php 62988 2012-05-31 07:19:56Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -143,6 +143,7 @@ class Tx_Formhandler_Finisher_DifferentDB extends Tx_Formhandler_Finisher_DB {
 	 * @return void
 	 */
 	public function init($gp, $settings) {
+		parent::init($gp, $settings);
 
 		//if adodb is installed
 		if (t3lib_extMgm::isLoaded('adodb')) {
@@ -161,7 +162,6 @@ class Tx_Formhandler_Finisher_DifferentDB extends Tx_Formhandler_Finisher_DB {
 			$this->utilityFuncs->throwException('extension_required', 'adodb', 'Tx_Formhandler_Finisher_DifferentDB');
 		}
 
-		parent::init($gp, $settings);
 	}
 
 }

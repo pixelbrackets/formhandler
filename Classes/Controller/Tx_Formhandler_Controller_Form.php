@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Controller_Form.php 62899 2012-05-28 15:41:24Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Controller_Form.php 65847 2012-09-02 11:35:54Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -269,6 +269,21 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$output = $this->runClasses($this->settings['initInterceptors.']);
 		if (strlen($output) > 0) {
 			return $output;
+		}
+
+		//Search for completely unchecked checkbox arrays before validation to make sure that no values from session are taken.
+		if ($this->currentStep > $this->lastStep) {
+			$currentGP = $this->utilityFuncs->getMergedGP();
+			if ($this->settings['checkBoxFields']) {
+				$checkBoxFields = $this->utilityFuncs->getSingle($this->settings, 'checkBoxFields');
+				$fields = t3lib_div::trimExplode(',', $checkBoxFields);
+				foreach ($fields as $idx => $field) {
+					if(isset($this->gp[$field]) && !isset($currentGP[$field])) {
+						unset($this->gp[$field]);
+					}
+				}
+			}
+			$this->globals->setGP($this->gp);
 		}
 
 		//Parse conditions again. An interceptor might have added additional values.
@@ -661,14 +676,14 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			$sessionFiles = $this->globals->getSession()->get('files');
 			if (is_array($sessionFiles)) {
 
-				//get upload folder
-				$uploadFolder = $this->utilityFuncs->getTempUploadFolder();
-
-				//build absolute path to upload folder
-				$uploadPath = $this->utilityFuncs->getTYPO3Root() . $uploadFolder;
-
 				foreach ($sessionFiles as $field => $files) {
 					if (!strcmp($field, $fieldname)) {
+
+						//get upload folder
+						$uploadFolder = $this->utilityFuncs->getTempUploadFolder($field);
+
+						//build absolute path to upload folder
+						$uploadPath = $this->utilityFuncs->getTYPO3Root() . $uploadFolder;
 						$found = FALSE;
 						foreach ($files as $key => $fileInfo) {
 							if (!strcmp($fileInfo['uploaded_name'], $filename)) {
@@ -711,15 +726,9 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		//if files were uploaded
 		if (isset($_FILES) && is_array($_FILES) && !empty($_FILES)) {
 
-			//get upload folder
-			$uploadFolder = $this->utilityFuncs->getTempUploadFolder();
-
-			//build absolute path to upload folder
-			$uploadPath = $this->utilityFuncs->getTYPO3Root() . $uploadFolder;
-
-			if (!file_exists($uploadPath)) {
-				$this->utilityFuncs->debugMessage('folder_doesnt_exist', array($uploadPath), 3);
-				return;
+			$uploadedFilesWithSameNameAction = $this->utilityFuncs->getSingle($this->settings['files.'], 'uploadedFilesWithSameName');
+			if(!$uploadedFilesWithSameNameAction) {
+				$uploadedFilesWithSameNameAction = 'ignore';
 			}
 
 			//for all file properties
@@ -731,6 +740,18 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 					//for all file names
 					foreach ($files['name'] as $field => $name) {
 						if (!isset($this->errors[$field])) {
+
+							//get upload folder
+							$uploadFolder = $this->utilityFuncs->getTempUploadFolder($field);
+
+							//build absolute path to upload folder
+							$uploadPath = $this->utilityFuncs->getTYPO3Root() . $uploadFolder;
+
+							if (!file_exists($uploadPath)) {
+								$this->utilityFuncs->debugMessage('folder_doesnt_exist', array($uploadPath), 3);
+								return;
+							}
+
 							$exists = FALSE;
 							if (is_array($sessionFiles[$field])) {
 								foreach ($sessionFiles[$field] as $idx => $fileOptions) {
@@ -739,21 +760,23 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 									}
 								}
 							}
-							if (!$exists) {
+							if (!$exists || $uploadedFilesWithSameNameAction === 'replace' || $uploadedFilesWithSameNameAction === 'append') {
+								$name = $this->utilityFuncs->doFileNameReplace($name);
 								$filename = substr($name, 0, strpos($name, '.'));
 								if (strlen($filename) > 0) {
 									$ext = substr($name, strpos($name, '.'));
 									$suffix = 1;
 
-									$filename = $this->utilityFuncs->doFileNameReplace($filename);
-
 									//build file name
 									$uploadedFileName = $filename . $ext;
 
-									//rename if exists
-									while(file_exists($uploadPath . $uploadedFileName)) {
-										$uploadedFileName = $filename . '_' . $suffix . $ext;
-										$suffix++;
+									if($uploadedFilesWithSameNameAction !== 'replace') {
+
+										//rename if exists
+										while(file_exists($uploadPath . $uploadedFileName)) {
+											$uploadedFileName = $filename . '_' . $suffix . $ext;
+											$suffix++;
+										}
 									}
 									$files['name'][$field] = $uploadedFileName;
 
@@ -775,11 +798,15 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 									if (!is_array($tempFiles[$field]) && strlen($field) > 0) {
 										$tempFiles[$field] = array();
 									}
-									array_push($tempFiles[$field], $tmp);
+									if(!$exists || $uploadedFilesWithSameNameAction !== 'replace') {
+										array_push($tempFiles[$field], $tmp);
+									}
 									if (!is_array($this->gp[$field])) {
 										$this->gp[$field] = array();
 									}
-									array_push($this->gp[$field], $uploadedFileName);
+									if(!$exists || $uploadedFilesWithSameNameAction !== 'replace') {
+										array_push($this->gp[$field], $uploadedFileName);
+									}
 								}
 							}
 						}
@@ -807,6 +834,9 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			$this->loadSettingsForStep($this->currentStep);
 		}
 		$data = $this->globals->getSession()->get('values');
+		
+		$checkBoxFields = $this->utilityFuncs->getSingle($this->settings, 'checkBoxFields');
+		$checkBoxFields = t3lib_div::trimExplode(',', $checkBoxFields);
 
 		//set the variables in session
 		if ($this->lastStep !== $this->currentStep) {
@@ -814,8 +844,15 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 				if (!strstr($key, 'step-') && $key !== 'submitted' && $key !== 'randomID' && 
 					$key !== 'removeFile' && $key !== 'removeFileField' && $key !== 'submitField') {
 
-					$data[$this->lastStep][$key] = $this->gp[$key];
+					$data[$this->lastStep][$key] = $newGP[$key];
 				}
+			}
+		}
+
+		//Search for checkboxes which were unchecked in this step.
+		foreach($checkBoxFields as $field) {
+			if(!isset($newGP[$field])) {
+				unset($data[$this->lastStep][$field]);
 			}
 		}
 		$this->globals->getSession()->set('values', $data);
@@ -867,27 +904,24 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			}
 		}
 
+		$stepInSession = intval($this->globals->getSession()->get('currentStep'));
 		switch ($action) {
-			case 'next':
-				if ($step !== intval($this->globals->getSession()->get('currentStep'))) {
-					$this->currentStep = intval($this->globals->getSession()->get('currentStep')) + 1;
-				} else {
-					$this->currentStep = $step;
-				}
-				break;
 			case 'prev':
-				if ($step !== intval($this->globals->getSession()->get('currentStep'))) {
-					$this->currentStep = intval($this->globals->getSession()->get('currentStep')) - 1;
+			case 'next':
+				if ($step > $stepInSession) {
+					$this->currentStep = $stepInSession + 1;
+				} elseif ($step < $stepInSession) {
+					$this->currentStep = $stepInSession - 1;
 				} else {
 					$this->currentStep = $step;
-				}
-				if ($this->currentStep < 1) {
-					$this->currentStep = 1;
 				}
 				break;
 			default:
-				$this->currentStep = intval($this->globals->getSession()->get('currentStep'));
+				$this->currentStep = $stepInSession;
 				break;
+		}
+		if ($this->currentStep < 1) {
+			$this->currentStep = 1;
 		}
 		if (!$this->currentStep) {
 			$this->currentStep = 1;
@@ -953,16 +987,16 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 				foreach ($andConditions as $subSubIdx => $andCondition) {
 					if (strstr($andCondition, '!=')) {
 						list($field, $value) = t3lib_div::trimExplode('!=', $andCondition);
-						$result = ($this->globals->getCObj()->getGlobal($field, $this->gp) !== $value);
+						$result = ($this->utilityFuncs->getGlobal($field, $this->gp) !== $value);
 					} elseif (strstr($andCondition, '=')) {
 						list($field, $value) = t3lib_div::trimExplode('=', $andCondition);
-						$result = ($this->globals->getCObj()->getGlobal($field, $this->gp) === $value);
+						$result = ($this->utilityFuncs->getGlobal($field, $this->gp) === $value);
 					} elseif (strstr($andCondition, '>')) {
 						list($field, $value) = t3lib_div::trimExplode('>', $andCondition);
-						$result = ($this->globals->getCObj()->getGlobal($field, $this->gp) > $value);
+						$result = ($this->utilityFuncs->getGlobal($field, $this->gp) > $value);
 					} elseif (strstr($andCondition, '<')) {
 						list($field, $value) = t3lib_div::trimExplode('<', $andCondition);
-						$result = ($this->globals->getCObj()->getGlobal($field, $this->gp) < $value);
+						$result = ($this->utilityFuncs->getGlobal($field, $this->gp) < $value);
 					} else {
 						$field = $andCondition;
 						$keys = explode('|', $field);

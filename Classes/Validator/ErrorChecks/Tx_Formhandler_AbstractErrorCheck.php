@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractErrorCheck.php 50192 2011-07-27 18:42:39Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractErrorCheck.php 63258 2012-06-08 08:20:48Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -70,7 +70,7 @@ abstract class Tx_Formhandler_AbstractErrorCheck extends Tx_Formhandler_Abstract
 				$this->utilityFuncs->throwException('error_checks_parameters_missing', $this->settings['check'], implode(',', $this->mandatoryParameters));
 			}
 			foreach($this->mandatoryParameters as $param) {
-				if(!$this->settings['params'][$param]) {
+				if(!isset($this->settings['params'][$param])) {
 					$this->utilityFuncs->throwException('error_checks_unsufficient_parameters', $param, $this->settings['check']);
 				}
 			}

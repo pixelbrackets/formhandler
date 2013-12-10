@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_StoreUploadedFiles.php 58491 2012-02-25 18:35:59Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_StoreUploadedFiles.php 63917 2012-06-26 10:18:24Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -72,7 +72,21 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 
 		$newFolder = $this->utilityFuncs->getSingle($this->settings, 'finishedUploadFolder');
 		$newFolder = $this->utilityFuncs->sanitizePath($newFolder);
+		$newFolder = $this->replaceSchemeMarkers($newFolder);
+		$newFolder = $this->utilityFuncs->sanitizePath($newFolder);
 		$uploadPath = $this->utilityFuncs->getDocumentRoot() . $newFolder;
+		if(!file_exists($uploadPath)) {
+			$doCreateNonExistingFolder = intval($this->utilityFuncs->getSingle($this->settings, 'createNonExistingFolder'));
+			if(!isset($this->settings['createNonExistingFolder'])) {
+				$doCreateNonExistingFolder = 1;
+			}
+			if($doCreateNonExistingFolder === 1) {
+				t3lib_div::mkdir_deep($this->utilityFuncs->getDocumentRoot(), $newFolder);
+				$this->utilityFuncs->debugMessage('Creating directory "' . $newFolder . '"');
+			} else {
+				$this->utilityFuncs->throwException('Directory "' . $newFolder . '" doesn\'t exist!');
+			}
+		}
 		$sessionFiles = $this->globals->getSession()->get('files');
 		if (is_array($sessionFiles) && !empty($sessionFiles) && strlen($newFolder) > 0) {
 			foreach ($sessionFiles as $field => $files) {
@@ -80,6 +94,17 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 				foreach ($files as $key => $file) {
 					if ($file['uploaded_path'] != $uploadPath) {
 						$newFilename = $this->getNewFilename($file['uploaded_name']);
+						$filename = substr($newFilename, 0, strrpos($newFilename, '.'));
+						$ext = substr($newFilename, strrpos($newFilename, '.'));
+
+						$suffix = 1;
+
+						//rename if exists
+						while(file_exists($uploadPath . $newFilename)) {
+							$newFilename = $filename . '_' . $suffix . $ext;
+							$suffix++;
+						}
+
 						$this->utilityFuncs->debugMessage(
 							'copy_file', 
 							array(
@@ -126,27 +151,40 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 		$newFilename = str_replace('[time]', time(), $newFilename);
 		$newFilename = str_replace('[md5]', md5($filename), $newFilename);
 		$newFilename = str_replace('[pid]', $GLOBALS['TSFE']->id, $newFilename);
-		if (is_array($this->settings['schemeMarkers.'])) {
-			foreach ($this->settings['schemeMarkers.'] as $markerName => $options) {
-				if (!(strpos($markerName, '.') > 0)) {
-					$value = $options;
-
-					//use field value
-					if (isset($this->settings['schemeMarkers.'][$markerName.'.']) && !strcmp($options, 'fieldValue')) {
-						$value = $this->gp[$this->settings['schemeMarkers.'][$markerName . '.']['field']];
-					} elseif (isset($this->settings['schemeMarkers.'][$markerName . '.'])) {
-						$value = $this->utilityFuncs->getSingle($this->settings['schemeMarkers.'], $markerName);
-					}
-					$newFilename = str_replace('[' . $markerName . ']', $value, $newFilename);
-				}
-			}
-		}
+		$newFilename = $this->replaceSchemeMarkers($newFilename);
 
 		//remove ',' from filename, would be handled as file separator 
 		$newFilename = str_replace(',', '', $newFilename);
 		$newFilename = $this->utilityFuncs->doFileNameReplace($newFilename);
 		$newFilename .= $fileext;
 		return $newFilename;
+	}
+
+	protected function replaceSchemeMarkers($str) {
+		$replacedStr = $str;
+		if (is_array($this->settings['schemeMarkers.'])) {
+			foreach ($this->settings['schemeMarkers.'] as $markerName => $options) {
+				if (!(strpos($markerName, '.') > 0)) {
+					$value = $options;
+
+					//use field value
+					if (isset($this->settings['schemeMarkers.'][$markerName . '.']) && !strcmp($options, 'fieldValue')) {
+						$value = $this->gp[$this->settings['schemeMarkers.'][$markerName . '.']['field']];
+						if(is_array($value)) {
+							$separator = $this->utilityFuncs->getSingle($this->settings['schemeMarkers.'][$markerName . '.'], 'separator');
+							if(strlen($separator) === 0) {
+								$separator = '-';
+							}
+							$value = implode($separator, $value);
+						}
+					} elseif (isset($this->settings['schemeMarkers.'][$markerName . '.'])) {
+						$value = $this->utilityFuncs->getSingle($this->settings['schemeMarkers.'], $markerName);
+					}
+					$replacedStr = str_replace('[' . $markerName . ']', $value, $replacedStr);
+				}
+			}
+		}
+		return $replacedStr;
 	}
 
 }

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Mail.php 58511 2012-02-25 20:29:05Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Mail.php 64837 2012-07-25 14:32:14Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -283,15 +283,17 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 
 		//send e-mails
 		$recipients = $mailSettings['to_email'];
-		foreach($recipients as &$recipient) {
-			if(strpos($mailto, '@') === FALSE || strpos($mailto, '@') === 0) {
-				unset($recipient);
+		foreach($recipients as $key => $recipient) {
+			if(strpos($recipient, '@') === FALSE || strpos($recipient, '@') === 0 || strlen(trim($recipient)) === 0) {
+				unset($recipients[$key]);
  			}
 		}
-		$recipients = array_slice($recipients, 0, $max);
+		if(!empty($recipients) && count($recipients) > $max) {
+			$recipients = array_slice($recipients, 0, $max);
+		}
 		$sent = FALSE;
-		if ($doSend) {
-			$sent = $emailObj->send(implode(',', $recipients));
+		if ($doSend && !empty($recipients)) {
+			$sent = $emailObj->send($recipients);
 		}
 		if ($sent) {
 			$this->utilityFuncs->debugMessage('mail_sent', array(implode(',', $recipients)));
@@ -401,8 +403,10 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 					foreach ($sessionFiles[$file] as $subIdx => $uploadedFile) {
 						array_push($parsed, $uploadedFile['uploaded_path'] . $uploadedFile['uploaded_name']);
 					}
-				} else {
+				} elseif(file_exists($file)) {
 					array_push($parsed, $file);
+				} elseif(strlen($file) > 0) {
+					$this->utilityFuncs->debugMessage('attachment_not_found', array($file), 2);
 				}
 			}
 		}

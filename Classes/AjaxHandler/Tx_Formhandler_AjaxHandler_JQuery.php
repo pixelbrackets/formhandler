@@ -28,6 +28,30 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 	protected $jQueryAlias;
 
 	/**
+	 * jQuery selector for the form
+	 *
+	 * @access protected
+	 * @var string
+	 */
+	protected $formSelector;
+
+	/**
+	 * Selector string for the submit button of the form
+	 *
+	 * @access protected
+	 * @var string
+	 */
+	protected $submitButtonSelector;
+
+	/**
+	 * Array holding the CSS classes to set for the various states of AJAX validation
+	 *
+	 * @access protected
+	 * @var array
+	 */
+	protected $validationStatusClasses;
+
+	/**
 	 * Initialize AJAX stuff
 	 *
 	 * @return void
@@ -38,6 +62,19 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 		if(strlen(trim($this->jQueryAlias)) === 0) {
 			$this->jQueryAlias = 'jQuery';
 		}
+
+		$formID = $this->utilityFuncs->getSingle($settings, 'formID');
+		if(strlen(trim($formID)) > 0) {
+			$this->formSelector = '#' . $formID;
+		} else {
+			$this->formSelector = '.Tx-Formhandler FORM';
+		}
+
+		$this->submitButtonSelector = $this->utilityFuncs->getSingle($settings['ajax.']['config.'], 'submitButtonSelector');
+		if(strlen(trim($this->submitButtonSelector)) === 0) {
+			$this->submitButtonSelector = '.Tx-Formhandler INPUT[type=\'submit\']';
+		}
+		$this->submitButtonSelector = str_replace('"', '\"', $this->submitButtonSelector);
 
 		$this->validationStatusClasses = array(
 			'base' => 'formhandler-validation-status',
@@ -64,11 +101,11 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 		$ajaxSubmit = $this->utilityFuncs->getSingle($settings['ajax.']['config.'], 'ajaxSubmit');
 		if(intval($ajaxSubmit) === 1) {
 			$js .= '
-			' . $this->jQueryAlias . '(".Tx-Formhandler FORM").live("submit", function() {
+			' . $this->jQueryAlias . '("' . $this->formSelector . '").live("submit", function() {
 				return false;
 			});
-			' . $this->jQueryAlias . '(".Tx-Formhandler INPUT[type=\'submit\']").live("click", function() {
-				' . $this->jQueryAlias . '(".Tx-Formhandler INPUT[type=\'submit\']").attr("disabled", "disabled");
+			' . $this->jQueryAlias . '("' . $this->submitButtonSelector . '").live("click", function() {
+				' . $this->jQueryAlias . '("' . $this->submitButtonSelector . '").attr("disabled", "disabled");
 				var container = ' . $this->jQueryAlias . '(this).closest(".Tx-Formhandler");
 				var form = ' . $this->jQueryAlias . '(this).closest("FORM");
 				var requestURL = "/index.php?id=' . $GLOBALS['TSFE']->id . '&eID=formhandler-ajaxsubmit&randomID=' . $this->globals->getRandomID() . '";
@@ -82,8 +119,7 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 					success: function(data, textStatus) {
 						if (data.redirect) {
 							window.location.href = data.redirect;
-						}
-						else {
+						} else {
 							form.closest(".Tx-Formhandler").replaceWith(data.form);
 						}
 					}
@@ -92,13 +128,21 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 			});';
 		}
 		if(strlen($js) > 0) {
-			$GLOBALS['TSFE']->additionalHeaderData['Tx_Formhandler_AjaxHandler_Jquery'] = '
+			$fullJS = '
 				<script type="text/javascript">
 				' . $this->jQueryAlias . '(function() {
 				' . $js . '
 				});
 				</script>
 			';
+			
+
+			$jsPosition = trim($this->utilityFuncs->getSingle($this->settings, 'jsPosition'));
+			if($jsPosition === 'footer') {
+				$GLOBALS['TSFE']->additionalFooterData['Tx_Formhandler_AjaxHandler_Jquery_' . $this->globals->getCObj()->data['uid']] = $fullJS;
+			} else {
+				$GLOBALS['TSFE']->additionalHeaderData['Tx_Formhandler_AjaxHandler_Jquery_' . $this->globals->getCObj()->data['uid']] = $fullJS;
+			}
 		}
 	}
 
@@ -160,23 +204,48 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 							<span id="result_' . $replacedFieldname . '" class="formhandler-ajax-validation-result">' . str_replace('###fieldname###', $replacedFieldname, $initial) . '</span>
 							<script type="text/javascript">
 								' . $this->jQueryAlias . '(function() {
-									' . $this->jQueryAlias . '("*[name=\'' . $fieldname . '\']").blur(function() {
+									' . $this->jQueryAlias . '("' . $this->formSelector . ' *[name=\'' . $fieldname . '\']").blur(function() {
 										var field = ' . $this->jQueryAlias . '(this);
-										var fieldVal = escape(field.val());
+										var fieldVal = encodeURIComponent(field.val());
 										if(field.attr("type") == "radio" || field.attr("type") == "checkbox") {
 											if (field.attr("checked") == "") {
 												fieldVal = "";
 											}
 										}
-										var loading = ' . $this->jQueryAlias . '("#loading_' . $replacedFieldname . '");
-										var result = ' . $this->jQueryAlias . '("#result_' . $replacedFieldname . '");
+										var loading = ' . $this->jQueryAlias . '("' . $this->formSelector . ' #loading_' . $replacedFieldname . '");
+										var result = ' . $this->jQueryAlias . '("' . $this->formSelector . ' #result_' . $replacedFieldname . '");
 										loading.show();
 										result.hide();
 										var url = "' . $url . '";
-										url = url.replace("value=", "value=" + fieldVal);
-										result.load(url, function() {
-											loading.hide();
-											result.show();
+						';
+						if($validatorSettings['config.']['fieldConf.'][$replacedFieldname . '.']['errorCheck.']) {
+							foreach($validatorSettings['config.']['fieldConf.'][$replacedFieldname . '.']['errorCheck.'] as $key => $errorCheck) {
+								if($errorCheck === 'equalsField') {
+									$equalsField = $this->utilityFuncs->getSingle($validatorSettings['config.']['fieldConf.'][$replacedFieldname . '.']['errorCheck.'][$key . '.'], 'field');
+									if(strlen(trim($equalsField)) > 0) {
+										$equalsFieldName = $equalsField;
+										if ($this->globals->getFormValuesPrefix()) {
+											$equalsFieldName = $this->globals->getFormValuesPrefix() . '[' . $equalsField . ']';
+										}
+										$markers['###validate_' . $replacedFieldname . '###'] .= '
+											var equalsField = ' . $this->jQueryAlias . '("*[name=\'' . $equalsFieldName . '\']");
+											var equalsFieldVal = encodeURIComponent(equalsField.val());
+											if (equalsField.attr("type") == "radio" || equalsField.attr("type") == "checkbox") {
+												if (equalsField.attr("checked") == "") {
+													equalsFieldVal = "";
+												}
+											}
+											url += "&equalsFieldName=' . urlencode($equalsField) . '&equalsFieldValue=" + equalsFieldVal;
+										';
+									}
+								}
+							}
+						}
+						$markers['###validate_' . $replacedFieldname . '###'] .= '
+							url = url.replace("value=", "value=" + fieldVal);
+							result.load(url, function() {
+								loading.hide();
+								result.show();
 						';
 						if(intval($autoDisableSubmitButton) === 1) {
 							$markers['###validate_' . $replacedFieldname . '###'] .= '
@@ -186,12 +255,12 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 									result.data("isValid", true);
 								}
 								var valid = true;
-								' . $this->jQueryAlias . '("#' . $this->globals->getFormID() . ' .formhandler-ajax-validation-result").each(function() {
+								' . $this->jQueryAlias . '("' . $this->formSelector . ' .formhandler-ajax-validation-result").each(function() {
 									if(!' . $this->jQueryAlias . '(this).data("isValid")) {
 										valid = false;
 									}
 								});
-								var button = ' . $this->jQueryAlias . '("#' . $this->globals->getFormID() . ' INPUT.' . $this->validationStatusClasses['base'] . '");
+								var button = ' . $this->jQueryAlias . '("' . $this->formSelector . ' INPUT.' . $this->validationStatusClasses['base'] . '");
 								if(valid) {
 									button.removeAttr("disabled");
 									button.removeClass("' . $this->validationStatusClasses['invalid'] . '").addClass("' . $this->validationStatusClasses['valid'] . '");
@@ -231,14 +300,14 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 		);
 		$url = $this->globals->getCObj()->getTypoLink_Url($GLOBALS['TSFE']->id, $params);
 		return '<a  
-				class="formhandler_removelink" 
+				class="formhandler_removelink formhandler_removelink_' . $field . '" 
 				href="' . $url . '"
 				>' . $text . '</a>
 				<script type="text/javascript">
 					' . $this->jQueryAlias . '(function() {
-						' . $this->jQueryAlias . '("a.formhandler_removelink").click(function() {
+						' . $this->jQueryAlias . '("' . $this->formSelector . ' a.formhandler_removelink_' . $field . '").click(function() {
 							var url = ' . $this->jQueryAlias . '(this).attr("href");
-							' . $this->jQueryAlias . '("#Tx_Formhandler_UploadedFiles_' . $field . '").load(url + "#Tx_Formhandler_UploadedFiles_picture");
+							' . $this->jQueryAlias . '("' . $this->formSelector . ' #Tx_Formhandler_UploadedFiles_' . $field . '").load(url + "#Tx_Formhandler_UploadedFiles_' . $field . '");
 							return false;
 						});
 					});
