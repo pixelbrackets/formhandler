@@ -26,26 +26,28 @@
  * in - so be sure to do that.
  *
  * @author	Christian Opitz <co@netzelf.de>
+ * @package	Tx_Formhandler
+ * @subpackage	Finisher
  */
 class Tx_Formhandler_Finisher_AutoDB extends Tx_Formhandler_Finisher_DB {
-
+	
 	/**
 	 * The name of the table to put the values into.
 	 * @todo Make it protected var in Tx_Formhandler_AbstractFinisher
 	 * @var string
 	 */
 	public $settings;
-
+	
 	/**
 	 * @var t3lib_db
 	 */
 	protected $db;
-
+	
 	/**
 	 * @var string Attributes for new db fields
 	 */
 	protected $newFieldsSqlAttribs = 'TINYTEXT NOT NULL';
-
+	
 	/**
 	 * Initialize the component
 	 * 
@@ -58,11 +60,11 @@ class Tx_Formhandler_Finisher_AutoDB extends Tx_Formhandler_Finisher_DB {
 		}
 		$this->settings = $settings;
 		parent::init($gp, $settings);
-
+		
 		if ($this->settings['newFieldsSqlAttribs']) {
-			$this->newFieldsSqlAttribs = $this->utilityFuncs->getSingle($this->settings, 'newFieldsSqlAttribs');
+			$this->newFieldsSqlAttribs = $this->settings['newFieldsSqlAttribs'];
 		}
-
+		
 		$this->db = $GLOBALS['TYPO3_DB'];
 	}
 
@@ -70,19 +72,18 @@ class Tx_Formhandler_Finisher_AutoDB extends Tx_Formhandler_Finisher_DB {
 	 * @see Classes/Finisher/Tx_Formhandler_Finisher_DB#parseFields()
 	 */
 	protected function parseFields() {
-		$doAutoCreate = intval($this->utilityFuncs->getSingle($this->settings, 'newFieldsSqlAttribs'));
-		if ($doAutoCreate === 1 && $GLOBALS['TSFE']->beUserLogin) {
+		if ($this->settings['autoCreate'] && $GLOBALS['TSFE']->beUserLogin) {
 			$this->createTable();
 		}
-
+		
 		$dbFields = $this->db->admin_get_fields($this->table);
-
+		
 		foreach ($dbFields as $field => $properties) {
 			if ($field != $this->key && !isset($this->settings['fields.'][$field])) {
 				$this->settings['fields.'][$field.'.'] = array('mapping' => $field);
 			}
 		}
-
+		
 		$fields = parent::parseFields();
 		$escapedFields = array();
 		foreach ($fields as $field => $value) {
@@ -90,7 +91,7 @@ class Tx_Formhandler_Finisher_AutoDB extends Tx_Formhandler_Finisher_DB {
 		}
 		return $escapedFields;
 	}
-
+	
 	/**
 	 * Retrieve the fieldnames registered by the fluid form (those include
 	 * the prefix if set)
@@ -99,23 +100,23 @@ class Tx_Formhandler_Finisher_AutoDB extends Tx_Formhandler_Finisher_DB {
 	 */
 	protected function getFormFieldNames() {
 		$pattern = '/\<(?=input|select|textarea)[^\>]*name=("|\')([^"\']*)\1/i';
-
-		$templateFile = $this->globals->getTemplateCode();
+    
+        $templateFile = Tx_Formhandler_Globals::$templateCode;
 		preg_match_all($pattern, $templateFile, $matches);
-
-		return (array) $matches[2];
+        
+        return (array) $matches[2];
 	}
-
+	
 	/**
 	 * Gets the top level fields from the formFieldNames (@see getFormFieldNames)
 	 * 
 	 * @return array
 	 */
 	protected function getFormFields() {
-		$invokePrefix = strlen($this->globals->getFormValuesPrefix()) > 0;
-		$prefix = $this->globals->getFormValuesPrefix();
-		$fields = array();
-
+		$invokePrefix = strlen(Tx_Formhandler_Globals::$formValuesPrefix) > 0;
+        $prefix = Tx_Formhandler_Globals::$formValuesPrefix;
+        $fields = array();
+        
 		foreach ($this->getFormFieldNames() as $fieldName) {
 			$keys = explode('[', str_replace(']', '', $fieldName));
 			if ($invokePrefix && $keys[0] == $prefix && !empty($keys[1])) {
@@ -125,10 +126,10 @@ class Tx_Formhandler_Finisher_AutoDB extends Tx_Formhandler_Finisher_DB {
 				$fields[$keys[0]] = $keys[0];
 			}
 		}
-
+		
 		return $fields;
 	}
-
+	
 	/**
 	 * Looks if the specified table exists and if not create it with the key-
 	 * field (uid). Then it syncs the DB-fields with the fields found in the form 
@@ -136,45 +137,42 @@ class Tx_Formhandler_Finisher_AutoDB extends Tx_Formhandler_Finisher_DB {
 	 */
 	protected function createTable() {
 		$fields = $this->getFormFields();
-		$excludeFields = trim($this->utilityFuncs->getSingle($this->settings, 'excludeFields'));
-		if (strlen($excludeFields) > 0) {
-			$excludes = t3lib_div::trimExplode(',', $excludeFields);
+		
+		if ($this->settings['excludeFields']) {
+			$excludes = t3lib_div::trimExplode(',', $this->settings['excludeFields']);
 			foreach ($excludes as $exclude) {
 				unset($fields[$exclude]);
 			}
 		}
-
-		$globalSettings = $this->globals->getSettings();
-		$isDebugMode = $this->utilityFuncs->getSingle($globalSettings, 'debug');
-		if (intval($isDebugMode) === 1) {
+		
+		if (Tx_Formhandler_Globals::$settings['debug']) {
 			$this->db->debugOutput = 1;
 		}
 		
-		$res = $this->db->sql_query("SHOW TABLES LIKE '" . $this->table . "'");
-
+		$res = $this->db->sql_query("SHOW TABLES LIKE '".$this->table."'");
+		
 		if (!$this->db->sql_num_rows($res)) {
-			$query = "CREATE TABLE `" . $this->table . "` (
-				`" . $this->key . "` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY
-			)";
+			$query = "CREATE TABLE `".$this->table."` (
+            	`".$this->key."` INT( 11 ) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY
+            )";
 			$this->db->sql_query($query);
-			$this->utilityFuncs->debugMessage('sql_request', array($query));
+			Tx_Formhandler_StaticFuncs::debugMessage('sql_request', $query);
 			$dbFields = array($this->key);
-		} else{
+		}else{
 			$dbFields = array_keys($this->db->admin_get_fields($this->table));
 		}
-		$this->db->sql_free_result($res);
-
+		
 		$createFields = array_diff($fields, $dbFields);
-
+		
 		if (count($createFields)) {
-			$sql = 'ALTER TABLE ' . $this->table . ' ADD `';
-			$sql .= implode('` ' . $this->newFieldsSqlAttribs . ', ADD `', $createFields);
-			$sql .= '` ' . $this->newFieldsSqlAttribs;
+			$sql = 'ALTER TABLE '.$this->table.' ADD `';
+			$sql .= implode('` '.$this->newFieldsSqlAttribs.', ADD `', $createFields);
+			$sql .= '` '.$this->newFieldsSqlAttribs.'';
 			
 			$this->db->sql_query($sql);
-			$this->utilityFuncs->debugMessage('sql_request', array($sql));
+			Tx_Formhandler_StaticFuncs::debugMessage('sql_request', $sql);
 			if($this->db->sql_error()) {
-				$this->utilityFuncs->debugMessage('error', array($this->db->sql_error()), 3);
+				Tx_Formhandler_StaticFuncs::debugMessage($GLOBALS['TYPO3_DB']->sql_error());
 			}
 		}
 	}

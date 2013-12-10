@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_Default.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_Default.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -29,7 +29,6 @@ class Tx_Formhandler_Interceptor_Default extends Tx_Formhandler_AbstractIntercep
 	 * @return array The probably modified GET/POST parameters
 	 */
 	public function process() {
-
 		return $this->gp;
 	}
 
