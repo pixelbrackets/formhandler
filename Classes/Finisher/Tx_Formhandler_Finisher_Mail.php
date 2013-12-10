@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Mail.php 23782 2009-08-31 09:01:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Mail.php 23820 2009-08-31 19:38:21Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -164,8 +164,8 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		}
 
 		//init mailer object
-		$version = TYPO3_version;
-		$version = preg_replace('/[a-zA-Z]*[0-9]{0,1}$/','',$version);
+		//$version = TYPO3_version;
+		//$version = preg_replace('/[a-zA-Z]*[0-9]{0,1}$/','',$version);
 		
 		/*if(version_compare($version, '4.3.0', '>=')) {
 			
@@ -220,7 +220,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		$emailObj->returnPath = $returnPath;
 		
 		if($mailSettings['email_header']) {
-			$emailObj->add_header($mailSettings['header']);
+			$emailObj->additionalHeaders = $mailSettings['header'];
 		}
 		
 		if(strlen(trim($template['plain'])) > 0) {
