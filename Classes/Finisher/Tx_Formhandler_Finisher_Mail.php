@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Mail.php 46261 2011-04-06 08:05:31Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Mail.php 46553 2011-04-15 07:41:51Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -469,16 +469,6 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		// Unset unnecessary variables.
 		unset($this->settings['admin.']);
 		unset($this->settings['user.']);
-	}
-
-	/**
-	 * Method to define whether the config is valid or not. If no, an exception is thrown.
-	 *
-	 */
-	public function validateConfig() {
-		if ($this->settings['templateFile'] == '') {
-			Tx_Formhandler_StaticFuncs::throwException('no_template');
-		}
 	}
 
 	/**

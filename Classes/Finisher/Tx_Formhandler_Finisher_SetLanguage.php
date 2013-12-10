@@ -13,49 +13,42 @@
  *                                                                        */
 
 /**
- * Finisher to set the currently used language to a set value.
- * Useful if you want to send the admin email in a specific language and do not want to use the language of the user.
- * 
  * @author	Reinhard Führicht <rf@typoheads.at>
+ * @package	Tx_Formhandler
+ * @subpackage	Finisher
  */
 class Tx_Formhandler_Finisher_SetLanguage extends Tx_Formhandler_AbstractFinisher {
 
-	/**
-	 * The main method called by the controller
-	 *
-	 * @return array The probably modified GET/POST parameters
-	 */
 	public function process() {
-		if($this->globals->getSession()->get('originalLanguage') === NULL) {
-			$this->globals->getSession()->set('originalLanguage', $GLOBALS['TSFE']->lang);
+		if(Tx_Formhandler_Globals::$session->get('originalLanguage') === NULL) {
+			Tx_Formhandler_Globals::$session->set('originalLanguage', $GLOBALS['TSFE']->lang);
 		}
-		$languageCode = $this->utilityFuncs->getSingle($this->settings, 'languageCode');
+		$languageCode = Tx_Formhandler_StaticFuncs::getSingle($this->settings, 'languageCode');
 		if($languageCode) {
 			$GLOBALS['TSFE']->lang = strtolower($languageCode);
-			$this->utilityFuncs->debugMessage('Language set to "' . $GLOBALS['TSFE']->lang . '"!', array(), 1);
+			Tx_Formhandler_StaticFuncs::debugMessage('Language set to "' . $GLOBALS['TSFE']->lang . '"!', array(), 1);
 		} else {
-			$this->utilityFuncs->debugMessage('Unable to set language! Language code set in TypoScript is empty!', array(), 2);
+			Tx_Formhandler_StaticFuncs::debugMessage('Unable to set language! Language code set in TypoScript is empty!', array(), 2);
 		}
 		return $this->gp;
 	}
-
+	
 	/**
 	 * Method to define whether the config is valid or not. If no, display a warning on the frontend.
 	 * The default value is TRUE. This up to the finisher to overload this method
 	 *
 	 */
 	public function validateConfig() {
-		$settings = $this->globals->getSettings();
+		$settings = Tx_Formhandler_Globals::$settings;
 		if(is_array($settings['finishers.'])) {
 			$found = FALSE;
 			foreach($settings['finishers.'] as $finisherConfig) {
-				$currentFinisherClass = $this->utilityFuncs->getPreparedClassName($finisherConfig);
-				if($currentFinisherClass === 'Tx_Formhandler_Finisher_RestoreLanguage') {
+				if(strstr($finisherConfig['class'], 'Finisher_RestoreLanguage')) {
 					$found = TRUE;
 				}
 			}
 			if(!$found) {
-				$this->utilityFuncs->throwException('No Finisher_RestoreLanguage found in the TypoScript setup! You have to reset the language to the original value after you changed it using Finisher_SetLanguage');
+				Tx_Formhandler_StaticFuncs::throwException('No Finisher_RestoreLanguage found in the TypoScript setup! You have to reset the language to the original value after you changed it using Finisher_SetLanguage');
 			}
 		}
 		return $found;

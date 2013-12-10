@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_DB.php 46243 2011-04-05 15:17:49Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_DB.php 46554 2011-04-15 07:46:19Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -249,7 +249,7 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 
 		//set primary key field
 		$this->key = Tx_Formhandler_StaticFuncs::getSingle($this->settings, 'key');
-		if (!$this->key) {
+		if (strlen($this->key) === 0) {
 			$this->key = 'uid';
 		}
 
@@ -274,15 +274,13 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 			if (isset($options) && is_array($options) && !isset($options['special'])) {
 
 				$mapping = $options['mapping'];
+
 				//if no mapping default to the name of the form field
 				if (!$mapping) {
 					$mapping = $fieldname;
 				}
 
 				$fieldValue = $this->gp[$mapping];
-				if ($options['mapping.']) {
-					$fieldValue = Tx_Formhandler_StaticFuncs::getSingle($options, 'mapping');
-				}
 
 				//pre process the field value. e.g. to format a date
 				if (is_array($options['preProcessing.'])) {
