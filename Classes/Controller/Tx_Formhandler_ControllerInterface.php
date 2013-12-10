@@ -11,15 +11,13 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ControllerInterface.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ControllerInterface.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
  *                                                                        */
 
 /**
  * Controller interface for Controller Classes of Formhandler
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Controller
  */
 interface Tx_Formhandler_ControllerInterface {
 

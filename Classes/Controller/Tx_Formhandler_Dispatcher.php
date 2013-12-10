@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Dispatcher.php 52892 2011-10-11 15:07:31Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Dispatcher.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
  *                                                                        */
 
 require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Formhandler_Component_Manager.php');
@@ -23,8 +23,6 @@ require_once(PATH_tslib.'class.tslib_pibase.php');
  * The Dispatcher instantiates the Component Manager and delegates the process to the given controller.
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Controller
  */
 class Tx_Formhandler_Dispatcher extends tslib_pibase {
 
@@ -107,7 +105,6 @@ class Tx_Formhandler_Dispatcher extends tslib_pibase {
 			}
 
 			$result = $controller->process();
-			
 		} catch(Exception $e) {
 			$result = '<div style="color:red; font-weight: bold">' . $e->getMessage() . '</div>';
 			if ($this->globals->getSession() && $this->globals->getSession()->get('debug')) {

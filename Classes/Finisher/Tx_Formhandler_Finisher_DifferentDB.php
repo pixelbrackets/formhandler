@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_DifferentDB.php 49145 2011-06-27 13:15:48Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_DifferentDB.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -32,8 +32,7 @@
  *
  * Further configuration equals the configuration of Tx_Formhandler_Finisher_DB.
  *
- * @package	Tx_Formhandler
- * @subpackage	Finisher
+ * @author	Reinhard Führicht <rf@typoheads.at>
  * @see Tx_Formhandler_Finisher_DB
  */
 class Tx_Formhandler_Finisher_DifferentDB extends Tx_Formhandler_Finisher_DB {

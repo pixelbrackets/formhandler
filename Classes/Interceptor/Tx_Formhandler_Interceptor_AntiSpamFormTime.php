@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_AntiSpamFormTime.php 49145 2011-06-27 13:15:48Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_AntiSpamFormTime.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -32,8 +32,6 @@
  * saveInterceptors.1.config.maxTime.unit = minutes
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Interceptor
  */
 class Tx_Formhandler_Interceptor_AntiSpamFormTime extends Tx_Formhandler_AbstractInterceptor {
 
@@ -54,7 +52,7 @@ class Tx_Formhandler_Interceptor_AntiSpamFormTime extends Tx_Formhandler_Abstrac
 				$view = $this->componentManager->getComponent('Tx_Formhandler_View_AntiSpam');
 				$view->setLangFiles($this->globals->getLangFiles());
 				$view->setPredefined($this->predefined);
-				
+
 				$templateCode = $this->globals->getTemplateCode();
 				$view->setTemplate($templateCode, 'ANTISPAM');
 				if (!$view->hasTemplate()) {

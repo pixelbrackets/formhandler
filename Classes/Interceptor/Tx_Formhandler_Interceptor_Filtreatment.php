@@ -11,15 +11,13 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 55219 2011-12-01 16:23:49Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
  *                                                                        */
 
 /**
  * An interceptor doing XSS checking on GET/POST parameters
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Interceptor
  */
 class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInterceptor {
 
@@ -173,7 +171,10 @@ class Tx_Formhandler_Interceptor_Filtreatment extends Tx_Formhandler_AbstractInt
 		}
 		return TRUE;
 	}
-	
+
+	/* (non-PHPdoc)
+	 * @see Classes/Component/Tx_Formhandler_AbstractComponent#init($gp, $settings)
+	*/
 	public function init($gp, $settings) {
 		parent::init($gp, $settings);
 		$this->doNotSanitizeFields = array();

@@ -11,15 +11,13 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractController.php 50810 2011-08-09 15:42:20Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractController.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
  *                                                                        */
 
 /**
  * Abstract class for Controller Classes used by Formhandler.
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
- * @package	Tx_Formhandler
- * @subpackage	Controller
  * @abstract
  */
 abstract class Tx_Formhandler_AbstractController extends Tx_Formhandler_AbstractClass implements Tx_Formhandler_ControllerInterface {

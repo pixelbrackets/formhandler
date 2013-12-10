@@ -11,11 +11,11 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_TCPDF.php 55295 2011-12-05 17:10:22Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Generator_TCPDF.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
  *                                                                        */
 
 /**
- * Class to generate PDF files in Backend and Frontend
+ * Class to generate PDF files in Backend
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
  * @package	Tx_Formhandler
@@ -172,6 +172,12 @@ class Tx_Formhandler_Generator_TCPDF {
 		exit;
 	}
 
+	/**
+	 * Sets the template code for the PDF
+	 *
+	 * @param string $templateCode The template code
+	 * @return void
+	 */
 	public function setTemplateCode($templateCode) {
 		$this->templateCode = $templateCode;
 	}
