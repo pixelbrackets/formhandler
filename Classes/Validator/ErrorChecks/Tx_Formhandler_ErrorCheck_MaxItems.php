@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_MaxItems.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_MaxItems.php 30983 2010-03-10 18:24:18Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -33,9 +33,9 @@ class Tx_Formhandler_ErrorCheck_MaxItems extends Tx_Formhandler_AbstractErrorChe
 	 */
 	public function check(&$check, $name, &$gp) {
 		$checkFailed = '';
-		$value = $check['params']['value'];
 		
-		if(isset($gp[$name]) && !empty($gp[$name])) {
+		if(isset($gp[$name])) {
+			$value = $check['params']['value'];
 			if(is_array($gp[$name])) {
 				if(count($gp[$name]) > $value) {
 					$checkFailed = $this->getCheckFailed($check);

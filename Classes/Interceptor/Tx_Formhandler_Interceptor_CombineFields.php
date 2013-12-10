@@ -29,41 +29,35 @@ class Tx_Formhandler_Interceptor_CombineFields extends Tx_Formhandler_AbstractIn
 	 * @return array The probably modified GET/POST parameters
 	 */
 	public function process() {
-		if (is_array($this->settings['combineFields.'])) {
-			foreach ($this->settings['combineFields.'] as $newField => $options) {
+		if(is_array($this->settings['combineFields.'])) {
+			foreach($this->settings['combineFields.'] as $newField=>$options) {
 				$newField = str_replace('.', '', $newField);
-				if (is_array($options['fields.'])) {
+				if(is_array($options['fields.'])) {
 					$this->gp[$newField] = $this->combineFields($options);
-					$this->utilityFuncs->debugMessage('combined', array($newField, $this->gp[$newField]));
+					Tx_Formhandler_StaticFuncs::debugMessage('combined', $newField, $this->gp[$newField]);
 				}
 			}
 		}
 		return $this->gp;
 	}
-
-	/**
-	 * Combines two or more field values
-	 *
-	 * @param array $options TS settings how to perform the combination
-	 * @return string The combined value
-	 */
+	
 	protected function combineFields($options) {
-		$separator = ' ';
-		if (isset($options['separator'])) {
-			$separator = $this->utilityFuncs->getSingle($options, 'separator');
+		if(!isset($options['seperator'])) {
+			$seperator = ' ';
+		} else {
+			$seperator = $options['seperator'];
 		}
 		$fieldsArr = $options['fields.'];
+		
 		$combinedString = '';
-		$hideEmptyValues = intval($this->utilityFuncs->getSingle($options, 'hideEmptyValues'));
-		foreach ($fieldsArr as $idx => $field) {
-			$value = $this->utilityFuncs->getGlobal($field, $this->gp);
-			if ($hideEmptyValues === 0 || 
-				($hideEmptyValues === 1 && strlen($value) > 0)) {
-				$combinedString .= $value . $separator;
+		foreach($fieldsArr as $field) {
+			if(	intval($options['hideEmptyValues']) === 0 || 
+					(intval($options['hideEmptyValues']) === 1 && isset($this->gp[$field]) && strlen($this->gp[$field]) > 0)) {
+				$combinedString .= $this->gp[$field] . $seperator;
 			}
 		}
-		if ($combinedString) {
-			$combinedString = substr($combinedString, 0, (strlen($combinedString) - strlen($separator)));
+		if($combinedString) {
+			$combinedString = substr($combinedString, 0, (strlen($combinedString) - 1));
 		}
 		return $combinedString; 
 	}

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractErrorCheck.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractErrorCheck.php 30981 2010-03-10 18:06:41Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -54,21 +54,6 @@ abstract class Tx_Formhandler_AbstractErrorCheck extends Tx_Formhandler_Abstract
 			$checkFailed = substr($checkFailed, 0, (strlen($checkFailed) - 1));
 		}
 		return $checkFailed;
-	}
-	
-	/**
-	 * Parses the parameter given to the error check and performs getSingle if necessary.
-	 *
-	 * @param string $obj A value string or TypoScript object
-	 * @param array $params If TypoScript object, this is the parameter array
-	 * @return string The parsed value
-	 */
-	protected function getCheckValue($obj, $params) {
-		$checkValue = $obj;
-		if(is_array($params)) {
-			$checkValue = $this->cObj->cObjGetSingle($obj, $params);
-		}
-		return $checkValue;
 	}
 
 }

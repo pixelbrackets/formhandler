@@ -18,6 +18,8 @@
  * Combines values entered in form field and stores it in a new entry in $this->gp.
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
+ * @package	Tx_Formhandler
+ * @subpackage	Interceptor
  */
 class Tx_Formhandler_Interceptor_TranslateFields extends Tx_Formhandler_AbstractInterceptor {
 
@@ -27,32 +29,26 @@ class Tx_Formhandler_Interceptor_TranslateFields extends Tx_Formhandler_Abstract
 	 * @return array The probably modified GET/POST parameters
 	 */
 	public function process() {
-		$this->langFiles = $this->globals->getLangFiles();
-		if (is_array($this->settings['translateFields.'])) {
-			foreach ($this->settings['translateFields.'] as $newField=>$options) {
+		$this->langFiles = $this->settings['langFiles'];
+		if(is_array($this->settings['translateFields.'])) {
+			foreach($this->settings['translateFields.'] as $newField=>$options) {
 				$newField = str_replace('.', '', $newField);
-				if (isset($options['langKey'])) {
+				if(isset($options['langKey'])) {
 					$this->gp[$newField] = $this->translateFields($options);
-					$this->utilityFuncs->debugMessage('translated', array($newField, $this->gp[$newField]));
+					Tx_Formhandler_StaticFuncs::debugMessage('translated', $newField, $this->gp[$newField]);
 				}
 			}
 		}
 		return $this->gp;
 	}
-
-	/**
-	 * Searches for a translation of the configured field
-	 *
-	 * @param array $options The TS setting for the translation
-	 * @return string The translated message
-	 */
+	
 	protected function translateFields($options) {
-		$key = $this->utilityFuncs->getSingle($options, 'langKey');
-		$field = $this->utilityFuncs->getSingle($options, 'field');
-		if ($field) {
+		$key = $options['langKey'];
+		$field = $options['field'];
+		if($field) {
 			$key = str_replace('|', $this->gp[$field], $key);
-		}
-		return $this->utilityFuncs->getTranslatedMessage($this->langFiles, $key); 
+		} 
+		return Tx_Formhandler_StaticFuncs::getTranslatedMessage($this->langFiles, $key); 
 	}
 
 }

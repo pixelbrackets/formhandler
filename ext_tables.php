@@ -46,7 +46,7 @@ if (TYPO3_MODE == 'BE')   {
 	// Add flexform field to plugin options
 	$TCA['tt_content']['types']['list']['subtypes_addlist'][$_EXTKEY . '_pi1'] = 'pi_flexform';
 	
-	if(!is_object($GLOBALS['BE_USER'])) {
+	if(!is_object($GLOBALS['BE_USER']) || !$GLOBALS['BE_USER']->checkCLIuser()) {
 		$GLOBALS['BE_USER'] = t3lib_div::makeInstance('t3lib_beUserAuth');
 		
 		// New backend user object
@@ -80,4 +80,18 @@ if (TYPO3_MODE == 'BE')   {
 t3lib_extMgm::addStaticFile($_EXTKEY, 'Configuration/Settings/', 'Example Configuration');
 t3lib_extMgm::addPlugin(array('Formhandler', $_EXTKEY . '_pi1'), 'list_type');
 t3lib_extMgm::addPlugin(array('Formhandler Listing', $_EXTKEY . '_pi2'), 'list_type');
+
+
+$TCA['tx_formhandler_log'] = array (
+    'ctrl' => array (
+		'title' => 'LLL:EXT:formhandler/Resources/Language/locallang_db.xml:tx_formhandler_log',
+		'label' => 'uid',
+		'default_sortby' => 'ORDER BY crdate DESC',
+		'crdate' => 'crdate',
+		'tstamp' => 'tstamp',
+		'iconfile' => t3lib_extMgm::extRelPath($_EXTKEY) . 'ext_icon.gif',
+		'dynamicConfigFile' => t3lib_extMgm::extPath($_EXTKEY) . 'tca.php'
+	)
+);
+
 ?>

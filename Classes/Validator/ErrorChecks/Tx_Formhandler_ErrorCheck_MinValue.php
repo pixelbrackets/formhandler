@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_MinValue.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_MinValue.php 30983 2010-03-10 18:24:18Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -35,9 +35,9 @@ class Tx_Formhandler_ErrorCheck_MinValue extends Tx_Formhandler_AbstractErrorChe
 		$checkFailed = '';
 		$min = $check['params']['value'];
 		if(	isset($gp[$name]) &&
-		!empty($gp[$name]) &&
-		!empty($min) &&
-		(!t3lib_div::testInt($gp[$name]) || intVal($gp[$name]) < $min)) {
+			intval($gp[$name]) >= 0 &&
+			intval($min) >= 0 &&
+			(!t3lib_div::testInt($gp[$name]) || intVal($gp[$name]) < $min)) {
 				
 			$checkFailed = $this->getCheckFailed($check);
 		}

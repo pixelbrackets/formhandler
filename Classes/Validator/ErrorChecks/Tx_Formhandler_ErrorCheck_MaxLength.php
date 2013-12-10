@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_MaxLength.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_MaxLength.php 30983 2010-03-10 18:24:18Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -35,9 +35,9 @@ class Tx_Formhandler_ErrorCheck_MaxLength extends Tx_Formhandler_AbstractErrorCh
 		$checkFailed = '';
 		$max = $check['params']['value'];
 		if(	isset($gp[$name]) &&
-		!empty($gp[$name]) &&
-		!empty($max) &&
-		strlen(trim($gp[$name])) > $max) {
+			strlen(trim($gp[$name])) > 0 &&
+			intval($min) > 0 &&
+			strlen(trim($gp[$name])) > $max) {
 
 			$checkFailed = $this->getCheckFailed($check);
 		}

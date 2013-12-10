@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_StoreUploadedFiles.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_StoreUploadedFiles.php 30981 2010-03-10 18:06:41Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -80,8 +80,9 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 		$uploadPath = Tx_Formhandler_StaticFuncs::getDocumentRoot() . $newFolder;
 	
 		session_start();
-		if(isset($_SESSION['formhandlerFiles']) && is_array($_SESSION['formhandlerFiles']) && strlen($newFolder) > 0 ) {
-			foreach($_SESSION['formhandlerFiles'] as $field => $files) {
+		$sessionFiles = Tx_Formhandler_Session::get('files');
+		if(is_array($sessionFiles) && !empty($sessionFiles) && strlen($newFolder) > 0 ) {
+			foreach($sessionFiles as $field => $files) {
 				$this->gp[$field] = array();
 				foreach($files as $key => $file) {
 					if($file['uploaded_path'] != $uploadPath) {
@@ -91,10 +92,10 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 						copy(($file['uploaded_path'] . $file['uploaded_name']), ($uploadPath . $newFilename));
 						unlink(($file['uploaded_path'] . $file['uploaded_name']));
 	
-						$_SESSION['formhandlerFiles'][$field][$key]['uploaded_path'] = $uploadPath;
-						$_SESSION['formhandlerFiles'][$field][$key]['uploaded_name'] = $newFilename;
-						$_SESSION['formhandlerFiles'][$field][$key]['uploaded_folder'] = $newFolder;
-						$_SESSION['formhandlerFiles'][$field][$key]['uploaded_url'] = t3lib_div::getIndpEnv('TYPO3_SITE_URL') . $newFolder . $newFilename;
+						$sessionFiles[$field][$key]['uploaded_path'] = $uploadPath;
+						$sessionFiles[$field][$key]['uploaded_name'] = $newFilename;
+						$sessionFiles[$field][$key]['uploaded_folder'] = $newFolder;
+						$sessionFiles[$field][$key]['uploaded_url'] = t3lib_div::getIndpEnv('TYPO3_SITE_URL') . $newFolder . $newFilename;
 						if(!is_array($this->gp[$field])) {
 							$this->gp[$field] = array();
 						}
@@ -102,6 +103,7 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 					}
 				}
 			}
+			Tx_Formhandler_Session::set('files', $sessionFiles);
 		}
 	}
 
@@ -139,11 +141,7 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 
 					} elseif(isset($this->settings['schemeMarkers.'][$markerName . '.'])) {
 
-						//pass gp to the plugin 
-						if(!strcmp($options,'USER') || !strcmp($options,'USER_INT')) {
-							$this->settings['schemeMarkers.'][$markerName . '.']['gp'] = $this->gp;
-						}
-						$value = $this->cObj->cObjGetSingle($this->settings['schemeMarkers.'][$markerName], $this->settings['schemeMarkers.'][$markerName . '.']);
+						$value = Tx_Formhandler_StaticFuncs::getSingle($this->settings['schemeMarkers.'], $markerName);
 					}
 					$newFilename = str_replace('[' . $markerName . ']', $value, $newFilename);
 				}

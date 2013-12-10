@@ -1,6 +1,6 @@
 <?php
 /***************************************************************
- *  Copyright notice
+*  Copyright notice
 *
 *  (c) 2010 Dev-Team Typoheads (dev@typoheads.at)
 *  All rights reserved
@@ -29,23 +29,19 @@
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
  */
-require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Utils/Tx_Formhandler_CompatibilityFuncs.php');
 class tx_formhandler_tcafuncs {
-
+	
 	public function user_getParams($PA, $fobj) {
 		$params = unserialize($PA['itemFormElValue']);
-		$output =
-			'<input
-			readonly="readonly" style="display:none"
-			name="' . $PA['itemFormElName'] . '"
-			value="' . htmlspecialchars($PA['itemFormElValue']) . '"
-			onchange="' . htmlspecialchars(implode('', $PA['fieldChangeFunc'])) . '"
-			' . $PA['onFocus'] . '/>
-		';
-		$compatFuncs = Tx_Formhandler_CompatibilityFuncs::getInstance();
-		$output .= $compatFuncs->viewArray($params);
-		return $output;
+        return
+            '<input
+                readonly="readonly" style="display:none" 
+                name="' . $PA['itemFormElName'] . '"
+                value="' . htmlspecialchars($PA['itemFormElValue']) . '"
+                onchange="' . htmlspecialchars(implode('', $PA['fieldChangeFunc'])) . '"
+                ' . $PA['onFocus'] . '/>' .
+            t3lib_div::view_array($params);
 	}
-
+	
 }
 ?>

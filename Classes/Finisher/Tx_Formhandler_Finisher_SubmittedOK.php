@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_SubmittedOK.php 27790 2009-12-17 09:28:42Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Confirmation.php 27790 2009-12-17 09:28:42Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -32,6 +32,8 @@
  * </code>
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
+ * @package	Tx_Formhandler
+ * @subpackage	Finisher
  */
 class Tx_Formhandler_Finisher_SubmittedOK extends Tx_Formhandler_AbstractFinisher {
 
@@ -41,33 +43,54 @@ class Tx_Formhandler_Finisher_SubmittedOK extends Tx_Formhandler_AbstractFinishe
 	 * @return array The probably modified GET/POST parameters
 	 */
 	public function process() {
+		
+		//set session value to prevent another validation or finisher circle. Formhandler will call only this Finisher if the user reloads the page.
+		session_start();
+		Tx_Formhandler_Session::set('submittedOK', TRUE);
+		
+		$action = $this->gp['action'];
+		if($action) {
+			
+			$this->processAction($action);
+		}
 
 		//read template file
-		$this->templateFile = $this->globals->getTemplateCode();
-		if($this->settings['templateFile']) {
-			$this->templateFile = $this->utilityFuncs->readTemplateFile(FALSE, $this->settings);
-		}
-
+		$this->templateFile = Tx_Formhandler_Globals::$templateCode;
+		
 		//set view
-		$viewClass = 'Tx_Formhandler_View_SubmittedOK';
-		if($this->settings['view']) {
-			$viewClass = $this->utilityFuncs->getSingle($this->settings, 'view');
-		}
-		$viewClass = $this->utilityFuncs->prepareClassName($viewClass);
-		$view = $this->componentManager->getComponent($viewClass);
-
+		$view = $this->componentManager->getComponent('Tx_Formhandler_View_SubmittedOK');
+			
 		//show TEMPLATE_SUBMITTEDOK
-		$view->setTemplate($this->templateFile, ('SUBMITTEDOK' . $this->globals->getTemplateSuffix()));
-		if (!$view->hasTemplate()) {
+		$view->setTemplate($this->templateFile, ('SUBMITTEDOK' . $this->settings['templateSuffix']));
+		if(!$view->hasTemplate()) {
 			$view->setTemplate($this->templateFile, 'SUBMITTEDOK');
-			if (!$view->hasTemplate()) {
-				$this->utilityFuncs->debugMessage('no_submittedok_template', array(), 3);
+			if(!$view->hasTemplate()) {
+				Tx_Formhandler_StaticFuncs::debugMessage('no_submittedok_template');
 			}
 		}
-
-		$view->setSettings($this->globals->getSession()->get('settings'));
+		
+		$view->setSettings(Tx_Formhandler_Session::get('settings'));
 		$view->setComponentSettings($this->settings);
 		return $view->render($this->gp, array());
+	}
+	
+	protected function processAction($action) {
+		if(is_array($this->settings['actions.'])) {
+			foreach($this->settings['actions.'] as $key=>$options) {
+				if(strpos($key, '.') !== FALSE) {
+					$currentAction = str_replace('.', '', $key);
+					if($currentAction === $action) {
+						$class = $options['class'];
+						if($class) {
+							$class = Tx_Formhandler_StaticFuncs::prepareClassName($class);
+							$object = $this->componentManager->getComponent($class);
+							$object->init($this->gp, $options['config.']);
+							$object->process();
+						}
+					}
+				}
+			}
+		}
 	}
 
 }

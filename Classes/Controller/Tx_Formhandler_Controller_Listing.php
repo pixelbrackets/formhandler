@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Controller_Listing.php 28348 2010-01-04 14:25:29Z erep $
+ * $Id: Tx_Formhandler_Controller_Listing.php 30981 2010-03-10 18:06:41Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -107,6 +107,7 @@ class Tx_Formhandler_Controller_Listing extends Tx_Formhandler_AbstractControlle
 	 */
 	public function process() {
 		$this->gp = t3lib_div::_GP('formhandler');
+		Tx_Formhandler_Globals::$gp = $this->gp;
 
 		//read settings
 		$settings = $this->configuration->getSettings();
@@ -135,7 +136,7 @@ class Tx_Formhandler_Controller_Listing extends Tx_Formhandler_AbstractControlle
 		//set template file
 		$templateFile = $settings['templateFile'];
 		if(isset($settings['templateFile.']) && is_array($settings['templateFile.'])) {
-			$this->templateFile = $this->cObj->cObjGetSingle($settings['templateFile'], $settings['templateFile.']);
+			$this->templateFile = Tx_Formhandler_StaticFuncs::getSingle($settings, 'templateFile');
 		} else {
 			$this->templateFile = t3lib_div::getURL(Tx_Formhandler_StaticFuncs::resolvePath($templateFile));
 		}
@@ -174,10 +175,12 @@ class Tx_Formhandler_Controller_Listing extends Tx_Formhandler_AbstractControlle
 		//buid items array
 		$listItems = array();
 		if($res && $GLOBALS['TYPO3_DB']->sql_num_rows($res) > 0) {
-			while($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-				if(!$this->gp['detailId']) {
+			while(FALSE !== ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res))) {
+
+				if(!isset($this->gp['detailId'])) {
 					array_push($listItems, $row);
-				} elseif($row['uid'] == $this->gp['detailId']) {
+				} elseif(intval($row['uid']) === intval($this->gp['detailId'])) {
+
 					array_push($listItems, $row);
 				}
 			}
@@ -187,7 +190,7 @@ class Tx_Formhandler_Controller_Listing extends Tx_Formhandler_AbstractControlle
 
 		//render view
 		$view->setModel($listItems);
-		return $view->render(array(), array());
+		return $view->render($this->gp, array());
 
 
 	}

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_ContainsNone.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_ContainsNone.php 30986 2010-03-10 18:34:49Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -35,12 +35,12 @@ class Tx_Formhandler_ErrorCheck_ContainsNone extends Tx_Formhandler_AbstractErro
 		$checkFailed = '';
 		$formValue = trim($gp[$name]);
 		
-		if(!empty($formValue)) {
-			$checkValue = $this->getCheckValue($check['params']['words'], $check['params']['words.']);
+		if(strlen($formValue) > 0) {
+			$checkValue = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'words');
 			if(!is_array($checkValue)) {
 				$checkValue = t3lib_div::trimExplode(',', $checkValue);
 			}
-			$found = false;
+			$found = FALSE;
 			foreach($checkValue as $word) {
 				if(stristr($formValue, $word) && !$found) {
 	
@@ -48,7 +48,7 @@ class Tx_Formhandler_ErrorCheck_ContainsNone extends Tx_Formhandler_AbstractErro
 					$check['params']['words'] = implode(',', $checkValue);
 					unset($check['params']['words.']);
 					$checkFailed = $this->getCheckFailed($check);
-					$found = true;
+					$found = TRUE;
 				}
 			}
 		}

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_EqualsField.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_EqualsField.php 30983 2010-03-10 18:24:18Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -35,7 +35,7 @@ class Tx_Formhandler_ErrorCheck_EqualsField extends Tx_Formhandler_AbstractError
 	public function check(&$check,$name,&$gp) {
 		$checkFailed = '';
 
-		if(isset($gp[$name]) && !empty($gp[$name])) {
+		if(isset($gp[$name]) && strlen(trim($gp[$name])) > 0) {
 			$comparisonValue = $gp[$check['params']['field']];
 	
 			if (strcmp($comparisonValue, $gp[$name]) != 0) {

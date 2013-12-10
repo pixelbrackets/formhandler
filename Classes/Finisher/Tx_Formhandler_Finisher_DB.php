@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_DB.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_DB.php 30986 2010-03-10 18:34:49Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -190,10 +190,6 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 	 */
 	public function init($gp, $settings) {
 		parent::init($gp, $settings);
-		
-		//make cObj instance
-		$this->cObj = t3lib_div::makeInstance('tslib_cObj');
-		$this->cObj->setCurrentVal($GLOBALS['TSFE']->id);
 
 		//set table
 		$this->table = $this->settings['table'];
@@ -205,13 +201,13 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 		//set primary key field
 		$this->key = $this->settings['key'];
 		if(!$this->key) {
-			$this->key = "uid";
+			$this->key = 'uid';
 		}
 
 		//check whether to update or to insert a record
-		$this->doUpdate = false;
+		$this->doUpdate = FALSE;
 		if($this->settings['updateInsteadOfInsert']) {
-			$this->doUpdate = true;
+			$this->doUpdate = TRUE;
 		}
 	}
 
@@ -240,17 +236,17 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 				$fieldValue = $this->gp[$mapping];
 				
 				if($options['mapping.']) {
-					$fieldValue = $this->cObj->cObjGetSingle($options['mapping'], $options['mapping.']);
+					$fieldValue = Tx_Formhandler_StaticFuncs::getSingle($options, 'mapping');
 				}
 
 				//pre process the field value. e.g. to format a date
 				if(is_array($options['preProcessing.'])) {
 					$options['preProcessing.']['value'] = $fieldValue;
-					$fieldValue = $this->cObj->cObjGetSingle($options['preProcessing'], $options['preProcessing.']);
+					$fieldValue = Tx_Formhandler_StaticFuncs::getSingle($options, 'preProcessing');
 				}
 
 				if($options['mapping.']) {
-					$queryFields[$fieldname] = $this->cObj->cObjGetSingle($options['mapping'], $options['mapping.']);
+					$queryFields[$fieldname] = Tx_Formhandler_StaticFuncs::getSingle($options, 'mapping');
 				} else {
 					$queryFields[$fieldname] = $fieldValue;
 				}
@@ -260,11 +256,19 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 						
 					//if given settings is a TypoScript object
 					if(isset($options['ifIsEmpty.']) && is_array($options['ifIsEmpty.'])) {
-						$queryFields[$fieldname] = $this->cObj->cObjGetSingle($options['ifIsEmpty'], $options['ifIsEmpty.']);
+						$queryFields[$fieldname] = Tx_Formhandler_StaticFuncs::getSingle($options, 'ifIsEmpty');
 					} else {
 						$queryFields[$fieldname] = $options['ifIsEmpty'];
 					}
 				}
+
+                if($options['nullIfEmpty'] && strlen($this->gp[$options['mapping']]) == 0) {
+                    unset($queryFields[$fieldname]);
+                }
+
+                if($options['zeroIfEmpty'] && strlen($this->gp[$options['mapping']]) == 0) {
+                    $queryFields[$fieldname] = 0;
+                }
 
 				//process array handling
 				if(isset($this->gp[$options['mapping']]) && is_array($this->gp[$options['mapping']])) {
@@ -276,7 +280,8 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 				}
 
 				//process uploaded files
-				if(isset($_SESSION['formhandlerFiles'][$fieldname]) && is_array($_SESSION['formhandlerFiles'][$fieldname])) {
+				$files = Tx_Formhandler_Session::get('files');
+				if(isset($files[$fieldname]) && is_array($files[$fieldname])) {
 					$queryFields[$fieldname] = $this->getFileList($fieldname);				
 				}
 
@@ -311,7 +316,7 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 			//post process the field value after formhandler did it's magic.
 			if(is_array($options['postProcessing.'])) {
 				$options['postProcessing.']['value'] = $queryFields[$fieldname];
-				$queryFields[$fieldname] = $this->cObj->cObjGetSingle($options['postProcessing'], $options['postProcessing.']);
+				$queryFields[$fieldname] = Tx_Formhandler_StaticFuncs::getSingle($options, 'postProcessing');
 			}
 		}
 		return $queryFields;
@@ -324,7 +329,8 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 	 */
 	protected function getFileList($fieldname){
 		$filenames = array();
-		foreach ($_SESSION['formhandlerFiles'][$fieldname] as $file) {
+		$files = Tx_Formhandler_Session::get('files');
+		foreach ($files[$fieldname] as $file) {
 			array_push($filenames, $file['uploaded_name']);
 		}
 		return implode(',', $filenames);

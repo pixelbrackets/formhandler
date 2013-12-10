@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_Float.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_Float.php 29674 2010-02-04 16:19:44Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -34,8 +34,8 @@ class Tx_Formhandler_ErrorCheck_Float extends Tx_Formhandler_AbstractErrorCheck 
 	public function check(&$check, $name, &$gp) {
 		$checkFailed = '';
 		
-		if(isset($gp[$name]) && !empty($gp[$name])) {
-			$valid = is_float($gp[$name]);
+		if(isset($gp[$name]) && strlen(trim($gp[$name])) > 0) {
+			$valid = preg_match('/^([-]*[0-9\.,\' ]+?)((\.|,){1}([0-9-]{1,2}))*$/', $gp[$name]);
 			if(!$valid) {
 				$checkFailed = $this->getCheckFailed($check);
 			}

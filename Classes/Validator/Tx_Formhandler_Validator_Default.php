@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Validator_Default.php 26633 2009-11-17 14:30:39Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Validator_Default.php 30986 2010-03-10 18:34:49Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -77,9 +77,9 @@ class Tx_Formhandler_Validator_Default extends Tx_Formhandler_AbstractValidator 
 	 */
 	public function validate(&$errors) {
 
-		//no config? validation returns true
+		//no config? validation returns TRUE
 		if(!is_array($this->settings['fieldConf.'])) {
-			return true;
+			return TRUE;
 		}
 
 		$disableErrorCheckFields = array();

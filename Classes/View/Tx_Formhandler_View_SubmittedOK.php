@@ -11,11 +11,11 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_SubmittedOK.php 58511 2012-02-25 20:29:05Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_SubmittedOK.php 29965 2010-02-12 11:50:30Z reinhardfuehricht $
  *                                                                        */
 
 /**
- * A view for Finisher_SubmittedOK used by Formhandler
+ * A view for Finisher_Confirmation used by Formhandler
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
  * @package	Tx_Formhandler
@@ -34,23 +34,32 @@ class Tx_Formhandler_View_SubmittedOK extends Tx_Formhandler_View_Form {
 	 */
 	protected function fillDefaultMarkers() {
 		parent::fillDefaultMarkers();
-		$params = array();
-		if ($this->globals->getFormValuesPrefix()) {
-			$params[$this->globals->getFormValuesPrefix()] = $this->gp;
+		if($this->settings['formValuesPrefix']) {
+			$params[$this->settings['formValuesPrefix']] = $this->gp;
 		} else {
 			$params = $this->gp;
 		}
-		if ($this->componentSettings['actions.']) {
-			foreach ($this->componentSettings['actions.'] as $action=>$options) {
+		$params['type'] = 98;
+		$label = trim($GLOBALS['TSFE']->sL('LLL:' . $this->langFile . ':print'));
+		if(strlen($label) == 0) {
+			$label = 'print';
+		}
+		$markers['###PRINT_LINK###'] = $this->cObj->getTypolink($label, $GLOBALS['TSFE']->id, $params);
+		unset($params['type']);
+		
+		if($this->componentSettings['actions.']) {
+			foreach($this->componentSettings['actions.'] as $action=>$options) {
 				$sanitizedAction = str_replace('.', '', $action);
-				$class = $this->utilityFuncs->getPreparedClassName($options);
-				if ($class) {
+				$class = $options['class'];
+				if($class) {
+					$class = Tx_Formhandler_StaticFuncs::prepareClassName($class);
 					$generator = $this->componentManager->getComponent($class);
 					$generator->init($this->gp, $options['config.']);
 					$markers['###' . strtoupper($sanitizedAction) . '_LINK###'] = $generator->getLink($params);
 				}
 			}
 		}
+		
 		$this->fillFEUserMarkers($markers);
 		$this->fillFileMarkers($markers);
 		$this->template = $this->cObj->substituteMarkerArray($this->template, $markers);

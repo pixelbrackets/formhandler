@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileRequired.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileRequired.php 30983 2010-03-10 18:24:18Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -33,14 +33,14 @@ class Tx_Formhandler_ErrorCheck_FileRequired extends Tx_Formhandler_AbstractErro
 	 */
 	public function check(&$check,$name,&$gp) {
 		$checkFailed = '';
-		session_start();
-		$found = false;
+		$files = Tx_Formhandler_Session::get('files');
+		$found = FALSE;
 		foreach($_FILES as $sthg => &$files) {
 			if(strlen($files['name'][$name]) > 0) {
-				$found = true;
+				$found = TRUE;
 			}
 		}
-		if(!$found && count($_SESSION['formhandlerFiles'][$name]) == 0) {
+		if(!$found && count($files[$name]) == 0) {
 			$checkFailed = $this->getCheckFailed($check);
 		}
 		return $checkFailed;
