@@ -128,7 +128,16 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 		//init gp params
 		$params = t3lib_div::_GP('formhandler');
 		
-
+		if(isset($params['markedUids']) && is_array($params['markedUids'])) {
+			foreach($params['markedUids'] as &$uidValue) {
+				$uidValue = intval($uidValue);
+			}
+		}
+		
+		if(isset($params['detailId'])) {
+			$params['detailId'] = intval($params['detailId']);
+		}
+		
 		//should delete records
 		if ($params['delete'] && isset($params['markedUids']) && is_array($params['markedUids'])) {
 
@@ -794,7 +803,7 @@ class Tx_Formhandler_Controller_Backend extends Tx_Formhandler_AbstractControlle
 			$ips = t3lib_div::trimExplode(',', $params['ipFilter'], 1);
 			$ip_search = array();
 			foreach ($ips as $value) {
-				$ip_search[] = "'" . htmlspecialchars($value) . "'";
+				$ip_search[] = $GLOBALS['TYPO3_DB']->fullQuoteStr(htmlspecialchars($value), $this->logTable) . "'";
 			}
 			$where[] = 'ip IN (' . implode(",", $ip_search) . ')';
  		}

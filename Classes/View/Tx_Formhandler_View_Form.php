@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Form.php 46386 2011-04-08 14:26:07Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Form.php 46386M 2011-04-08 14:26:07Z (local) $
  *                                                                        */
 
 /**
@@ -391,7 +391,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		$markers = array();
 		$markers['###REL_URL###'] = $path;
 		$markers['###TIMESTAMP###'] = time();
-		$markers['###RANDOM_ID###'] = $this->gp['randomID'];
+		$markers['###RANDOM_ID###'] = htmlspecialchars($this->gp['randomID']);
 		$markers['###ABS_URL###'] = t3lib_div::locationHeaderUrl('') . $path;
 		$markers['###rel_url###'] = $markers['###REL_URL###'];
 		$markers['###timestamp###'] = $markers['###TIMESTAMP###'];
@@ -411,7 +411,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 			$name = Tx_Formhandler_Globals::$formValuesPrefix . '[randomID]';
 		}
 		$markers['###HIDDEN_FIELDS###'] .= '
-			<input type="hidden" name="' . $name . '" value="' . $this->gp['randomID'] . '" />
+			<input type="hidden" name="' . $name . '" value="' . htmlspecialchars($this->gp['randomID']) . '" />
 		';
 
 		$name = 'removeFile';
@@ -419,7 +419,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 			$name = Tx_Formhandler_Globals::$formValuesPrefix . '[removeFile]';
 		}
 		$markers['###HIDDEN_FIELDS###'] .= '
-			<input type="hidden" id="removeFile-' . $this->gp['randomID'] . '" name="' . $name . '" value="" />
+			<input type="hidden" id="removeFile-' . htmlspecialchars($this->gp['randomID']) . '" name="' . $name . '" value="" />
 		';
 
 		$name = 'removeFileField';
@@ -427,7 +427,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 			$name = Tx_Formhandler_Globals::$formValuesPrefix . '[removeFileField]';
 		}
 		$markers['###HIDDEN_FIELDS###'] .= '
-			<input type="hidden" id="removeFileField-' . $this->gp['randomID'] . '" name="' . $name . '" value="" />
+			<input type="hidden" id="removeFileField-' . htmlspecialchars($this->gp['randomID']) . '" name="' . $name . '" value="" />
 		';
 
 		$name = 'submitField';
@@ -435,7 +435,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 			$name = Tx_Formhandler_Globals::$formValuesPrefix . '[submitField]';
 		}
 		$markers['###HIDDEN_FIELDS###'] .= '
-			<input type="hidden" id="submitField-' . $this->gp['randomID'] . '" name="' . $name . '" value="" />
+			<input type="hidden" id="submitField-' . htmlspecialchars($this->gp['randomID']) . '" name="' . $name . '" value="" />
 		';
 		$markers['###formValuesPrefix###'] = Tx_Formhandler_Globals::$formValuesPrefix;
 
@@ -997,8 +997,8 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 					$level--;
 				}
 				$v = trim($v);
-				$markers['###' . $currPrefix . '###'] = $v;
-				$markers['###' . strtoupper($currPrefix) . '###'] = $v;
+				$markers['###' . $currPrefix . '###'] = htmlspecialchars($v);
+				$markers['###' . strtoupper($currPrefix) . '###'] = htmlspecialchars($v);
 			}
 		}
 		return $markers;
