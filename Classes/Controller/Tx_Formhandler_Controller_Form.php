@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Controller_Form.php 28809 2010-01-13 16:36:47Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Controller_Form.php 29051 2010-01-19 15:17:57Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -180,6 +180,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$this->init();
 		
 		
+		
 		//not submitted
 		if(!$this->submitted) {
 			$this->loadSettingsForStep($this->currentStep);
@@ -195,6 +196,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			}
 			
 			//run init interceptors
+			$this->addFormhandlerClass($this->settings['initInterceptors.'], 'Interceptor_Filtreatment');
 			$output = $this->runClasses($this->settings['initInterceptors.']);
 			if(strlen($output) > 0) {
 				return $output;
@@ -215,10 +217,10 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 				$this->setViewSubpart($this->currentStep);
 
 				//run finishers
-				if(isset($this->settings['finishers.']) && is_array($this->settings['finishers.'])) {
+				if(isset($this->settings['finishers.']) && is_array($this->settings['finishers.']) && intval($this->settings['finishers.']['disable']) !== 1) {
 
 					foreach($this->settings['finishers.'] as $tsConfig) {
-						if(isset($tsConfig['class'])) {
+						if(isset($tsConfig['class']) && intval($tsConfig['disable']) !== 1) {
 							$className = Tx_Formhandler_StaticFuncs::prepareClassName($tsConfig['class']);
 							$finisher = $this->componentManager->getComponent($className);
 							if($finisher instanceof Tx_Formhandler_Finisher_Confirmation) {
@@ -259,6 +261,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 				}
 				
 				//run init interceptors
+				$this->addFormhandlerClass($this->settings['initInterceptors.'], 'Interceptor_Filtreatment');
 				$output = $this->runClasses($this->settings['initInterceptors.']);
 				if(strlen($output) > 0) {
 					return $output;
@@ -267,21 +270,26 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 				//run validation
 				$this->errors = array();
 				$valid = array(true);
-				if(isset($this->settings['validators.']) && is_array($this->settings['validators.'])) {
+				if(	isset($this->settings['validators.']) && 
+					is_array($this->settings['validators.']) && 
+					intval($this->settings['validators.']['disable']) !== 1) {
+						
 					foreach($this->settings['validators.'] as $tsConfig) {
-						$className = Tx_Formhandler_StaticFuncs::prepareClassName($tsConfig['class']);
-						Tx_Formhandler_StaticFuncs::debugBeginSection('calling_validator',  $className);
-						$validator = $this->componentManager->getComponent($className);
-						if($this->currentStep == $this->lastStep) {
-							$userSetting = t3lib_div::trimExplode(',', $tsConfig['config.']['restrictErrorChecks']);
-							$autoSetting = array('fileAllowedTypes','fileRequired','fileMaxCount','fileMinCount','fileMaxSize','fileMinSize');
-							$merged = array_merge($userSetting,$autoSetting);
-							$tsConfig['config.']['restrictErrorChecks'] = implode(',', $merged);
+						if($tsConfig['class'] && intval($tsConfig['disable']) !== 1) {
+							$className = Tx_Formhandler_StaticFuncs::prepareClassName($tsConfig['class']);
+							Tx_Formhandler_StaticFuncs::debugBeginSection('calling_validator',  $className);
+							$validator = $this->componentManager->getComponent($className);
+							if($this->currentStep == $this->lastStep) {
+								$userSetting = t3lib_div::trimExplode(',', $tsConfig['config.']['restrictErrorChecks']);
+								$autoSetting = array('fileAllowedTypes','fileRequired','fileMaxCount','fileMinCount','fileMaxSize','fileMinSize');
+								$merged = array_merge($userSetting,$autoSetting);
+								$tsConfig['config.']['restrictErrorChecks'] = implode(',', $merged);
+							}
+							$validator->init($this->gp,$tsConfig['config.']);
+							$res = $validator->validate($this->errors);
+							array_push($valid,$res);
+							Tx_Formhandler_StaticFuncs::debugEndSection();
 						}
-						$validator->init($this->gp,$tsConfig['config.']);
-						$res = $validator->validate($this->errors);
-						array_push($valid,$res);
-						Tx_Formhandler_StaticFuncs::debugEndSection();
 					}
 				}
 
@@ -326,14 +334,14 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 						}
 						
 						//run loggers
-						$this->addLoggerDB();
+						$this->addFormhandlerClass($this->settings['loggers.'], 'Logger_DB');
 						$output = $this->runClasses($this->settings['loggers.']);
 						if(strlen($output) > 0) {
 							return $output;
 						}
 							
 						//run finishers
-						if(isset($this->settings['finishers.']) && is_array($this->settings['finishers.'])) {
+						if(isset($this->settings['finishers.']) && is_array($this->settings['finishers.']) && intval($this->settings['finishers.']['disable']) !== 1) {
 
 							ksort($this->settings['finishers.']);
 
@@ -343,7 +351,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 							}
 
 							foreach($this->settings['finishers.'] as $tsConfig) {
-								if(isset($tsConfig['class'])) {
+								if(isset($tsConfig['class']) && intval($tsConfig['disable']) !== 1) {
 									$className = Tx_Formhandler_StaticFuncs::prepareClassName($tsConfig['class']);
 									$finisher = $this->componentManager->getComponent($className);
 									
@@ -391,7 +399,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 						if($this->currentStep >= $this->lastStep) {
 							Tx_Formhandler_StaticFuncs::debugBeginSection('store_gp');
 							$this->storeGPinSession();
-							$this->mergeGPWithSession();
+							$this->mergeGPWithSession(FALSE, $this->currentStep);
 							Tx_Formhandler_StaticFuncs::debugEndSection();
 						}
 						
@@ -452,29 +460,30 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		}
 	}
 	
-/**
+	/**
 	 * Adds the Logger_DB
 	 *
 	 * @return void
 	 */
-	protected function addLoggerDB(){
+	protected function addFormhandlerClass(&$classesArray, $className){
 		
-		if(!isset($this->settings['loggers.']) && !is_array($this->settings['loggers.'])) {
+		if(!isset($classesArray) && !is_array($classesArray)) {
 
-			//add Logger_DB to the end of logger array
-			$this->settings['loggers.'][] = array('class' => 'Tx_Formhandler_Logger_DB');
+			//add class to the end of the array
+			$classesArray[] = array('class' => $className);
 			
 		} else {
 			
-			foreach($this->settings['loggers.'] as $logger) {
+			foreach($classesArray as $classOptions) {
 				$found = FALSE;
-				if(strpos('Logger_DB', $logger['class']) !== FALSE) {
+				if(strpos($className, $classOptions['class']) !== FALSE) {
 					$found = TRUE;
 				}
-				if(!$found) {
-					//add Logger_DB to the end of logger array
-					$this->settings['loggers.'][] = array('class' => 'Tx_Formhandler_Finisher_StoreGP');
-				}
+				
+			}
+			if(!$found) {
+				//add class to the end of the array
+				$classesArray[] = array('class' => $className);
 			}
 		}
 	}
@@ -857,6 +866,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		//set submitted
 		$this->submitted = $this->isFormSubmitted();
 		
+		
 		//not submitted
 		$dontReset = t3lib_div::_GP('dontReset');
 		if(!$this->submitted && intval($dontReset) !== 1) {
@@ -1023,9 +1033,9 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	 */
 	protected function runClasses($classesArray) {
 		$output = '';
-		if(isset($classesArray) && is_array($classesArray)) {
+		if(isset($classesArray) && is_array($classesArray) && intval($classesArray['disable']) !== 1) {
 			foreach($classesArray as $tsConfig) {
-				if(isset($tsConfig['class'])) {
+				if(isset($tsConfig['class']) && intval($tsConfig['disable']) !== 1) {
 					$className = Tx_Formhandler_StaticFuncs::prepareClassName($tsConfig['class']);
 					Tx_Formhandler_StaticFuncs::debugBeginSection('calling_class', $className);
 	

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Dispatcher.php 26628 2009-11-17 12:53:16Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Dispatcher.php 29104 2010-01-20 14:15:50Z reinhardfuehricht $
  *                                                                        */
 
 require_once (t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_GimmeFive_Component_Manager.php');
@@ -75,6 +75,7 @@ class Tx_Formhandler_Dispatcher extends tslib_pibase {
 		$this->componentManager = Tx_GimmeFive_Component_Manager::getInstance();
 
 		Tx_Formhandler_Globals::$cObj = $this->cObj;
+		Tx_Formhandler_Globals::$overrideSettings = $setup;
 
 		//handle AJAX stuff
 		$this->handleAjax();
