@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Form.php 68977 2012-12-20 15:45:29Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Form.php 72259 2013-03-05 14:24:36Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -235,10 +235,8 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 
 		$pattern = '/(\<\!\-\-[^#]*)?(###' . $type . '_+([^#]*)_*###)([^\-]*\-\-\>)?/i';
 		preg_match_all($pattern, $this->template, $matches);
-
 		if(is_array($matches[0])) {
 			$resultCount = count($matches[0]);
-
 			for($i = 0; $i < $resultCount; $i = $i + 2) {
 				$conditionString = $matches[3][$i];
 				$endMarkerConditionString = $matches[3][$i + 1];
@@ -281,22 +279,14 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 					$count++;
 				}
 				$write = (boolean) $finalConditionResult;
+				$replacement = '';
 				if($write) {
-					if($conditionString === $endMarkerConditionString) {
-						$content = $this->cObj->getSubpart($this->template, $markerName);
-						$this->template = $this->cObj->substituteSubpart($this->template, $markerName, $content);
-					} else {
-						$pattern = '/' . $fullMarkerName . '([^#]+)' . $fullEndMarker . '/im';
-						preg_replace($pattern, '${1}', $this->template);
-					}
-				} else {
-					if($conditionString === $endMarkerConditionString) {
-						$this->template = $this->cObj->substituteSubpart($this->template, $markerName, '');
-					} else {
-						$pattern = '/' . $fullMarkerName . '([^#]+)' . $fullEndMarker . '/im';
-						preg_replace($pattern, '', $this->template);
-					}
+					$replacement = '${1}';
 				}
+				$fullMarkerName = preg_quote($fullMarkerName);
+				$fullEndMarker = preg_quote($fullEndMarker);
+				$pattern = '/' . $fullMarkerName . '(.*?)' . $fullEndMarker . '/ism';
+				$this->template = preg_replace($pattern, $replacement, $this->template);
 			}
 		}
 	}
@@ -310,7 +300,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		}
 		$value = $this->utilityFuncs->getGlobal($fieldname, $this->gp);
 		if(is_array($value)) {
-			$result = (empty($value));
+			$result = (!empty($value));
 		} else {
 			$result = (strlen(trim($value)) > 0);
 		}

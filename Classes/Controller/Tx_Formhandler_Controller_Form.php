@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Controller_Form.php 68976 2012-12-20 15:40:57Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Controller_Form.php 69560 2013-01-07 08:42:21Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -766,7 +766,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 							foreach($uploadedFiles as $idx => $name) {
 								$exists = FALSE;
 								if (is_array($sessionFiles[$field])) {
-									foreach ($sessionFiles[$field] as $idx => $fileOptions) {
+									foreach ($sessionFiles[$field] as $fileId => $fileOptions) {
 										if ($fileOptions['name'] === $name) {
 											$exists = TRUE;
 										}

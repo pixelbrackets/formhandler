@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Mail.php 68708 2012-12-11 13:37:00Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Mail.php 72301 2013-03-06 09:57:27Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -307,6 +307,14 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		if ($tmphtml) {
 			unlink($tmphtml);
 		}
+
+		// delete generated files
+		if ($mailSettings['deleteGeneratedFiles'] && $mailSettings['attachGeneratedFiles']) {
+			$files = t3lib_div::trimExplode(',', $mailSettings['attachGeneratedFiles']);
+			foreach($files as $file) {
+				unlink($file);
+			}
+		}
 	}
 
 	/**
@@ -496,6 +504,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			'return_path',
 			'attachment',
 			'attachGeneratedFiles',
+			'deleteGeneratedFiles',
 			'htmlEmailAsAttachment',
 			'plain.',
 			'html.'
@@ -581,6 +590,13 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 							$emailSettings['htmlEmailAsAttachment'] = 1;
 						}
 
+						break;
+					case 'deleteGeneratedFiles':
+						$htmlEmailAsAttachment = $this->utilityFuncs->getSingle($currentSettings, 'deleteGeneratedFiles');
+						if (intval($htmlEmailAsAttachment) === 1) {
+							$emailSettings['deleteGeneratedFiles'] = 1;
+						}
+					
 						break;
 					case 'filePrefix':
 						$filePrefix = $this->utilityFuncs->getSingle($currentSettings, 'filePrefix');

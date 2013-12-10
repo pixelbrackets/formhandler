@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_UtilityFuncs.php 68661 2012-12-10 16:10:03Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_UtilityFuncs.php 70471 2013-01-30 09:48:12Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -1026,6 +1026,16 @@ class Tx_Formhandler_UtilityFuncs {
 		return t3lib_div::getIndpEnv('TYPO3_SITE_PATH') . 'index.php?' . t3lib_div::implodeArrayForUrl('', $params);
 	}
 
+	public function prepareAndWhereString($andWhere) {
+		$andWhere = trim($andWhere);
+		if(substr($andWhere, 0, 3) === 'AND') {
+			$andWhere = trim(substr($andWhere, 3));
+		}
+		if(strlen($andWhere) > 0) {
+			$andWhere = ' AND ' . $andWhere;
+		}
+		return $andWhere;
+	}
 }
 
 ?>
