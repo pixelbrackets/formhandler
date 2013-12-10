@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_CSV.php 49526 2011-07-06 15:58:43Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Generator_CSV.php 55343 2011-12-08 13:21:48Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -74,15 +74,24 @@ class Tx_Formhandler_Generator_CSV {
 					$param = implode(';', $param);
 				}
 			}
+			if (count($exportParams) == 0 || in_array('pid', $exportParams)) {
+				$record['params']['pid'] = $record['pid'];
+			}
+			if (count($exportParams) == 0 || in_array('submission_date', $exportParams)) {
+				$record['params']['submission_date'] = date('d.m.Y H:i:s', $record['crdate']);
+			}
+			if (count($exportParams) == 0 || in_array('ip', $exportParams)) {
+				$record['params']['ip'] = $record['ip'];
+			}
 			$data[] = $record['params'];
 		}
 		if (count($exportParams) > 0) {
 			foreach ($data as $idx => &$params) {
 
 				// fill missing fields with empty value
-				foreach ($exportParams as $key => $param) {
-					if (!array_key_exists($param, $params)) {
-						$params[$param] = '';
+				foreach ($exportParams as $key => $exportParam) {
+					if (!array_key_exists($exportParam, $params)) {
+						$params[$exportParam] = '';
 					}
 				}
 

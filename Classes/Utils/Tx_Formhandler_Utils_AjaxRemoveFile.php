@@ -52,8 +52,8 @@ class Tx_Formhandler_Utils_AjaxRemoveFile {
 	}
 
 	protected function init() {
-		$this->fieldName = $_GET['field'];
-		$this->uploadedFileName = $_GET['uploadedFileName'];
+		$this->fieldName = htmlspecialchars($_GET['field']);
+		$this->uploadedFileName = htmlspecialchars($_GET['uploadedFileName']);
 		if (isset($_GET['pid'])) {
 			$this->id = intval($_GET['pid']);
 		} else {
@@ -66,7 +66,7 @@ class Tx_Formhandler_Utils_AjaxRemoveFile {
 		tslib_eidtools::connectDB();
 		$this->utilityFuncs->initializeTSFE($this->id);
 		$this->globals->setCObj($GLOBALS['TSFE']->cObj);
-		$randomID = t3lib_div::_GP('randomID');
+		$randomID = htmlspecialchars(t3lib_div::_GP('randomID'));
 		$this->globals->setRandomID($randomID);
 		
 		if(!$this->globals->getSession()) {

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_ClearCache.php 52891 2011-10-11 15:04:25Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_ClearCache.php 55171 2011-11-30 11:44:56Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -52,7 +52,7 @@ class Tx_Formhandler_Finisher_ClearCache extends Tx_Formhandler_AbstractFinisher
 
 		$this->utilityFuncs->debugMessage('Clearing Cache', array($pidList));
 
-		$GLOBALS['TSFE']->clearPageCacheContent_pidList($pidList)
+		$GLOBALS['TSFE']->clearPageCacheContent_pidList($pidList);
 		return $this->gp;
 	}
 }
