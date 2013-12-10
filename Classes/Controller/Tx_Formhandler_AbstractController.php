@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractController.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_AbstractController.php 27495 2009-12-09 08:56:51Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -106,11 +106,11 @@ abstract class Tx_Formhandler_AbstractController implements Tx_Formhandler_Contr
 	 * Sets the internal attribute "langFile"
 	 *
 	 * @author Reinhard Führicht <rf@typoheads.at>
-	 * @param string $langFile
+	 * @param array $langFiles
 	 * @return void
 	 */
-	public function setLangFile($langFile) {
-		$this->langFile = $langFile;
+	public function setLangFiles($langFiles) {
+		$this->langFiles = $langFiles;
 	}
 
 	/**
@@ -144,9 +144,10 @@ abstract class Tx_Formhandler_AbstractController implements Tx_Formhandler_Contr
 	public function getSettings() {
 		$settings = $this->configuration->getSettings();
 
-		if($this->predefined) {
-				
-			$settings = $settings['predef.'][$this->predefined];
+		if($this->predefined && is_array($settings['predef.'][$this->predefined])) {
+			$predefSettings = $settings['predef.'][$this->predefined];
+			unset($settings['predef.'][$this->predefined]);
+			$settings = t3lib_div::array_merge_recursive_overrule($settings, $predefSettings);
 		}
 		return $settings;
 	}

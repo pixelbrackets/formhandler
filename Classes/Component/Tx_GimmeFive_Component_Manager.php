@@ -80,12 +80,19 @@ class Tx_GimmeFive_Component_Manager {
 	 * @author adapted for TYPO3v4 by Jochen Rau <jochen.rau@typoplanet.de>
 	 */
 	public function getComponent($componentName) {
+		
+		//Avoid component manager creating multiple instances of itself:
+		if (get_class($this) == $componentName) {
+			return $this;
+		}
+		
 		if(!is_array($this->classFiles)) {
 			$this->classFiles = array();
 		}
-		if ($this->componentObjectExists($componentName)) {
+		/*if ($this->componentObjectExists($componentName)) {
 			$componentObject = $this->componentObjects[$componentName];
-		} elseif (!array_key_exists($componentName, $this->classFiles)) {
+		} else */
+		if (!array_key_exists($componentName, $this->classFiles)) {
 			$this->loadClass($componentName);
 			$componentObject = $this->createComponentObject($componentName, array());
 			$this->putComponentObject($componentName, $componentObject);
@@ -127,6 +134,7 @@ class Tx_GimmeFive_Component_Manager {
 		$instruction = '$componentObject = new ' . $className .'(';
 		$instruction .= implode(', ',$preparedArguments);
 		$instruction .= ');';
+		
 		eval($instruction);
 
 		if (!is_object($componentObject)) {
@@ -134,6 +142,7 @@ class Tx_GimmeFive_Component_Manager {
 			throw new Exception('A parse error ocurred while trying to build a new object of type ' . $className . ' (' . $errorMessage['message'] . '). The evaluated PHP code was: ' . $instruction);
 		}
 		$scope = $this->getComponentScope($componentName, $componentConfiguration);
+		
 		switch ($scope) {
 			case 'singleton' :
 				$this->putComponentObject($componentName, $componentObject);
@@ -351,8 +360,11 @@ class Tx_GimmeFive_Component_Manager {
 	private function loadClass($className) {		
 		$classNameParts = explode('_', $className,3);
 		if ($classNameParts[0] === self::PACKAGE_PREFIX) {
-			// TODO The $classFiles should be cached by package key
-			$this->classFiles = $this->buildArrayOfClassFiles($classNameParts[1]);
+		
+			// Caches the $classFiles
+			if ($this->classFiles === NULL || empty($this->classFiles)) {
+				$this->classFiles = $this->buildArrayOfClassFiles($classNameParts[1]);
+			}
 			
 			if(is_array($this->tsConf['additionalIncludePaths.'])) {
 				foreach($this->tsConf['additionalIncludePaths.'] as $dir) {

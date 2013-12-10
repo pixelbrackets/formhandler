@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_StaticFuncs.php 24857 2009-09-28 09:36:08Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_StaticFuncs.php 28847 2010-01-14 16:58:10Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -153,14 +153,23 @@ class Tx_Formhandler_StaticFuncs {
 		//language file was not set in flexform, search TypoScript for setting
 		if(!$langFiles) {
 			$langFiles = array();
-			if($settings['langFile.']) {
-				foreach($settings['langFile.'] as $langFile) {
-					$langFiles[] = $langFile;
+			if(isset($settings['langFile']) && !isset($settings['langFile.'])) {
+				array_push($langFiles, Tx_Formhandler_StaticFuncs::resolveRelPathFromSiteRoot($settings['langFile']));
+			} elseif(isset($settings['langFile']) && isset($settings['langFile.'])) {
+				array_push($langFiles, Tx_Formhandler_Globals::$cObj->cObjGetSingle($settings['langFile'], $settings['langFile.']));
+			} elseif(isset($settings['langFile.']) && is_array($settings['langFile.'])) {
+				foreach($settings['langFile.'] as $key => $langFile) {
+					if(FALSE === strpos($key, '.')) {
+						if(is_array($settings['langFile.'][$key . '.'])) {
+							array_push($langFiles, Tx_Formhandler_Globals::$cObj->cObjGetSingle($langFile, $settings['langFile.'][$key . '.']));
+						} else {
+							array_push($langFiles, Tx_Formhandler_StaticFuncs::resolveRelPathFromSiteRoot($langFile));
+						}
+					}
 				}
-			} elseif($settings['langFile']) {
-				$langFiles[] = $settings['langFile'];
 			}
 		}
+		
 		foreach($langFiles as &$langFile) {
 			$langFile = Tx_Formhandler_StaticFuncs::convertToRelativePath($langFile);
 		}
@@ -317,6 +326,15 @@ class Tx_Formhandler_StaticFuncs {
 		}
 		return $path;
 	}
+	
+	static public function generateHash(){
+		$result = '';
+		$charPool = '0123456789abcdefghijklmnopqrstuvwxyz';
+		for($p = 0; $p < 15; $p++) {
+			$result .= $charPool[mt_rand(0, strlen($charPool) - 1)];
+		}
+		return sha1(md5(sha1($result)));
+	}
 
 	/**
 	 * Converts an absolute path into a relative path from TYPO3 root directory.
@@ -381,21 +399,19 @@ class Tx_Formhandler_StaticFuncs {
 	static public function getFilledValueMarkers(&$gp) {
 		if (isset($gp) && is_array($gp)) {
 			foreach($gp as $k=>$v) {
-				if (!ereg('EMAIL_', $k)) {
-					if (is_array($v)) {
-						$v = implode(',', $v);
-					}
-					$v = trim($v);
-					if (strlen($v) > 0) {
-						if(get_magic_quotes_gpc()) {
-							$markers['###value_'.$k.'###'] = stripslashes(self::reverse_htmlspecialchars($v));
-						} else {
-							$markers['###value_'.$k.'###'] = self::reverse_htmlspecialchars($v);
-						}
+				if (is_array($v)) {
+					$v = implode(',', $v);
+				}
+				$v = trim($v);
+				if (strlen($v) > 0) {
+					if(get_magic_quotes_gpc()) {
+						$markers['###value_'.$k.'###'] = stripslashes(self::reverse_htmlspecialchars($v));
 					} else {
-						$markers['###value_'.$k.'###'] = '';
+						$markers['###value_'.$k.'###'] = self::reverse_htmlspecialchars($v);
 					}
-				} //if end
+				} else {
+					$markers['###value_'.$k.'###'] = '';
+				}
 			} // foreach end
 		} // if end
 		return $markers;
@@ -412,7 +428,7 @@ class Tx_Formhandler_StaticFuncs {
 	static public function reverse_htmlspecialchars($mixed) {
 		$htmltable = get_html_translation_table(HTML_ENTITIES);
 		foreach($htmltable as $key => $value) {
-			$mixed = ereg_replace(addslashes($value), $key, $mixed);
+			$mixed = preg_replace('/' . addslashes($value) . '/', $key, $mixed);
 		}
 		return $mixed;
 	}

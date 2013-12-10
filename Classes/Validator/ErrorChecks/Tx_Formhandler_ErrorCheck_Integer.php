@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_Integer.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_ErrorCheck_Integer.php 28822 2010-01-14 08:33:45Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -34,8 +34,7 @@ class Tx_Formhandler_ErrorCheck_Integer extends Tx_Formhandler_AbstractErrorChec
 	public function check(&$check, $name, &$gp) {
 		$checkFailed = '';
 		if(isset($gp[$name]) && !empty($gp[$name])) {
-			$ereg = '^-{0,1}[0-9]+$';
-			$valid = ereg($ereg, $gp[$name]);
+			$valid = preg_match('/^-{0,1}[0-9]+$/', $gp[$name]);
 			if(!$valid) {
 				$checkFailed = $this->getCheckFailed($check);
 			}

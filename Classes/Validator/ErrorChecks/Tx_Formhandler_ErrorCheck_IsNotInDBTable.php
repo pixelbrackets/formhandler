@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_IsNotInDBTable.php 22817 2009-07-27 16:35:58Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_IsNotInDBTable.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
  *                                                                        */
 
 /**

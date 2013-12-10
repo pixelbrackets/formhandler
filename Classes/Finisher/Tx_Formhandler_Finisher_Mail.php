@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Mail.php 24857 2009-09-28 09:36:08Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Mail.php 28822 2010-01-14 08:33:45Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -95,7 +95,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		$view = $this->componentManager->getComponent('Tx_Formhandler_View_Mail');
 		$view->setLangFiles(Tx_Formhandler_Globals::$langFiles);
 		$view->setPredefined($this->predefined);
-		
+		$view->setComponentSettings($this->settings);
 		$templateCode = Tx_Formhandler_Globals::$templateCode;
 		$view->setTemplate($templateCode, ('EMAIL_' . strtoupper($mode) . '_' . strtoupper($suffix) . $this->settings['templateSuffix']));
 		if(!$view->hasTemplate()) {
@@ -106,36 +106,6 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		}
 		
 		return $view->render($this->gp, array('mode' => $suffix));
-	}
-
-	/**
-	 * Sanitizes E-mail markers by processing the 'checkBinaryCrLf' setting in TypoScript
-	 *
-	 * @param array &$markers The E-mail markers
-	 * @return void
-	 */
-	protected function sanitizeMarkers(&$markers) {
-		$checkBinaryCrLf = $this->settings['checkBinaryCrLf'];
-		if ($checkBinaryCrLf != '') {
-			$markersToCheck = t3lib_div::trimExplode(',', $checkBinaryCrLf);
-			foreach($markersToCheck as $idx => $val) {
-				if(substr($val,0,3) != '###') {
-					$val = '###' . $markersToCheck[$idx];
-				}
-
-				if(substr($val,-3) != '###') {
-					$val .= '###';
-				}
-				$iStr = $markers[$val];
-				$iStr = str_replace (chr(13), '<br />', $iStr);
-				$iStr = str_replace ('\\', '', $iStr);
-				$markers[$val] = $iStr;
-
-			}
-		}
-		foreach($markers as $field => &$value) {
-			$value = nl2br($value);
-		}
 	}
 
 	/**
@@ -303,7 +273,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		foreach($mailSettings['to_email'] as $mailto) {
 			$sent = FALSE;
 			if($count < $max) {
-				if (strstr($mailto, '@') && !eregi("\r", $mailto) && !eregi("\n", $mailto)) {
+				if (strstr($mailto, '@') && !preg_match("/\r/i", $mailto) && !preg_match("/\n/i", $mailto)) {
 					
 					if($doSend) {
 						
@@ -381,6 +351,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		if(isset($this->emailSettings[$type][$key])) {
 			$parsed = $this->parseSettingValue($this->emailSettings[$type][$key]);
 		} else if(isset($settings[$key . '.']) && is_array($settings[$key . '.'])) {
+			$settings[$key . '.']['gp'] = $this->gp;
 			$parsed = $this->cObj->cObjGetSingle($settings[$key], $settings[$key . '.']);
 		} else {
 			$parsed = $this->parseSettingValue($settings[$key]);

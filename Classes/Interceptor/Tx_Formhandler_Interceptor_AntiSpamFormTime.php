@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_AntiSpamFormTime.php 24857 2009-09-28 09:36:08Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_AntiSpamFormTime.php 28812 2010-01-13 16:58:00Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -45,9 +45,10 @@ class Tx_Formhandler_Interceptor_AntiSpamFormTime extends Tx_Formhandler_Abstrac
 	public function process() {
 		$isSpam = $this->doCheck();
 		if($isSpam) {
-			$this->log();
+			$this->log(TRUE);
 			if($this->settings['redirectPage']) {
 				Tx_Formhandler_Staticfuncs::doRedirect($this->settings['redirectPage'], $this->settings['correctRedirectUrl']);
+				return 'Lousy spammer!';
 			} else {
 				$view = $this->componentManager->getComponent('Tx_Formhandler_View_AntiSpam');
 				$view->setLangFiles(Tx_Formhandler_Globals::$langFiles);
@@ -98,14 +99,5 @@ class Tx_Formhandler_Interceptor_AntiSpamFormTime extends Tx_Formhandler_Abstrac
 		return $spam;
 	}
 	
-	/**
-	 * Logs to the database. Records will be marked red in backend module.
-	 *
-	 * @return void
-	 */
-	protected function log() {
-		$logger = $this->componentManager->getComponent('Tx_Formhandler_Logger_DB');
-		$logger->log($this->gp, array('markAsSpam' => 1));
-	}
 }
 ?>

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_DB.php 24857 2009-09-28 09:36:08Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_DB.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -117,7 +117,8 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 				}
 				$info = array(
 					'table' => $this->table,
-					'uid' => $this->gp['inserted_uid']
+					'uid' => $this->gp['inserted_uid'],
+					'uidField' => $this->key
 				);
 				array_push($this->gp['saveDB'], $info);
 			}	
@@ -171,10 +172,7 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 		} else {
 				
 			//check if uid of record to update is in GP
-			$uid =$this->gp['uid'];
-			if(!$uid) {
-				$uid = $this->gp[$this->key];
-			}
+			$uid = $this->gp[$this->key];
 			if($uid) {
 				$query = $GLOBALS['TYPO3_DB']->UPDATEquery($this->table, $this->key . '=' . $uid, $queryFields);
 				Tx_Formhandler_StaticFuncs::debugMessage('sql_request', $query);

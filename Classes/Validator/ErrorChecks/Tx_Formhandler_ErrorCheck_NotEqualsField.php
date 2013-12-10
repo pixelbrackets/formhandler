@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_NotEqualsField.php 22614 2009-07-21 20:43:47Z fabien_u $
+ * $Id: Tx_Formhandler_ErrorCheck_NotEqualsField.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
  *                                                                        */
 
 /**

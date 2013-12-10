@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractView.php 24857 2009-09-28 09:36:08Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractView.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -104,12 +104,12 @@ abstract class Tx_Formhandler_AbstractView extends tslib_pibase {
 	protected $template;
 
 	/**
-	 * The translation file name
+	 * An array of translation file names
 	 *
 	 * @access protected
-	 * @var string
+	 * @var array
 	 */
-	protected $langFile;
+	protected $langFiles;
 
 	/**
 	 * The get/post parameters
@@ -126,6 +126,8 @@ abstract class Tx_Formhandler_AbstractView extends tslib_pibase {
 	 * @var tx_xajax
 	 */
 	protected $xajax;
+	
+	protected $componentSettings;
 
 	/**
 	 * The constructor for a view setting the component manager and the configuration.
@@ -148,9 +150,9 @@ abstract class Tx_Formhandler_AbstractView extends tslib_pibase {
 	}
 
 	/**
-	 * Sets the internal attribute "langFile"
+	 * Sets the internal attribute "langFiles"
 	 *
-	 * @param string $langFile The file path
+	 * @param array $langFiles The files array
 	 * @return void
 	 */
 	public function setLangFiles($langFiles) {
@@ -165,6 +167,17 @@ abstract class Tx_Formhandler_AbstractView extends tslib_pibase {
 	 */
 	public function setSettings($settings) {
 		$this->settings = $settings;
+	}
+	
+	public function setComponentSettings($settings) {
+		$this->componentSettings = $settings;
+	}
+	
+	public function getComponentSettings() {
+		if(!is_array($this->componentSettings)) {
+			$this->componentSettings = array();
+		}
+		return $this->componentSettings;
 	}
 
 	/**

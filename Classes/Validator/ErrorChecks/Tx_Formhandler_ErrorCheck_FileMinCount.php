@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileMinCount.php 23292 2009-08-12 12:27:50Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileMinCount.php 27708 2009-12-15 09:22:07Z reinhardfuehricht $
  *                                                                        */
 
 /**

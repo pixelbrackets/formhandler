@@ -1,6 +1,6 @@
 <?php
 
-/* $Id: Tx_Formhandler_Template_PDF.php 22614 2009-07-21 20:43:47Z fabien_u $ */
+/* $Id: Tx_Formhandler_Template_PDF.php 27923 2009-12-21 19:18:39Z reinhardfuehricht $ */
 
 if (TYPO3_MODE=="BE")   {
 	require_once("../../../Resources/PHP/fpdf/fpdf.php");
@@ -39,7 +39,7 @@ class Tx_Formhandler_Template_PDF extends FPDF {
 	public function Header() {
 	  
 		//Arial bold 15
-		$this->SetFont('Arial', 'B', 15);
+		$this->SetFont('Helvetica', 'B', 15);
 	  
 		
 		//Title
@@ -60,7 +60,7 @@ class Tx_Formhandler_Template_PDF extends FPDF {
 		$this->SetY(-15);
 	  
 		//Arial italic 8
-		$this->SetFont('Arial', 'I', 8);
+		$this->SetFont('Helvetica', 'I', 8);
 	    
 		$text = $this->getLL('footer_text');
 		$text = sprintf($text,date('d.m.Y H:i:s', time()));

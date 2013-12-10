@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Mail.php 24857 2009-09-28 09:36:08Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Mail.php 27493 2009-12-09 08:46:05Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -49,7 +49,7 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 		if(!$this->langFiles) {
 			$this->langFiles = Tx_Formhandler_Globals::$langFiles;
 		}
-		
+
 		if($errors['mode'] != 'plain') {
 			$this->sanitizeMarkers();
 		}
@@ -85,17 +85,19 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 	 * @return void
 	 */
 	protected function sanitizeMarkers() {
-		$checkBinaryCrLf = $this->settings['checkBinaryCrLf'];
+		$componentSettings = $this->getComponentSettings();
+		$checkBinaryCrLf = $componentSettings['checkBinaryCrLf'];
 		if ($checkBinaryCrLf != '') {
 			$paramsToCheck = t3lib_div::trimExplode(',', $checkBinaryCrLf);
-			foreach($paramsToCheck as &$val) {
-				if(!is_array($val)) {
-					$val = str_replace (chr(13), '<br />', $val);
-					$val = str_replace ('\\', '', $val);
-					$val = nl2br($val);
+			foreach($paramsToCheck as &$field) {
+				if(!is_array($field)) {
+					$this->gp[$field] = str_replace (chr(13), '<br />', $this->gp[$field]);
+					$this->gp[$field] = str_replace ('\\', '', $this->gp[$field]);
+					$this->gp[$field] = nl2br($this->gp[$field]);
 				}
 			}
 		}
+		
 	}
 
 }

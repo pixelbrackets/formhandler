@@ -22,7 +22,7 @@
  *  This copyright notice MUST APPEAR in all copies of the script!
  ***************************************************************/
 /**
- * Plugin 'Formhandler' for the 'formhandler' extension.
+ * Plugin 'WebKit PDFs' for the 'webkitpdf' extension.
  *
  * @author Reinhard Führicht <rf@typoheads.at>
  */
@@ -32,9 +32,9 @@ require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Controller/Tx_Formh
 
 class tx_formhandler_pi1 extends tslib_pibase {
 	var $prefixId = 'tx_formhandler_pi1';
-	var $scriptRelPath = 'pi1/class.tx_formhandler_pi1.php';
-	var $extKey = 'formhandler';
-
+	var $scriptRelPath = 'pi1/class.tx_formhandler_pi1.php';	
+	var $extKey = 'formhandler';	
+	
 	/**
 	 * The main method of the PlugIn
 	 *
@@ -42,15 +42,15 @@ class tx_formhandler_pi1 extends tslib_pibase {
 	 * @param	array		$conf: The PlugIn configuration
 	 * @return	The content that is displayed on the website
 	 */
-	public function main($content, $conf) {
+	public function main($content,$conf)	{
 		$dispatcher = new Tx_Formhandler_Dispatcher();
 		$dispatcher->cObj = &$this->cObj;
 		return $dispatcher->main($content, $conf);
 	}
 }
 
-if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/formhandler/pi1/class.tx_formhandler_pi1.php']) {
-	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/formhandler/pi1/class.tx_formhandler_pi1.php']);
+if (defined('TYPO3_MODE') && $TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/webkitpdf/pi1/class.tx_webkitpdf_pi1.php']) {
+	include_once($TYPO3_CONF_VARS[TYPO3_MODE]['XCLASS']['ext/webkitpdf/pi1/class.tx_webkitpdf_pi1.php']);
 }
 
 ?>

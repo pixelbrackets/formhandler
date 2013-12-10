@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Logger_DB.php 24857 2009-09-28 09:36:08Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Logger_DB.php 28812 2010-01-13 16:58:00Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -26,8 +26,6 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 	/**
 	 * Logs the given values.
 	 *
-	 * @param array $gp The current GET/POST parameters
-	 * @param array $settings The settings for the logger
 	 * @return void
 	 */
 	public function process() {
@@ -36,7 +34,7 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 		$table = "tx_formhandler_log";
 
 		$fields['ip'] = t3lib_div::getIndpEnv('REMOTE_ADDR');
-		if(isset($settings['disableIPlog']) && intval($settings['disableIPlog']) == 1) {
+		if(isset($this->settings['disableIPlog']) && intval($this->settings['disableIPlog']) == 1) {
 			$fields['ip'] = NULL;
 		}
 		$fields['tstamp'] = time();
@@ -45,11 +43,11 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 		ksort($this->gp);
 		$keys = array_keys($this->gp);
 		$serialized = serialize($this->gp);
-		$hash = hash("md5",serialize($keys));
+		$hash = md5(serialize($keys));
 		$fields['params'] = $serialized;
 		$fields['key_hash'] = $hash;
 		
-		if(intval($settings['markAsSpam']) == 1) {
+		if(intval($this->settings['markAsSpam']) == 1) {
 			$fields['is_spam'] = 1;
 		}
 
@@ -57,7 +55,10 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 
 		//query the database
 		$res = $GLOBALS['TYPO3_DB']->exec_INSERTquery($table, $fields);
-		if(!$settings['nodebug']) {
+		$insertedUID = $GLOBALS['TYPO3_DB']->sql_insert_id();
+		$GLOBALS['TSFE']->fe_user->setKey('ses', 'inserted_uid', $insertedUID);
+		$GLOBALS['TSFE']->fe_user->storeSessionData();
+		if(!$this->settings['nodebug']) {
 			Tx_Formhandler_StaticFuncs::debugMessage('logging', $table, implode(',', $fields));
 			if(strlen($GLOBALS['TYPO3_DB']->sql_error()) > 0) {
 				Tx_Formhandler_StaticFuncs::debugMessage('error', $GLOBALS['TYPO3_DB']->sql_error());
