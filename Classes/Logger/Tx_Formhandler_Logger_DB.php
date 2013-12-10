@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Logger_DB.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Logger_DB.php 58494 2012-02-25 18:51:38Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -33,8 +33,10 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 		//set params
 		$table = 'tx_formhandler_log';
 
-		if (!isset($this->settings['disableIPlog']) || intval($this->settings['disableIPlog']) !== 1) {
-			$fields['ip'] = t3lib_div::getIndpEnv('REMOTE_ADDR');
+		$doDisableIPlog = $this->utilityFuncs->getSingle($this->settings, 'disableIPlog');
+		$fields['ip'] = t3lib_div::getIndpEnv('REMOTE_ADDR');
+		if(intval($doDisableIPlog) === 1) {
+			unset($fields['ip']);
 		}
 		$fields['tstamp'] = time();
 		$fields['crdate'] = time();
@@ -74,7 +76,8 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 			'unique_hash' => $uniqueHash
 		);
 		$this->globals->getSession()->setMultiple($sessionValues);
-		if (!$this->settings['nodebug']) {
+
+		if (intval($this->utilityFuncs->getSingle($this->settings, 'nodebug')) !== 1) {
 			$this->utilityFuncs->debugMessage('logging', array($table, implode(',', $fields)));
 			if (strlen($GLOBALS['TYPO3_DB']->sql_error()) > 0) {
 				$this->utilityFuncs->debugMessage('error', array($GLOBALS['TYPO3_DB']->sql_error()), 3);

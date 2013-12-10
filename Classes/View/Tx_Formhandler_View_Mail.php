@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Mail.php 57671 2012-02-14 09:21:14Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Mail.php 58488 2012-02-25 18:26:23Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -77,7 +77,7 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 	/**
 	 * Sanitizes GET/POST parameters by processing the 'checkBinaryCrLf' setting in TypoScript
 	 *
-	 * @return void
+	 * @return array The markers
 	 */
 	protected function sanitizeMarkers($markers) {
 		$componentSettings = $this->getComponentSettings();

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Mail.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Mail.php 58511 2012-02-25 20:29:05Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -91,7 +91,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	 */
 	protected function parseTemplate($mode, $suffix) {
 
-		$viewClass = $this->settings['view'];
+		$viewClass = $this->utilityFuncs->getSingle($this->settings, 'view');
 		if(!$viewClass) {
 			$viewClass = 'Tx_Formhandler_View_Mail';
 		}
@@ -129,7 +129,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	 */
 	protected function sendMail($type) {
 		$doSend = TRUE;
-		if (intval($this->settings[$type]['disable']) === 1) {
+		if (intval($this->utilityFuncs->getSingle($this->settings[$type], 'disable')) === 1) {
 			$this->utilityFuncs->debugMessage('mail_disabled', array($type));
 			$doSend = FALSE;
 		} 
@@ -145,11 +145,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		}
 
 		//init mailer object
-		$emailClass = $this->settings['mailer.']['class'];
-		if (!$emailClass) {
-			$emailClass = 'Tx_Formhandler_Mailer_HtmlMail';
-		}
-		$emailClass = $this->utilityFuncs->prepareClassName($emailClass);
+		$emailClass = $this->utilityFuncs->getPreparedClassName($this->settings['mailer.'], 'Mailer_HtmlMail');
 		$emailObj = $this->componentManager->getComponent($emailClass);
 		$emailObj->init($this->gp, $this->settings['mailer.']['config.']);
 
@@ -276,7 +272,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 
 		//parse max count of mails to send
 		$count = 0;
-		$max = $this->settings['limitMailsToUser'];
+		$max = $this->utilityFuncs->getSingle($this->settings, 'limitMailsToUser');
 		if (!$max) {
 			$max = 2;
 		}
@@ -553,9 +549,8 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 					case 'attachGeneratedFiles':
 						if (isset($currentSettings['attachGeneratedFiles.']) && is_array($currentSettings['attachGeneratedFiles.'])) {
 							foreach($currentSettings['attachGeneratedFiles.'] as $idx => $options) {
-								$generatorClass = $options['class'];
+								$generatorClass = $this->utilityFuncs->getPreparedClassName($options);
 								if ($generatorClass) {
-									$generatorClass = $this->utilityFuncs->prepareClassName($generatorClass);
 									$generator = $this->componentManager->getComponent($generatorClass);
 									$generator->init($this->gp, $options['config.']);
 									$generator->getLink();
@@ -574,14 +569,16 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 						break;
 
 					case 'htmlEmailAsAttachment':
-						if (isset($currentSettings['htmlEmailAsAttachment']) && !strcmp($currentSettings['htmlEmailAsAttachment'], '1')) {
+						$htmlEmailAsAttachment = $this->utilityFuncs->getSingle($currentSettings, 'htmlEmailAsAttachment');
+						if (intval($htmlEmailAsAttachment) === 1) {
 							$emailSettings['htmlEmailAsAttachment'] = 1;
 						}
 
 						break;
 					case 'filePrefix':
-						if (isset($currentSettings['filePrefix'])) {
-							$emailSettings['filePrefix'] = $currentSettings['filePrefix'];
+						$filePrefix = $this->utilityFuncs->getSingle($currentSettings, 'filePrefix');
+						if (strlen($filePrefix) > 0) {
+							$emailSettings['filePrefix'] = $filePrefix;
 						}
 						break;
 					case 'plain.':

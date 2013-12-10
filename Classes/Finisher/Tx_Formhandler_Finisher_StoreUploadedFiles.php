@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_StoreUploadedFiles.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_StoreUploadedFiles.php 58491 2012-02-25 18:35:59Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -70,7 +70,7 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 	 */
 	protected function moveUploadedFiles() {
 
-		$newFolder = $this->settings['finishedUploadFolder'];
+		$newFolder = $this->utilityFuncs->getSingle($this->settings, 'finishedUploadFolder');
 		$newFolder = $this->utilityFuncs->sanitizePath($newFolder);
 		$uploadPath = $this->utilityFuncs->getDocumentRoot() . $newFolder;
 		$sessionFiles = $this->globals->getSession()->get('files');
@@ -117,7 +117,7 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 		array_pop($fileparts);
 		$filename = implode('.', $fileparts);
 
-		$namingScheme = $this->settings['renameScheme'];
+		$namingScheme = $this->utilityFuncs->getSingle($this->settings, 'renameScheme');
 		if (!$namingScheme) {
 			$namingScheme = '[filename]_[time]';
 		}

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_PreProcessor_ClearTempFiles.php 52405 2011-09-23 08:57:48Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_PreProcessor_ClearTempFiles.php 58495 2012-02-25 18:55:18Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -39,10 +39,10 @@ class Tx_Formhandler_PreProcessor_ClearTempFiles extends Tx_Formhandler_Abstract
 	 * @return array The probably modified GET/POST parameters
 	 */
 	public function process() {
-		$this->olderThanValue = $this->settings['clearTempFilesOlderThan.']['value'];
-		$this->olderThanUnit = $this->settings['clearTempFilesOlderThan.']['unit'];
-		if (!empty($this->olderThanValue) && is_numeric($this->olderThanValue)) {
-			$this->clearTempFiles($this->olderThanValue, $this->olderThanUnit);
+		$olderThanValue = $this->utilityFuncs->getSingle($this->settings['clearTempFilesOlderThan.'], 'value');
+		$olderThanUnit = $this->utilityFuncs->getSingle($this->settings['clearTempFilesOlderThan.'], 'unit');
+		if (strlen($olderThanValue) > 0 && is_numeric($olderThanValue)) {
+			$this->clearTempFiles($olderThanValue, $olderThanUnit);
 		}
 		return $this->gp;
 	}
