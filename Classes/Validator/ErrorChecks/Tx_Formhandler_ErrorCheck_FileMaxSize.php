@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileMaxSize.php 62405 2012-05-18 12:07:32Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileMaxSize.php 68656 2012-12-10 15:23:29Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -36,12 +36,20 @@ class Tx_Formhandler_ErrorCheck_FileMaxSize extends Tx_Formhandler_AbstractError
 			$this->utilityFuncs->throwException('error_check_filemaxsize', t3lib_div::formatSize($maxSize, ' Bytes| KB| MB| GB'), $this->formFieldName, t3lib_div::formatSize($phpIniUploadMaxFileSize, ' Bytes| KB| MB| GB'));
 		}
 		foreach ($_FILES as $sthg => &$files) {
-			if (strlen($files['name'][$this->formFieldName]) > 0 &&
-				$maxSize &&
-				$files['size'][$this->formFieldName] > $maxSize) {
+			if(!is_array($files['name'][$this->formFieldName])) {
+				$files['name'][$this->formFieldName] = array($files['name'][$this->formFieldName]);
+			}
+			if (strlen($files['name'][$this->formFieldName][0]) > 0 && $maxSize) {
 
-				unset($files);
-				$checkFailed = $this->getCheckFailed();
+				if(!is_array($files['size'][$this->formFieldName])) {
+					$files['size'][$this->formFieldName] = array($files['size'][$this->formFieldName]);
+				}
+				foreach($files['size'][$this->formFieldName] as $size) {
+					if($size > $maxSize) {
+						unset($files);
+						$checkFailed = $this->getCheckFailed();
+					}
+				}
 			}
 		}
 		return $checkFailed;

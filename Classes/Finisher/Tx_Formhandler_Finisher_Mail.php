@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Mail.php 64837 2012-07-25 14:32:14Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Mail.php 68708 2012-12-11 13:37:00Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -216,6 +216,9 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		$returnPath = $mailSettings['return_path'];
 		if (isset($mailSettings['return_path']) && is_array($mailSettings['return_path'])) {
 			$returnPath = implode(',', $mailSettings['return_path']);
+		}
+		if(strlen(trim($returnPath)) === 0) {
+			$returnPath = $GLOBALS['TYPO3_CONF_VARS']['MAIL']['defaultMailFromAddress'];
 		}
 
 		$emailObj->setReturnPath($returnPath);

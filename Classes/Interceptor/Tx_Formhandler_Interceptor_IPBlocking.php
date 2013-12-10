@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_IPBlocking.php 60132 2012-03-30 13:36:38Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_IPBlocking.php 66032 2012-09-14 16:25:01Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -76,7 +76,7 @@ class Tx_Formhandler_Interceptor_IPBlocking extends Tx_Formhandler_AbstractInter
 		$globalMaxValue = $this->utilityFuncs->getSingle($this->settings['global.'], 'threshold');
 
 		if ($globalTimebaseValue && $globalTimebaseUnit && $globalMaxValue) {
-			$this->check($globalTimebaseValue, $globalTimebaseUnit, $globalMaxValue, TRUE);
+			$this->check($globalTimebaseValue, $globalTimebaseUnit, $globalMaxValue, FALSE);
 		}
 
 		return $this->gp;
@@ -100,7 +100,7 @@ class Tx_Formhandler_Interceptor_IPBlocking extends Tx_Formhandler_AbstractInter
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery('uid,ip,crdate,params', $this->logTable, $where);
 		if ($res && $GLOBALS['TYPO3_DB']->sql_num_rows($res) >= $maxValue) {
 			$this->log(TRUE);
-			$message = 'You are not allowed to send more mails because form got submitted too many times ';
+			$message = 'You are not allowed to send more mails because the form got submitted too many times ';
 			if ($addIPToWhere) {
 				$message .= 'by your IP address ';
 			}
@@ -111,7 +111,7 @@ class Tx_Formhandler_Interceptor_IPBlocking extends Tx_Formhandler_AbstractInter
 				}
 				$intervalValue = $this->utilityFuncs->getSingle($this->settings['report.']['interval.'], 'value');
 				$intervalUnit = $this->utilityFuncs->getSingle($this->settings['report.']['interval.'], 'unit');
-				$send = TRUE;
+				$send = FALSE;
 				if ($intervalUnit && $intervalValue) {
 					$intervalTstamp = $this->utilityFuncs->getTimestamp($intervalValue, $intervalUnit);
 					$where = 'pid=' . $GLOBALS['TSFE']->id . ' AND crdate>' . $intervalTstamp;
@@ -121,8 +121,10 @@ class Tx_Formhandler_Interceptor_IPBlocking extends Tx_Formhandler_AbstractInter
 
 					$count = $GLOBALS['TYPO3_DB']->exec_SELECTcountRows('*', $this->logTable, $where);
 					if ($count > 0) {
-						$send = FALSE;
+						$send = TRUE;
 					}
+				} else {
+					$send = TRUE;
 				}
 				if ($send) {
 					if ($addIPToWhere) {
@@ -150,7 +152,7 @@ class Tx_Formhandler_Interceptor_IPBlocking extends Tx_Formhandler_AbstractInter
 	 * @param array The select rows of log table
 	 * @return void
 	 */
-	private function sendReport($type,&$rows) {
+	private function sendReport($type, $rows) {
 		$email = $this->utilityFuncs->getSingle($this->settings['report.'], 'email');
 		$email = t3lib_div::trimExplode(',', $email);
 		$sender = $this->utilityFuncs->getSingle($this->settings['report.'], 'sender');
@@ -166,7 +168,7 @@ class Tx_Formhandler_Interceptor_IPBlocking extends Tx_Formhandler_AbstractInter
 		if (is_array($rows)) {
 			$message .= "\n\n" . 'These are the submitted values:' . "\n\n";
 			foreach ($rows as $idx => $row) {
-				$message .= date('Y/m/d h:i:s' , $row['crdate']) . ":\n";
+				$message .= date('Y/m/d H:i:s' , $row['crdate']) . ":\n";
 				$message .= 'IP: ' . $row['ip'] . "\n";
 				$message .= 'Params:' . "\n";
 				$params = unserialize($row['params']);
@@ -181,29 +183,27 @@ class Tx_Formhandler_Interceptor_IPBlocking extends Tx_Formhandler_AbstractInter
 		}
 
 		//init mailer object
-		require_once(PATH_t3lib . 'class.t3lib_htmlmail.php');
-		$emailObj = t3lib_div::makeInstance('t3lib_htmlmail');
-		$emailObj->start();
+		$emailClass = $this->utilityFuncs->getPreparedClassName($this->settings['mailer.'], 'Mailer_HtmlMail');
+		$emailObj = $this->componentManager->getComponent($emailClass);
+		$emailObj->init($this->gp, array());
 
 		//set e-mail options
-		$emailObj->subject = $subject;
-		$emailObj->from_email = $sender;
+		$emailObj->setSubject($subject);
+		$emailObj->setSender($sender, '');
 		$emailObj->setPlain($message);
 
 		//send e-mails
-		foreach ($email as $idx => $mailto) {
-			$sent = $emailObj->send($mailto);
-			if ($sent) {
-				$this->utilityFuncs->debugMessage('mail_sent', array($mailto));
-				$this->utilityFuncs->debugMessage('mail_sender', array($emailObj->from_email));
-				$this->utilityFuncs->debugMessage('mail_subject', array($emailObj->subject));
-				$this->utilityFuncs->debugMessage('mail_message', array(), 1, array($message));
-			} else {
-				$this->utilityFuncs->debugMessage('mail_not_sent', array($mailto), 2);
-				$this->utilityFuncs->debugMessage('mail_sender', array($emailObj->from_email));
-				$this->utilityFuncs->debugMessage('mail_subject', array($emailObj->subject));
-				$this->utilityFuncs->debugMessage('mail_message', array(), 1, array($message));
-			}
+		$sent = $emailObj->send($email);
+		if ($sent) {
+			$this->utilityFuncs->debugMessage('mail_sent', array($mailto));
+			$this->utilityFuncs->debugMessage('mail_sender', array($emailObj->from_email));
+			$this->utilityFuncs->debugMessage('mail_subject', array($emailObj->subject));
+			$this->utilityFuncs->debugMessage('mail_message', array(), 1, array($message));
+		} else {
+			$this->utilityFuncs->debugMessage('mail_not_sent', array($mailto), 2);
+			$this->utilityFuncs->debugMessage('mail_sender', array($emailObj->from_email));
+			$this->utilityFuncs->debugMessage('mail_subject', array($emailObj->subject));
+			$this->utilityFuncs->debugMessage('mail_message', array(), 1, array($message));
 		}
 	}
 

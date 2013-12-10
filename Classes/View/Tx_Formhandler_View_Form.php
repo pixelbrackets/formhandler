@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Form.php 65846 2012-09-02 11:15:34Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Form.php 68705 2012-12-11 11:38:51Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -59,7 +59,11 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		}
 
 		if (!empty($this->masterTemplates)) {
-			$this->replaceMarkersFromMaster();
+			$count = 0;
+			while($count < 5 && preg_match('/###(field|master)_[^#]*###/', $this->template)) {
+				$this->replaceMarkersFromMaster();
+				$count++;
+			}
 		}
 
 		if ($this->globals->getAjaxHandler()) {
@@ -169,11 +173,20 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 					if (!empty($matchesSlave[0])) {
 						foreach ($matchesSlave[0] as $key=>$markerName) {
 							$fieldName = $matchesSlave[2][$key];
+							$params = array();
+							if(strpos($fieldName, ';')) {
+								$parts = explode(';', $fieldName);
+								$fieldName = array_shift($parts);
+								$params = explode(',', array_shift($parts));
+							}
 							if ($fieldName) {
 								$markers = array(
 									'###fieldname###' => $fieldName,
 									'###formValuesPrefix###' => $this->globals->getFormValuesPrefix()
 								);
+								foreach($params as $key => $paramValue) {
+									$markers['###param' . (++$key) . '###'] = $paramValue;
+								}
 								$replacedCode = $this->cObj->substituteMarkerArray($code, $markers);
 							} else {
 								$replacedCode = $code;
@@ -215,68 +228,73 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 	protected function substituteConditionalSubparts($type) {
 		$type = strtolower($type);
 		$write = TRUE;
-		$out = array();
 
-		$loopArr = explode(chr(10), $this->template);
-		foreach($loopArr as $line){
+		$pattern = '/(\<\!\-\-[^#]*)?(###' . $type . '_+([^#]*)_*###)([^\-]*\-\-\>)?/i';
+		preg_match_all($pattern, $this->template, $matches);
 
-			// works only on it's own line
-			$pattern = '/###' . $type . '_+([^#]*)_*###/i';
+		if(is_array($matches[0])) {
+			$resultCount = count($matches[0]);
 
-			// set for odd IF_xyz, else reset
-			if(preg_match($pattern, $line, $matches)) {
-				if(!$flags[$matches[0]] && strtolower($matches[1]) != 'end') { // set
-					$flags[$matches[0]] = TRUE;
+			for($i = 0; $i < $resultCount; $i = $i + 2) {
+				$conditionString = $matches[3][$i];
+				$endMarkerConditionString = $matches[3][$i + 1];
+				$fullMarkerName = $matches[0][$i];
+				$fullEndMarker = $matches[0][$i + 1];
+				$markerName = $matches[2][$i];
+				$conditions = preg_split('/\s*(\|\||&&)\s*/i', $conditionString, -1, PREG_SPLIT_DELIM_CAPTURE);
+				$operator = NULL;
+				$finalConditionResult = FALSE;
+				$count = 0;
 
-					$conditions = preg_split('/\s*(\|\||&&)\s*/i', $matches[1], -1, PREG_SPLIT_DELIM_CAPTURE);
-					$operator = NULL;
-					$finalConditionResult = FALSE;
-					$count = 0;
-					foreach($conditions as $condition) {
-
-						if($condition === '||' || $condition === '&&') {
-							$operator = $condition;
-						} else {
-							switch($type) {
-								case 'if':
-									$conditionResult = $this->handleIfSubpartCondition($condition);
-									break;
-								case 'isset':
-									$conditionResult = $this->handleIssetSubpartCondition($condition);
-									break;
-								case 'has_translation':
-									$conditionResult = $this->handleHasTranslationSubpartCondition($condition);
-									break;
-								default:
-									$this->utilityFuncs->throwException('Unsupported conditional subpart type: ' . $type);
-									break;
-							}
+				foreach($conditions as $condition) {
+					if($condition === '||' || $condition === '&&') {
+						$operator = $condition;
+					} else {
+						switch($type) {
+							case 'if':
+								$conditionResult = $this->handleIfSubpartCondition($condition);
+								break;
+							case 'isset':
+								$conditionResult = $this->handleIssetSubpartCondition($condition);
+								break;
+							case 'has_translation':
+								$conditionResult = $this->handleHasTranslationSubpartCondition($condition);
+								break;
+							default:
+								$this->utilityFuncs->throwException('Unsupported conditional subpart type: ' . $type);
+							break;
 						}
-						if($count === 0) {
-							$finalConditionResult = $conditionResult;
-						} elseif($operator === '&&') {
-							$finalConditionResult = ($finalConditionResult && $conditionResult);
-						} elseif($operator === '||') {
-							$finalConditionResult = ($finalConditionResult || $conditionResult);
-						} else {
-							$finalConditionResult = $conditionResult;
-						}
-						$count++;
 					}
-
-					$write = (boolean) $finalConditionResult;
-				} else if($flags[$matches[0]] || strtolower($matches[1]) == 'end') { // close it
-					$flags[$matches[0]] = FALSE;
-					$write = TRUE;
+					if($count === 0) {
+						$finalConditionResult = $conditionResult;
+					} elseif($operator === '&&') {
+						$finalConditionResult = ($finalConditionResult && $conditionResult);
+					} elseif($operator === '||') {
+						$finalConditionResult = ($finalConditionResult || $conditionResult);
+					} else {
+						$finalConditionResult = $conditionResult;
+					}
+					$count++;
 				}
-			} else if($write) {
-				$out[] = $line;
+				$write = (boolean) $finalConditionResult;
+				if($write) {
+					if($conditionString === $endMarkerConditionString) {
+						$content = $this->cObj->getSubpart($this->template, $markerName);
+						$this->template = $this->cObj->substituteSubpart($this->template, $markerName, $content);
+					} else {
+						$pattern = '/' . $fullMarkerName . '([^#]+)' . $fullEndMarker . '/im';
+						preg_replace($pattern, '${1}', $this->template);
+					}
+				} else {
+					if($conditionString === $endMarkerConditionString) {
+						$this->template = $this->cObj->substituteSubpart($this->template, $markerName, '');
+					} else {
+						$pattern = '/' . $fullMarkerName . '([^#]+)' . $fullEndMarker . '/im';
+						preg_replace($pattern, '', $this->template);
+					}
+				}
 			}
 		}
-
-		$out = implode(chr(10),$out);
-
-		$this->template = $out;
 	}
 
 	protected function handleIssetSubpartCondition($condition) {
@@ -422,6 +440,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		}
 
 		$path = $this->pi_getPageLink($GLOBALS['TSFE']->id, '', $parameters);
+		$path = preg_replace('/ADMCMD_[^=]+=[^&]+(&)?/', '', $path);
 		$path = htmlspecialchars($path);
 		$markers = array();
 		$markers['###REL_URL###'] = $path;
@@ -504,7 +523,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		$hiddenActionFieldName = str_replace('#step#', $currentStepFromSession + 1, $hiddenActionFieldName);
 
 		$markers['###HIDDEN_FIELDS###'] .= '
-			<input type="hidden" ' . $hiddenActionFieldName . ' value="1" />
+			<input type="hidden" ' . $hiddenActionFieldName . ' id="ieHiddenField-' . htmlspecialchars($this->gp['randomID']) . '" value="1" />
 		';
 
 		$markers['###formValuesPrefix###'] = $this->globals->getFormValuesPrefix();
@@ -545,7 +564,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		$prevName = ' name="' . str_replace('#action#', 'prev', $name) . '" ';
 		$prevName = str_replace('#step#', $currentStepFromSession - 1, $prevName);
 		$markers['###submit_prevStep###'] = $prevName;
-		
+
 			// submits for next/prev steps with template suffix
 		preg_match_all('/###submit_nextStep_[^#]+?###/Ssm', $this->template, $allNextSubmits);
 		foreach($allNextSubmits[0] as $nextSubmitSuffix){
@@ -568,6 +587,18 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		$reloadName = str_replace('#step#', $currentStepFromSession, $reloadName);
 		$markers['###submit_reload###'] = $reloadName;
 
+		preg_match_all('/###submit_step_([^#])+?###/Ssm', $this->template, $allJumpToStepSubmits);
+		foreach($allJumpToStepSubmits[0] as $idx => $allJumpToStepSubmit){
+			$step = intval($allJumpToStepSubmits[1][$idx]);
+			$action = 'next';
+			if($step < $this->currentStep) {
+				$action = 'prev';
+			}
+			$submitName = ' name="' . str_replace('#action#', $action, $name) . '" ';
+			$submitName = str_replace('#step#', $step, $submitName);
+			$markers['###submit_step_'. $step .'###'] = $submitName;
+		}
+
 		// step bar
 		$prevName = str_replace('#action#', 'prev', $name);
 		$prevName = str_replace('#step#', $currentStepFromSession - 1, $prevName);
@@ -579,14 +610,17 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 			$prevName,
 			$nextName
 		);
-		$this->fillCaptchaMarkers($markers);
+
+		if(!$this->globals->isAjaxMode()) {
+			$this->fillCaptchaMarkers($markers);
+		}
 		$this->fillFEUserMarkers($markers);
 		$this->fillFileMarkers($markers);
 
 		if (!strstr($this->template, '###HIDDEN_FIELDS###')) {
-			$this->template = str_replace(
-				'</form>', 
-				'<fieldset style="display: none;">' . $markers['###HIDDEN_FIELDS###'] . '</fieldset></form>', 
+			$this->template = preg_replace(
+				'/(<form[^>]*>)/i', 
+				'$1<fieldset style="display: none;">' . $markers['###HIDDEN_FIELDS###'] . '</fieldset>', 
 				$this->template
 			);
 		}
@@ -604,7 +638,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 		global $LANG;
 
 		if (t3lib_extMgm::isLoaded('captcha')){
-			$markers['###CAPTCHA###'] = '<img src="' . t3lib_extMgm::siteRelPath('captcha') . 'captcha/captcha.php" alt="" />';
+			$markers['###CAPTCHA###'] = '<img src="' . t3lib_extMgm::siteRelPath('captcha') . 'captcha/captcha.php?rand=' . rand() . '" alt="" />';
 			$markers['###captcha###'] = $markers['###CAPTCHA###'];
 		}
 		if (t3lib_extMgm::isLoaded('sr_freecap')){
@@ -750,7 +784,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 												$markers['###' . $replacedFieldname . '_currentTotalSize###'] = t3lib_div::formatSize($totalSize, ' Bytes| KB| MB| GB');
 												$markers['###' . $replacedFieldname . '_remainingTotalSize###'] = t3lib_div::formatSize($maxTotalSize - $totalSize, ' Bytes| KB| MB| GB');
 												break;
-											case 'required':case 'fileRequired':case 'jmRecaptcha':case 'captcha':case 'srFreecap':case 'mathguard':
+											case 'required':case 'fileRequired':case 'jmRecaptcha':case 'captcha':case 'srFreecap':case 'mathGuard':
 												if(!in_array('all', $disableErrorCheckFields) && !in_array($replacedFieldname, $disableErrorCheckFields)) {
 													$requiredSign = $this->utilityFuncs->getSingle($settings, 'requiredSign');
 													if(strlen($requiredSign) === 0) {
@@ -769,10 +803,6 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 			}
 		}
 		if (is_array($sessionFiles)) {
-			$singleWrap = $settings['singleFileMarkerTemplate.']['singleWrap'];
-			$totalMarkerSingleWrap = $settings['totalFilesMarkerTemplate.']['singleWrap'];
-			$totalWrap = $settings['singleFileMarkerTemplate.']['totalWrap'];
-			$totalMarkersTotalWrap = $settings['totalFilesMarkerTemplate.']['totalWrap'];
 			foreach ($sessionFiles as $field => $files) {
 				foreach ($files as $idx => $fileInfo) {
 					$filename = $fileInfo['name'];
@@ -801,7 +831,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 							document.getElementById('removeFile-" . $this->globals->getRandomID() . "').value='" . $uploadedFileName . "';
 							document.getElementById('removeFileField-" . $this->globals->getRandomID() . "').value='" . $field . "';
 							document.getElementById('submitField-" . $this->globals->getRandomID() . "').name='" . $submitName . "';
-							
+							document.getElementById('ieHiddenField-" . $this->globals->getRandomID() . "').name='dummy';
 						";
 						
 						if ($this->globals->getFormID()) {
@@ -809,28 +839,24 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 						} else {
 							$onClick .= 'document.forms[0].submit();';
 						}
-						
+
 						$onClick .= 'return false;';
-						
+
 						$link = '<a 
 								href="javascript:void(0)" 
 								class="formhandler_removelink" 
 								onclick="' . str_replace(array("\n", '	'), '', $onClick) . '"
 								>' . $text . '</a>';
 					}
-					$stdWrappedFilename = $filename;
-					if($settings['singleFileMarkerTemplate.']['filenameWrap']) {
-						$stdWrappedFilename = str_replace('|', $filename, $settings['singleFileMarkerTemplate.']['filenameWrap']);
-					}
-					if (strlen($singleWrap) > 0 && strstr($singleWrap, '|')) {
-						$wrappedFilename = str_replace('|', $stdWrappedFilename . $link, $singleWrap);
-						$wrappedThumb = str_replace('|', $thumb . $link, $singleWrap);
-						$wrappedThumbFilename = str_replace('|', $thumb . ' ' . $stdWrappedFilename . $link, $singleWrap);
-					} else {
-						$wrappedFilename = $stdWrappedFilename . $link;
-						$wrappedThumb = $thumb . $link;
-						$wrappedThumbFilename = $thumb . ' ' . $stdWrappedFilename . $link;
-					}
+					$stdWrappedFilename = $this->utilityFuncs->wrap($filename, $this->settings['singleFileMarkerTemplate.'], 'filenameWrap');
+					$singleWrap = $settings['singleFileMarkerTemplate.']['singleWrap'];
+					$totalMarkerSingleWrap = $settings['totalFilesMarkerTemplate.']['singleWrap'];
+					$totalWrap = $settings['singleFileMarkerTemplate.']['totalWrap'];
+					$totalMarkersTotalWrap = $settings['totalFilesMarkerTemplate.']['totalWrap'];
+
+					$wrappedFilename = $this->utilityFuncs->wrap($stdWrappedFilename . $link, $settings['singleFileMarkerTemplate.'], 'singleWrap');
+					$wrappedThumb = $this->utilityFuncs->wrap($thumb . $link, $settings['singleFileMarkerTemplate.'], 'singleWrap');
+					$wrappedThumbFilename = $this->utilityFuncs->wrap($thumb . ' ' . $stdWrappedFilename . $link, $settings['singleFileMarkerTemplate.'], 'singleWrap');
 					if (intval($settings['singleFileMarkerTemplate.']['showThumbnails']) === 1) {
 						$markers['###' . $field . '_uploadedFiles###'] .= $wrappedThumb;
 					} elseif (intval($settings['singleFileMarkerTemplate.']['showThumbnails']) === 2) {
@@ -850,19 +876,12 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 						$thumb = $this->getThumbnail($imgConf, $fileInfo);
 
 					}
-					$stdWrappedFilename = $filename;
-					if($settings['totalFilesMarkerTemplate.']['filenameWrap']) {
-						$stdWrappedFilename = str_replace('|', $filename, $settings['totalFilesMarkerTemplate.']['filenameWrap']);
-					}
-					if (strlen($totalMarkerSingleWrap) > 0 && strstr($totalMarkerSingleWrap, '|')) {
-						$wrappedFilename = str_replace('|', $stdWrappedFilename . $link, $totalMarkerSingleWrap);
-						$wrappedThumb = str_replace('|', $thumb . $link, $totalMarkerSingleWrap);
-						$wrappedThumbFilename = str_replace('|', $thumb . ' ' . $stdWrappedFilename . $link, $totalMarkerSingleWrap);
-					} else {
-						$wrappedFilename = $stdWrappedFilename . $link;
-						$wrappedThumb = $thumb . $link;
-						$wrappedThumbFilename = $thumb . $stdWrappedFilename . $link;
-					}
+					$stdWrappedFilename = $this->utilityFuncs->wrap($filename, $this->settings['totalFilesMarkerTemplate.'], 'filenameWrap');
+
+					$wrappedFilename = $this->utilityFuncs->wrap($stdWrappedFilename . $link, $settings['totalFilesMarkerTemplate.'], 'singleWrap');
+					$wrappedThumb = $this->utilityFuncs->wrap($thumb . $link, $settings['totalFilesMarkerTemplate.'], 'singleWrap');
+					$wrappedThumbFilename = $this->utilityFuncs->wrap($thumb . ' ' . $stdWrappedFilename . $link, $settings['totalFilesMarkerTemplate.'], 'singleWrap');
+
 					if (intval($settings['totalFilesMarkerTemplate.']['showThumbnails']) === 1) {
 						$markers['###total_uploadedFiles###'] .= $wrappedThumb;
 					} elseif (intval($settings['totalFilesMarkerTemplate.']['showThumbnails']) === 2) {
@@ -871,14 +890,10 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 						$markers['###total_uploadedFiles###'] .= $wrappedFilename;
 					}
 				}
-				if (strlen($totalWrap) > 0 && strstr($totalWrap,'|')) {
-					$markers['###' . $field . '_uploadedFiles###'] = str_replace('|', $markers['###' . $field . '_uploadedFiles###'],$totalWrap);
-				}
+				$markers['###' . $field . '_uploadedFiles###'] = $this->utilityFuncs->wrap($markers['###' . $field . '_uploadedFiles###'], $settings['singleFileMarkerTemplate.'], 'totalWrap');
 				$markers['###' . $field . '_uploadedFiles###'] = '<div id="Tx_Formhandler_UploadedFiles_' . $field . '">' . $markers['###' . $field . '_uploadedFiles###'] . '</div>';
 			}
-			if (strlen($totalMarkersTotalWrap) > 0 && strstr($totalMarkersTotalWrap, '|')) {
-				$markers['###total_uploadedFiles###'] = str_replace('|', $markers['###total_uploadedFiles###'], $totalMarkersTotalWrap);
-			}
+			$markers['###total_uploadedFiles###'] = $this->utilityFuncs->wrap($markers['###total_uploadedFiles###'], $settings['totalFilesMarkerTemplate.'], 'totalWrap');
 			$markers['###TOTAL_UPLOADEDFILES###'] = $markers['###total_uploadedFiles###'];
 			$markers['###total_uploadedfiles###'] = $markers['###total_uploadedFiles###'];
 		}
@@ -952,16 +967,13 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 	 */
 	protected function fillErrorMarkers(&$errors) {
 		$markers = array();
-		$singleWrap = $this->settings['singleErrorTemplate.']['singleWrap'];
+
 		foreach ($errors as $field => $types) {
 			$errorMessages = array();
 			$clearErrorMessages = array();
 			$temp = $this->utilityFuncs->getTranslatedMessage($this->langFiles, 'error_' . $field);
 			if (strlen($temp) > 0) {
-				$errorMessage = $temp;
-				if (strlen($singleWrap) > 0 && strstr($singleWrap, '|')) {
-					$errorMessage = str_replace('|', $errorMessage, $singleWrap);
-				}
+				$errorMessage = $this->utilityFuncs->wrap($temp, $this->settings['singleErrorTemplate.'], 'singleWrap');
 				$errorMessages[] = $errorMessage;
 			}
 			if (!is_array($types)) {
@@ -1002,10 +1014,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 				}
 			}
 			$errorMessage = implode('', $errorMessages);
-			$totalWrap = $this->settings['singleErrorTemplate.']['totalWrap'];
-			if (strlen($totalWrap) > 0 && strstr($totalWrap, '|')) {
-				$errorMessage = str_replace('|', $errorMessage, $totalWrap);
-			}
+			$errorMessage = $this->utilityFuncs->wrap($errorMessage, $this->settings['singleErrorTemplate.'], 'totalWrap');
 			$clearErrorMessage = $errorMessage;
 			if ($this->settings['addErrorAnchors']) {
 				$errorMessage = '<a name="' . $field . '">' . $errorMessage . '</a>';
@@ -1020,16 +1029,10 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 			}
 
 			//list settings
-			$listSingleWrap = $this->settings['errorListTemplate.']['singleWrap'];
-			if (strlen($listSingleWrap) > 0 && strstr($listSingleWrap, '|')) {
-				$errorMessage = str_replace('|', $errorMessage, $listSingleWrap);
-			}
+			$errorMessage = $this->utilityFuncs->wrap($errorMessage, $this->settings['errorListTemplate.'], 'singleWrap');
 			$markers['###ERROR###'] .= $errorMessage;
 		}
-		$totalWrap = $this->settings['errorListTemplate.']['totalWrap'];
-		if (strlen($totalWrap) > 0 && strstr($totalWrap, '|')) {
-			$markers['###ERROR###'] = str_replace('|', $markers['###ERROR###'], $totalWrap);
-		}
+		$markers['###ERROR###'] = $this->utilityFuncs->wrap($markers['###ERROR###'], $this->settings['errorListTemplate.'], 'totalWrap');
 		$langMarkers = $this->utilityFuncs->getFilledLangMarkers($markers['###ERROR###'], $this->langFiles);
 		$markers['###ERROR###'] = $this->cObj->substituteMarkerArray($markers['###ERROR###'], $langMarkers);
 		$markers['###error###'] = $markers['###ERROR###'];
@@ -1110,7 +1113,7 @@ class Tx_Formhandler_View_Form extends Tx_Formhandler_AbstractView {
 	protected function getSelectedMarkers($values, $level = 0, $prefix = 'selected_') {
 		$markers = array();
 		$activeString = 'selected="selected"';
-		if($prefix === 'checked_') {
+		if(substr($prefix, 0, 8) === 'checked_') {
 			$activeString = 'checked="checked"';
 		}
 		if (is_array($values)) {

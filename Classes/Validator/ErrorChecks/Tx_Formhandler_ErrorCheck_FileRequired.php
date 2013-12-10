@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileRequired.php 50875 2011-08-10 09:21:19Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileRequired.php 68656 2012-12-10 15:23:29Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -28,7 +28,10 @@ class Tx_Formhandler_ErrorCheck_FileRequired extends Tx_Formhandler_AbstractErro
 		$sessionFiles = $this->globals->getSession()->get('files');
 		$found = FALSE;
 		foreach ($_FILES as $sthg => &$files) {
-			if (strlen($files['name'][$this->formFieldName]) > 0) {
+			if(!is_array($files['name'][$this->formFieldName])) {
+				$files['name'][$this->formFieldName] = array($files['name'][$this->formFieldName]);
+			}
+			if(is_array($files['name'][$this->formFieldName]) && !empty($files['name'][$this->formFieldName][0])) {
 				$found = TRUE;
 			}
 		}

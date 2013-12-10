@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 58503 2012-02-25 19:30:36Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_Filtreatment.php 68708 2012-12-11 13:37:00Z reinhardfuehricht $
  *                                                                        */
 
 /**

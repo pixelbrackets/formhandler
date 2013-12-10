@@ -25,25 +25,12 @@ class Tx_Formhandler_Session_TYPO3 extends Tx_Formhandler_AbstractSession {
 	public function __construct(Tx_Formhandler_Component_Manager $componentManager, 
 								Tx_Formhandler_Configuration $configuration, 
 								Tx_Formhandler_Globals $globals,
-								Tx_Formhandler_UtilityFuncs $utilityFuncs) {
+								Tx_Formhandler_UtilityFuncs $utilityFuncs,
+								Tx_Formhandler_CompatibilityFuncs $compatibilityFuncs) {
 
-		parent::__construct($componentManager, $configuration, $globals, $utilityFuncs);
+		parent::__construct($componentManager, $configuration, $globals, $utilityFuncs, $compatibilityFuncs);
 		$this->start();
 
-		$threshold = $this->getOldSessionThreshold();
-		$data = $GLOBALS['TSFE']->fe_user->getKey('ses', 'formhandler');
-		if(is_array($data)) {
-			foreach($data as $hashedID => $sesData) {
-				if($this->globals->getFormValuesPrefix() === $sesData['formValuesPrefix'] && $sesData['creationTstamp'] < $threshold) {
-					unset($data[$hashedID]);
-				}
-			}
-		} else {
-			$data = array();
-		}
-
-		$GLOBALS['TSFE']->fe_user->setKey('ses', 'formhandler', $data);
-		$GLOBALS['TSFE']->fe_user->storeSessionData();
 	}
 
 	/* (non-PHPdoc)
@@ -107,6 +94,24 @@ class Tx_Formhandler_Session_TYPO3 extends Tx_Formhandler_AbstractSession {
 		$GLOBALS['TSFE']->fe_user->storeSessionData();
 	}
 
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+
+		$threshold = $this->getOldSessionThreshold();
+		$data = $GLOBALS['TSFE']->fe_user->getKey('ses', 'formhandler');
+		if(is_array($data)) {
+			foreach($data as $hashedID => $sesData) {
+				if(!$this->gp['submitted'] && $this->globals->getFormValuesPrefix() === $sesData['formValuesPrefix'] && $sesData['creationTstamp'] < $threshold) {
+					unset($data[$hashedID]);
+				}
+			}
+		} else {
+			$data = array();
+		}
+
+		$GLOBALS['TSFE']->fe_user->setKey('ses', 'formhandler', $data);
+		$GLOBALS['TSFE']->fe_user->storeSessionData();
+	}
 }
 
 ?>

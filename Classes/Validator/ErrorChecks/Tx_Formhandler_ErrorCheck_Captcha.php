@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_Captcha.php 50760 2011-08-08 13:40:04Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_Captcha.php 67837 2012-11-14 09:11:59Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -26,13 +26,12 @@ class Tx_Formhandler_ErrorCheck_Captcha extends Tx_Formhandler_AbstractErrorChec
 	public function check() {
 		$checkFailed = '';
 
-		// get captcha sting
+		// get captcha string
 		session_start();
 
 		// make sure that an anticipated answer to the captcha actually exists
 		if ( isset( $_SESSION['tx_captcha_string'] ) && $_SESSION['tx_captcha_string'] > '' ) {
 			$captchaStr = $_SESSION['tx_captcha_string'];
-			$_SESSION['tx_captcha_string'] = '';
 
 			// make sure the answer given to the captcha is not empty
 			if ($captchaStr != $this->gp[$this->formFieldName] || strlen(trim($this->gp[$this->formFieldName])) === 0) {
@@ -40,6 +39,10 @@ class Tx_Formhandler_ErrorCheck_Captcha extends Tx_Formhandler_AbstractErrorChec
 			}
 		} else {
 			$checkFailed = $this->getCheckFailed();
+		}
+
+		if(!$this->globals->isAjaxMode()) {
+			$_SESSION['tx_captcha_string'] = '';
 		}
 		return $checkFailed;
 	}

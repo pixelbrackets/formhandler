@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileMinCount.php 50875 2011-08-10 09:21:19Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileMinCount.php 68656 2012-12-10 15:23:29Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -40,9 +40,13 @@ class Tx_Formhandler_ErrorCheck_FileMinCount extends Tx_Formhandler_AbstractErro
 			$currentStep > $lastStep) {
 
 			foreach ($_FILES as $idx => $info) {
-				if (strlen($info['name'][$this->formFieldName]) > 0 && count($files[$this->formFieldName]) < ($minCount - 1)) {
-					$checkFailed = $this->getCheckFailed();
-				} elseif (strlen($info['name'][$this->formFieldName]) === 0 && count($files[$this->formFieldName]) < $minCount) {
+				if(!is_array($info['name'][$this->formFieldName])) {
+					$info['name'][$this->formFieldName] = array($info['name'][$this->formFieldName]);
+				}
+				if(empty($info['name'][$this->formFieldName][0])) {
+					$info['name'][$this->formFieldName] = array();
+				}
+				if ((count($info['name'][$this->formFieldName]) + count($files[$this->formFieldName])) < $minCount) {
 					$checkFailed = $this->getCheckFailed();
 				}
 			}

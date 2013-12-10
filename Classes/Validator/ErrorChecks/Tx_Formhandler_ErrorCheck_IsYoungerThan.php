@@ -19,7 +19,7 @@
  * @package	Tx_Formhandler
  * @subpackage	ErrorChecks
  */
-class Tx_Formhandler_ErrorCheck_IsYoungerThan extends Tx_Formhandler_ErrorCheck_IsOlderThan {
+class Tx_Formhandler_ErrorCheck_IsYoungerThan extends Tx_Formhandler_AbstractErrorCheck {
 
 	public function init($gp, $settings) {
 		parent::init($gp, $settings);
@@ -34,7 +34,8 @@ class Tx_Formhandler_ErrorCheck_IsYoungerThan extends Tx_Formhandler_ErrorCheck_
 			$dateFormat = $this->utilityFuncs->getSingle($this->settings['params'], 'dateFormat');
 			$mandatoryYears = intval($this->utilityFuncs->getSingle($this->settings['params'], 'years'));
 			$timestamp = $this->utilityFuncs->dateToTimestamp($date, $dateFormat);
-			$years = $this->getDateDifference($timestamp);
+			$difference = time() - $timestamp;
+			$years = floor($difference / 60 / 60 / 24 / 365);
 			if($years >= $mandatoryYears) {
 				$checkFailed = $this->getCheckFailed();
 			}
