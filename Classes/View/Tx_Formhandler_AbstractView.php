@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractView.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractView.php 49145 2011-06-27 13:15:48Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -72,6 +72,22 @@ abstract class Tx_Formhandler_AbstractView extends tslib_pibase {
 	protected $configuration;
 
 	/**
+	 * The global Formhandler values
+	 *
+	 * @access protected
+	 * @var Tx_Formhandler_Globals
+	 */
+	protected $globals;
+
+	/**
+	 * The Formhandler utility methods
+	 *
+	 * @access protected
+	 * @var Tx_Formhandler_UtilityFuncs
+	 */
+	protected $utlityFuncs;
+
+	/**
 	 * The model of the view
 	 *
 	 * @access protected
@@ -120,11 +136,17 @@ abstract class Tx_Formhandler_AbstractView extends tslib_pibase {
 	 * @param Tx_Formhandler_Configuration $configuration
 	 * @return void
 	 */
-	public function __construct(Tx_Formhandler_Component_Manager $componentManager, Tx_Formhandler_Configuration $configuration) {
+	public function __construct(Tx_Formhandler_Component_Manager $componentManager, 
+								Tx_Formhandler_Configuration $configuration, 
+								Tx_Formhandler_Globals $globals,
+								Tx_Formhandler_UtilityFuncs $utilityFuncs) {
+
 		parent::__construct();
 		$this->componentManager = $componentManager;
 		$this->configuration = $configuration;
-		$this->cObj = Tx_Formhandler_Globals::$cObj;
+		$this->globals = $globals;
+		$this->utilityFuncs = $utilityFuncs;
+		$this->cObj = $this->globals->getCObj();
 		$this->pi_loadLL();
 		$this->initializeView();
 	}

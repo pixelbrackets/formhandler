@@ -1,24 +1,5 @@
 <?php
-/*                                                                       *
-* This script is part of the TYPO3 project - inspiring people to share!  *
-*                                                                        *
-* TYPO3 is free software; you can redistribute it and/or modify it under *
-* the terms of the GNU General Public License version 2 as published by  *
-* the Free Software Foundation.                                          *
-*                                                                        *
-* This script is distributed in the hope that it will be useful, but     *
-* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHAN-    *
-* TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
-* Public License for more details.                                       *
-*                                                                        */
 
-/**
- * Abstract class for any usable Formhandler component.
- * This class defines some useful variables and a default constructor for all Formhandler components.
- *
- * @author	Reinhard Führicht <rf@typoheads.at>
- * @abstract
- */
 abstract class Tx_Formhandler_AbstractClass {
 
 	/**
@@ -51,15 +32,7 @@ abstract class Tx_Formhandler_AbstractClass {
 	 * @access protected
 	 * @var Tx_Formhandler_UtilityFuncs
 	 */
-	protected $utilityFuncs;
-
-	/**
-	 * The Formhandler compatibility methods
-	 *
-	 * @access protected
-	 * @var Tx_Formhandler_CompatibilityFuncs
-	 */
-	protected $compatibilityFuncs;
+	protected $utlityFuncs;
 
 	/**
 	 * The cObj
@@ -79,14 +52,12 @@ abstract class Tx_Formhandler_AbstractClass {
 	public function __construct(Tx_Formhandler_Component_Manager $componentManager, 
 								Tx_Formhandler_Configuration $configuration, 
 								Tx_Formhandler_Globals $globals,
-								Tx_Formhandler_UtilityFuncs $utilityFuncs,
-								Tx_Formhandler_CompatibilityFuncs $compatibilityFuncs) {
+								Tx_Formhandler_UtilityFuncs $utilityFuncs) {
 
 		$this->componentManager = $componentManager;
 		$this->configuration = $configuration;
 		$this->globals = $globals;
 		$this->utilityFuncs = $utilityFuncs;
-		$this->compatibilityFuncs = $compatibilityFuncs;
 		$this->cObj = $this->globals->getCObj();
 	}
 }

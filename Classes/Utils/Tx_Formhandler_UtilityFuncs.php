@@ -11,40 +11,24 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_UtilityFuncs.php 70471 2013-01-30 09:48:12Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_UtilityFuncs.php 52414 2011-09-23 09:34:40Z reinhardfuehricht $
  *                                                                        */
 
 /**
  * A class providing helper functions for Formhandler
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
+ * @package	Tx_Formhandler
+ * @subpackage	Utils
  */
 class Tx_Formhandler_UtilityFuncs {
 
 	static private $instance = NULL;
 
-	/**
-	 * The global Formhandler values
-	 *
-	 * @access protected
-	 * @var Tx_Formhandler_Globals
-	 */
-	protected $globals;
-
-	
-	/**
-	 * The Formhandler compatibility methods
-	 *
-	 * @access protected
-	 * @var Tx_Formhandler_CompatibilityFuncs
-	 */
-	protected $compatibilityFuncs;
-
 	static public function getInstance() {
 		if (self::$instance === NULL) {
 			self::$instance = new Tx_Formhandler_UtilityFuncs();
 			self::$instance->globals = Tx_Formhandler_Globals::getInstance();
-			self::$instance->compatibilityFuncs = Tx_Formhandler_CompatibilityFuncs::getInstance();
 		}
 		return self::$instance;
 	}
@@ -68,11 +52,6 @@ class Tx_Formhandler_UtilityFuncs {
 		if ($prefix) {
 			$gp = $gp[$prefix];
 		}
-		
-		/*
-		 * Unset key "saveDB" to prevent conflicts with information set by Finisher_DB
-		 */
-		unset($gp['saveDB']);
 		return $gp;
 	}
 
@@ -123,8 +102,8 @@ class Tx_Formhandler_UtilityFuncs {
 	 *
 	 * Returns the first subpart encapsulated in the marker, $marker (possibly present in $content as a HTML comment)
 	 *
-	 * @param	string	Content with subpart wrapped in fx. "###CONTENT_PART###" inside.
-	 * @param	string	Marker string, eg. "###CONTENT_PART###"
+	 * @param	string		Content with subpart wrapped in fx. "###CONTENT_PART###" inside.
+	 * @param	string		Marker string, eg. "###CONTENT_PART###"
 	 * @return	string
 	 */
 	public function getSubpart($content, $marker) {
@@ -168,16 +147,12 @@ class Tx_Formhandler_UtilityFuncs {
 
 			if (isset($settings['templateFile.']) && is_array($settings['templateFile.'])) {
 				$templateFile = $this->getSingle($settings, 'templateFile');
-				if ($this->isTemplateFilePath($templateFile)) {
+				if (strpos($templateFile, "\n") === FALSE) {
 					$templateFile = $this->resolvePath($templateFile);
 					if (!@file_exists($templateFile)) {
 						$this->throwException('template_file_not_found', $templateFile);
 					}
 					$templateCode = t3lib_div::getURL($templateFile);
-				} else {
-
-					//The setting "templateFile" was a cObject which returned HTML content. Just use that as template code.
-					$templateCode = $templateFile;
 				}
 			} else {
 				$templateFile = $this->resolvePath($templateFile);
@@ -187,7 +162,7 @@ class Tx_Formhandler_UtilityFuncs {
 				$templateCode = t3lib_div::getURL($templateFile);
 			}
 		} else {
-			if ($this->isTemplateFilePath($templateFile)) {
+			if (strpos($templateFile, "\n") === FALSE) {
 				$templateFile = $this->resolvePath($templateFile);
 				if (!@file_exists($templateFile)) {
 					$this->throwException('template_file_not_found', $templateFile);
@@ -256,24 +231,13 @@ class Tx_Formhandler_UtilityFuncs {
 	}
 
 	public function getSingle($arr, $key) {
-		if(!is_array($arr)) {
-			return $arr;
-		}
-		if (!is_array($arr[$key . '.'])) {
+		if (!isset($arr[$key . '.'])) {
 			return $arr[$key];
 		}
 		if (!isset($arr[$key . '.']['sanitize'])) {
 			$arr[$key . '.']['sanitize'] = 1;
 		}
 		return $this->globals->getCObj()->cObjGetSingle($arr[$key], $arr[$key . '.']);
-	}
-
-	public function getPreparedClassName($settingsArray, $defaultClassName = '') {
-		$className = $defaultClassName;
-		if(is_array($settingsArray) && $settingsArray['class']) {
-			$className = $this->getSingle($settingsArray, 'class');
-		}
-		return $this->prepareClassName($className);
 	}
 
 	/**
@@ -283,12 +247,12 @@ class Tx_Formhandler_UtilityFuncs {
 	 * @param boolean $correctRedirectUrl replace &amp; with & in URL 
 	 * @return void
 	 */
-	public function doRedirect($redirect, $correctRedirectUrl, $additionalParams = array(), $headerStatusCode = '') {
+	public function doRedirect($redirect, $correctRedirectUrl, $additionalParams = array()) {
 
 		// these parameters have to be added to the redirect url
-		$addParams = array();
+		$addparams = array();
 		if (t3lib_div::_GP('L')) {
-			$addParams['L'] = t3lib_div::_GP('L');
+			$addparams['L'] = t3lib_div::_GP('L');
 		}
 
 		if (is_array($additionalParams)) {
@@ -297,12 +261,12 @@ class Tx_Formhandler_UtilityFuncs {
 					if (is_array($additionalParams[$param . '.'])) {
 						$value = $this->getSingle($additionalParams, $param);
 					}
-					$addParams[$param] = $value;
+					$addparams[$param] = $value;
 				}
 			}
 		}
 
-		$url = $this->globals->getCObj()->getTypoLink_URL($redirect, $addParams);
+		$url = $this->globals->getCObj()->getTypoLink_URL($redirect, $addparams);
 
 		//correct the URL by replacing &amp;
 		if ($correctRedirectUrl) {
@@ -310,56 +274,8 @@ class Tx_Formhandler_UtilityFuncs {
 		}
 
 		if ($url) {
-			if(!$this->globals->isAjaxMode()) {
-				$status = '303 See Other';
-				if($headerStatusCode) {
-					$status = $headerStatusCode;
-				}
-				header('Status: ' . $status);
-				header('Location: ' . t3lib_div::locationHeaderUrl($url));
-			} else {
-				print '{' . json_encode('redirect') . ':' . json_encode(t3lib_div::locationHeaderUrl($url)) . '}';
-				exit;
-			}
-			
-		}
-	}
-
-	/**
-	 * Redirects to a specified page or URL.
-	 * The redirect url, additional params and other settings are taken from the given settings array.
-	 *
-	 * @param array $settings Array containing the redirect settings
-	 * @param array $gp Array with GET/POST parameters
-	 * @param string $redirectPageSetting Name of the Typoscript setting which holds the redirect page.
-	 * @return void
-	 */
-	public function doRedirectBasedOnSettings($settings, $gp, $redirectPageSetting = 'redirectPage') {
-		$redirectPage = $this->getSingle($settings, $redirectPageSetting);
-
-		//Allow "redirectPage" to be the value of a form field
-		if($redirectPage && isset($gp[$redirectPage])) {
-			$redirectPage = $gp[$redirectPage];
-		}
-
-		if(strlen($redirectPage) > 0) {
-			$correctRedirectUrl = $this->getSingle($settings, 'correctRedirectUrl');
-			$headerStatusCode = $this->getSingle($settings, 'headerStatusCode');
-			if(isset($settings['additionalParams']) && isset($settings['additionalParams.'])) {
-				$additionalParamsString = $this->getSingle($settings, 'additionalParams');
-				$additionalParamsKeysAndValues = explode('&', $additionalParamsString);
-				$additionalParams = array();
-				foreach($additionalParamsKeysAndValues as $keyAndValue) {
-					list($key, $value) = explode('=', $keyAndValue, 2);
-					$additionalParams[$key] = $value;
-				}
-			} else {
-				$additionalParams = $settings['additionalParams.'];
-			}
-			$this->doRedirect($redirectPage, $correctRedirectUrl, $additionalParams, $headerStatusCode);
-			exit();
-		} else {
-			$this->debugMessage('No redirectPage set.');
+			header('Status: 301 Moved Permanently');
+			header('Location: ' . t3lib_div::locationHeaderUrl($url));
 		}
 	}
 
@@ -398,7 +314,7 @@ class Tx_Formhandler_UtilityFuncs {
 	public function pi_getFFvalueFromSheetArray($sheetArray, $fieldNameArr, $value) {
 		$tempArr = $sheetArray;
 		foreach ($fieldNameArr as $k => $v) {
-			if ($this->compatibilityFuncs->canBeInterpretedAsInteger($v)) {
+			if (t3lib_div::testInt($v)) {
 				if (is_array($tempArr)) {
 					$c = 0;
 					foreach ($tempArr as $idx => $values) {
@@ -417,56 +333,19 @@ class Tx_Formhandler_UtilityFuncs {
 	}
 
 	/**
-	 * This function formats a date used by the backend module
+	 * This function formats a date
 	 *
-	 * @param string $date The date string to convert
+	 * @param long $date The timestamp to format
 	 * @param boolean $end Is end date or start date
-	 * @return long timestamp
+	 * @return string formatted date
 	 * @author Reinhard Führicht <rf@typoheads.at>
 	 */
-	public function dateToTimestampForBackendModule($date, $end = FALSE) {
+	public function dateToTimestamp($date,$end = FALSE) {
 		$dateArr = t3lib_div::trimExplode('.', $date);
 		if ($end) {
 			return mktime(23, 59, 59, $dateArr[1], $dateArr[0], $dateArr[2]);
 		}
 		return mktime(0, 0, 0, $dateArr[1], $dateArr[0], $dateArr[2]);
-	}
-
-	/**
-	 * Converts a date to a UNIX timestamp.
-	 *
-	 * @param array $options The TS settings of the "special" section
-	 * @return long The timestamp
-	*/
-	public function dateToTimestamp($date, $format = 'Y-m-d') {
-		if(strlen(trim($date)) > 0) {
-			if(version_compare(PHP_VERSION, '5.3.0') < 0) {
-
-				// find out separator
-				preg_match('/^[d|m|y]*(.)[d|m|y]*/i', $format, $res);
-				$sep = $res[1];
-
-				// normalisation of format
-				$pattern = $this->utilityFuncs->normalizeDatePattern($format, $sep);
-
-				// find out correct positioins of "d","m","y"
-				$pos1 = strpos($pattern, 'd');
-				$pos2 = strpos($pattern, 'm');
-				$pos3 = strpos($pattern, 'y');
-
-				$dateParts = t3lib_div::trimExplode($sep, $date);
-				$timestamp = mktime(0, 0, 0, $dateParts[$pos2], $dateParts[$pos1], $dateParts[$pos3]);
-			} else {
-				$dateObj = DateTime::createFromFormat($format, $date);
-				if($dateObj) {
-					$timestamp = $dateObj->getTimestamp();
-				} else {
-					$this->debugMessage('Error parsing the date. Supported formats: http://www.php.net/manual/en/datetime.createfromformat.php', array(), 3, array('format' => $format, 'date' => $date));
-					$timestamp = 0;
-				}
-			}
-		}
-		return $timestamp;
 	}
 
 	/**
@@ -499,7 +378,7 @@ class Tx_Formhandler_UtilityFuncs {
 		}
 		return $path;
 	}
-
+	
 	public function generateHash() {
 		$result = '';
 		$charPool = '0123456789abcdefghijklmnopqrstuvwxyz';
@@ -559,6 +438,48 @@ class Tx_Formhandler_UtilityFuncs {
 	}
 
 	/**
+	 * Finds and fills value markers using given GET/POST parameters.
+	 *
+	 * @param array &$gp Reference to the GET/POST parameters
+	 * @return array The filled value markers
+	 */
+	public function getFilledValueMarkers(&$gp) {
+		if (isset($gp) && is_array($gp)) {
+			foreach ($gp as $k=>$v) {
+				if (is_array($v)) {
+					$v = implode(',', $v);
+				}
+				$v = trim($v);
+				if (strlen($v) > 0) {
+					if (get_magic_quotes_gpc()) {
+						$markers['###value_'.$k.'###'] = stripslashes($this->reverse_htmlspecialchars($v));
+					} else {
+						$markers['###value_'.$k.'###'] = $this->reverse_htmlspecialchars($v);
+					}
+				} else {
+					$markers['###value_'.$k.'###'] = '';
+				}
+			}
+		}
+		return $markers;
+	}
+
+	/**
+	 * I have no idea
+	 *
+	 * @author	Peter Luser <pl@typoheads.at>
+	 * @param string $mixed The value to process
+	 * @return string The processed value
+	 */
+	public function reverse_htmlspecialchars($mixed) {
+		$htmltable = get_html_translation_table(HTML_ENTITIES);
+		foreach ($htmltable as $key => $value) {
+			$mixed = preg_replace('/' . addslashes($value) . '/', $key, $mixed);
+		}
+		return $mixed;
+	}
+
+	/**
 	 * Method to log a debug message.
 	 * The message will be handled by one or more configured "Debuggers".
 	 *
@@ -569,39 +490,18 @@ class Tx_Formhandler_UtilityFuncs {
 	 * @return void
 	 */
 	public function debugMessage($key, array $printfArgs = array(), $severity = 1, array $data = array()) {
+		
 		$severity = intval($severity);
+		
 		$message = $this->getDebugMessage($key);
 		if (strlen($message) == 0) {
 			$message = $key;
 		} elseif (count($printfArgs) > 0) {
 			$message = vsprintf($message, $printfArgs);
 		}
-		$data = $this->recursiveHtmlSpecialChars($data);
 		foreach($this->globals->getDebuggers() as $idx => $debugger) {
-			$debugger->addToDebugLog(htmlspecialchars($message), $severity, $data);
+			$debugger->addToDebugLog($message, $severity, $data);
 		}
-	}
-
-	public function debugMailContent($emailObj) {
-		$this->debugMessage('mail_subject', array($emailObj->getSubject()));
-
-		$sender = $emailObj->getSender();
-		if(!is_array($sender)) {
-			$sender = array($sender);
-		}
-		$this->debugMessage('mail_sender', array(), 1, $sender);
-
-		$replyTo = $emailObj->getReplyTo();
-		if(!is_array($replyTo)) {
-			$replyTo = array($replyTo);
-		}
-		$this->debugMessage('mail_replyto', array(), 1, $replyTo);
-
-		$this->debugMessage('mail_cc', array(), 1, (array)$emailObj->getCc());
-		$this->debugMessage('mail_bcc', array(), 1, (array)$emailObj->getBcc());
-		$this->debugMessage('mail_returnpath', array(), 1, array($emailObj->returnPath));
-		$this->debugMessage('mail_plain', array(), 1, array($emailObj->getPlain()));
-		$this->debugMessage('mail_html', array(), 1, array($emailObj->getHTML()));
 	}
 
 	/**
@@ -700,24 +600,19 @@ class Tx_Formhandler_UtilityFuncs {
 	 *
 	 * The default upload folder is: '/uploads/formhandler/tmp/'
 	 *
-	 * @return string
+	 * @return void
 	 */
-	public function getTempUploadFolder($fieldName = '') {
+	public function getTempUploadFolder() {
 
 		//set default upload folder
 		$uploadFolder = '/uploads/formhandler/tmp/';
 
 		//if temp upload folder set in TypoScript, take that setting
 		$settings = $this->globals->getSession()->get('settings');
-		if(strlen($fieldName) > 0 && $settings['files.']['uploadFolder.'][$fieldName]) {
-			$uploadFolder = $this->getSingle($settings['files.']['uploadFolder.'], $fieldName);
-		} elseif($settings['files.']['uploadFolder.']['default']) {
-			$uploadFolder = $this->getSingle($settings['files.']['uploadFolder.'], 'default');
-		} elseif ($settings['files.']['uploadFolder']) {
+		if ($settings['files.']['uploadFolder']) {
 			$uploadFolder = $this->getSingle($settings['files.'], 'uploadFolder');
+			$uploadFolder = $this->sanitizePath($uploadFolder);
 		}
-
-		$uploadFolder = $this->sanitizePath($uploadFolder);
 
 		//if the set directory doesn't exist, print a message and try to create
 		if (!is_dir($this->getTYPO3Root() . $uploadFolder)) {
@@ -725,37 +620,6 @@ class Tx_Formhandler_UtilityFuncs {
 			t3lib_div::mkdir_deep($this->getTYPO3Root() . '/', $uploadFolder);
 		}
 		return $uploadFolder;
-	}
-
-	/**
-	 * Searches for upload folders set in TypoScript setup.
-	 * Returns all upload folders as array.
-	 *
-	 * @return array
-	 */
-	public function getAllTempUploadFolders() {
-
-		$uploadFolders = array();
-
-		//set default upload folder
-		$defaultUploadFolder = '/uploads/formhandler/tmp/';
-
-		//if temp upload folder set in TypoScript, take that setting
-		$settings = $this->globals->getSession()->get('settings');
-
-		if(is_array($settings['files.']['uploadFolder.'])) {
-			foreach($settings['files.']['uploadFolder.'] as $fieldName => $folderSettings) {
-				$uploadFolders[] = $this->sanitizePath($this->getSingle($settings['files.']['uploadFolder.'], $fieldName));
-			}
-		} elseif ($settings['files.']['uploadFolder']) {
-			$defaultUploadFolder = $this->sanitizePath($this->getSingle($settings['files.'], 'uploadFolder'));
-		}
-
-		//If no special upload folder for a field was set, add the default upload folder
-		if(count($uploadFolders) === 0) {
-			$uploadFolders[] = $defaultUploadFolder;
-		}
-		return $uploadFolders;
 	}
 
 	/**
@@ -813,16 +677,16 @@ class Tx_Formhandler_UtilityFuncs {
 		}
 		return $convertedValue;
 	}
-
+	
 	public function generateRandomID() {
 		$randomID = md5($this->globals->getFormValuesPrefix() . $GLOBALS['ACCESS_TIME']);
 		return $randomID;
 	}
-
+	
 	public function initializeTSFE($pid) {
 		global $TSFE;
 
-		// create object instances:
+			// create object instances:
 		$TSFE = t3lib_div::makeInstance('tslib_fe', $GLOBALS['TYPO3_CONF_VARS'], $pid, 0, TRUE);
 		$TSFE->tmpl = t3lib_div::makeInstance('t3lib_tstemplate');
 		$TSFE->tmpl->init();
@@ -837,7 +701,6 @@ class Tx_Formhandler_UtilityFuncs {
 			// Get the page
 		$TSFE->fetch_the_id();
 		$TSFE->getConfigArray();
-		$TSFE->includeLibraries($TSFE->tmpl->setup['includeLibs.']);
 		$TSFE->newCObj();
 	}
 	
@@ -883,164 +746,17 @@ class Tx_Formhandler_UtilityFuncs {
 		$search = array(' ', '%20');
 		$replace = array('_');
 
-		$usePregReplace = $this->getSingle($settings['files.'], 'usePregReplace');
-		if(intval($usePregReplace) === 1) {
-			$search = array('/ /', '/%20/');
-		}
-
 		//The settings "search" and "replace" are comma separated lists
 		if($settings['files.']['search']) {
-			$search = $this->getSingle($settings['files.'], 'search');
-			$search = explode(',', $search);
+			$search = explode(',', $settings['files.']['search']);
 		}
 		if($settings['files.']['replace']) {
-			$replace = $this->getSingle($settings['files.'], 'replace');
-			$replace = explode(',', $replace);
+			$replace = explode(',', $settings['files.']['replace']);
 		}
-
-		$usePregReplace = $this->getSingle($settings['files.'], 'usePregReplace');
-		if(intval($usePregReplace) === 1) {
-			$fileName = preg_replace($search, $replace, $fileName);
-		} else {
-			$fileName = str_replace($search, $replace, $fileName);
-		}
+		$fileName = str_replace($search, $replace, $fileName);
 		return $fileName;
 	}
 
-	public function recursiveHtmlSpecialChars($values) {
-		if(is_array($values)) {
-			foreach($values as &$value) {
-				if(is_array($value)) {
-					$value = $this->recursiveHtmlSpecialChars($value);
-				} else {
-					$value = htmlspecialchars($value);
-				}
-			}
-		} else {
-			$values = htmlspecialchars($values);
-		}
-		return $values;
-	}
-
-	/**
-	 * Convert a shorthand byte value from a PHP configuration directive to an integer value
-	 * 
-	 * Copied from http://www.php.net/manual/de/faq.using.php#78405
-	 * 
-	 * @param	string	$value
-	 * @return	int
-	 */
-	public function convertBytes($value) {
-		if(is_numeric($value)) {
-			return $value;
-		} else {
-			$value_length = strlen($value);
-			$qty = substr($value, 0, $value_length - 1);
-			$unit = strtolower(substr($value, $value_length - 1));
-			switch($unit) {
-				case 'k':
-					$qty *= 1024;
-					break;
-				case 'm':
-					$qty *= 1048576;
-					break;
-				case 'g':
-					$qty *= 1073741824;
-					break;
-			}
-			return $qty;
-		}
-	}
-
-	/**
-	 * Check if a given string is a file path or contains parsed HTML template data
-	 *
-	 * @param	string	$templateFile
-	 * @return	boolean
-	 */
-	public function isTemplateFilePath($templateFile) {
-		return (stristr($templateFile, '###TEMPLATE_') === FALSE);
-	}
-
-	/**
-	 * Method to normalize a specified date pattern for internal use
-	 *
-	 * @param string $pattern The pattern
-	 * @param string $sep The separator character
-	 * @return string The normalized pattern
-	 */
-	public function normalizeDatePattern($pattern, $sep) {
-		$pattern = strtoupper($pattern);
-		$pattern = str_replace(
-			array($sep, 'DD', 'D', 'MM', 'M', 'YYYY', 'YY', 'Y'),
-			array('', 'd', 'd', 'm', 'm', 'y', 'y', 'y'),
-			$pattern
-		);
-		return $pattern;
-	}
-
-	/**
-	 * Copy of tslib_content::getGlobal for use in Formhandler.
-	 * 
-	 * Changed to be able to return an array and not only scalar values.
-	 * 
-	 * @param string Global var key, eg. "HTTP_GET_VAR" or "HTTP_GET_VARS|id" to get the GET parameter "id" back.
-	 * @param array Alternative array than $GLOBAL to get variables from.
-	 * @return mixed Whatever value. If none, then blank string.
-	 */
-	public function getGlobal($keyString, $source = NULL) {
-		$keys = explode('|', $keyString);
-		$numberOfLevels = count($keys);
-		$rootKey = trim($keys[0]);
-		$value = isset($source) ? $source[$rootKey] : $GLOBALS[$rootKey];
-
-		for ($i = 1; $i < $numberOfLevels && isset($value); $i++) {
-			$currentKey = trim($keys[$i]);
-			if (is_object($value)) {
-				$value = $value->$currentKey;
-			} elseif (is_array($value)) {
-				$value = $value[$currentKey];
-			} else {
-				$value = '';
-				break;
-			}
-		}
-
-		return $value;
-	}
-
-	public function wrap($str, $settingsArray, $key) {
-		$wrappedString = $str;
-		if(is_array($settingsArray[$key . '.'])) {
-			$wrappedString = $this->globals->getCObj()->stdWrap($str, $settingsArray[$key . '.']);
-		} elseif(strlen($settingsArray[$key]) > 0) {
-			$wrappedString = $this->globals->getCObj()->wrap($str, $settingsArray[$key]);
-		}
-		return $wrappedString;
-	}
-
-	public function getAjaxUrl($specialParams) {
-		$params = array(
-			'id' => $GLOBALS['TSFE']->id,
-			'L' => $GLOBALS['TSFE']->sys_language_uid,
-			'randomID' => $this->globals->getRandomID(),
-			'field' => $field,
-			'uploadedFileName' => $uploadedFileName
-		);
-		$params = array_merge($params, $specialParams);
-		return t3lib_div::getIndpEnv('TYPO3_SITE_PATH') . 'index.php?' . t3lib_div::implodeArrayForUrl('', $params);
-	}
-
-	public function prepareAndWhereString($andWhere) {
-		$andWhere = trim($andWhere);
-		if(substr($andWhere, 0, 3) === 'AND') {
-			$andWhere = trim(substr($andWhere, 3));
-		}
-		if(strlen($andWhere) > 0) {
-			$andWhere = ' AND ' . $andWhere;
-		}
-		return $andWhere;
-	}
 }
 
 ?>

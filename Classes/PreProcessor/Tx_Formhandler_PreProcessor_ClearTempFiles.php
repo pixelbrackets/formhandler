@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_PreProcessor_ClearTempFiles.php 43837 2011-02-18 15:46:46Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_PreProcessor_ClearTempFiles.php 52405 2011-09-23 08:57:48Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -42,8 +42,7 @@ class Tx_Formhandler_PreProcessor_ClearTempFiles extends Tx_Formhandler_Abstract
 		$this->olderThanValue = $this->settings['clearTempFilesOlderThan.']['value'];
 		$this->olderThanUnit = $this->settings['clearTempFilesOlderThan.']['unit'];
 		if (!empty($this->olderThanValue) && is_numeric($this->olderThanValue)) {
-			$uploadFolder = Tx_Formhandler_StaticFuncs::getTempUploadFolder();
-			$this->clearTempFiles($uploadFolder, $this->olderThanValue, $this->olderThanValue);
+			$this->clearTempFiles($this->olderThanValue, $this->olderThanUnit);
 		}
 		return $this->gp;
 	}
@@ -52,32 +51,29 @@ class Tx_Formhandler_PreProcessor_ClearTempFiles extends Tx_Formhandler_Abstract
 	 * Deletes all files older than a specific time in a temporary upload folder.
 	 * Settings for the threshold time and the folder are made in TypoScript.
 	 *
-	 * Here is an example:
-	 * <code>
-	 * plugin.Tx_Formhandler.settings.files.clearTempFilesOlderThanHours = 24
-	 * plugin.Tx_Formhandler.settings.files.tmpUploadFolder = uploads/formhandler/tmp
-	 * </code>
-	 *
-	 * @param integer $olderThan Delete files older than $olderThan hours.
+	 * @param integer $olderThanValue Delete files older than this value.
+	 * @param string $olderThanUnit The unit for $olderThan. May be seconds|minutes|hours|days
 	 * @return void
 	 * @author	Reinhard Führicht <rf@typoheads.at>
 	 */
-	protected function clearTempFiles($uploadFolder, $olderThanValue, $olderThanUnit) {
+	protected function clearTempFiles($olderThanValue, $olderThanUnit) {
 		if (!$olderThanValue) {
 			return;
 		}
 
+		$uploadFolder = $this->utilityFuncs->getTempUploadFolder();
+
 		//build absolute path to upload folder
-		$path = Tx_Formhandler_StaticFuncs::getDocumentRoot() . $uploadFolder;
+		$path = $this->utilityFuncs->getDocumentRoot() . $uploadFolder;
 
 		//read files in directory
 		$tmpFiles = t3lib_div::getFilesInDir($path);
 
-		Tx_Formhandler_StaticFuncs::debugMessage('cleaning_temp_files', array($path));
+		$this->utilityFuncs->debugMessage('cleaning_temp_files', array($path));
 
 		//calculate threshold timestamp
 		//hours * 60 * 60 = millseconds
-		$threshold = Tx_Formhandler_StaticFuncs::getTimestamp($olderThanValue, $olderThanUnit);
+		$threshold = $this->utilityFuncs->getTimestamp($olderThanValue, $olderThanUnit);
 
 		//for all files in temp upload folder
 		foreach ($tmpFiles as $idx => $file) {
@@ -91,7 +87,7 @@ class Tx_Formhandler_PreProcessor_ClearTempFiles extends Tx_Formhandler_Abstract
 
 			if ($creationTime < $threshold) {
 				unlink($path . $file);
-				Tx_Formhandler_StaticFuncs::debugMessage('deleting_file', array($file));
+				$this->utilityFuncs->debugMessage('deleting_file', array($file));
 			}
 		}
 	}

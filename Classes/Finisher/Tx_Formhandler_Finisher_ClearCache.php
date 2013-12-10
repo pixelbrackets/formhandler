@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_ClearCache.php 43837 2011-02-18 15:46:46Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_ClearCache.php 49145 2011-06-27 13:15:48Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -47,12 +47,12 @@ class Tx_Formhandler_Finisher_ClearCache extends Tx_Formhandler_AbstractFinisher
 	 * @return array The probably modified GET/POST parameters
 	 */
 	public function process() {
-		$cacheCmd = Tx_Formhandler_StaticFuncs::getSingle($this->settings, 'cacheCmd');
+		$cacheCmd = $this->utilityFuncs->getSingle($this->settings, 'cacheCmd');
 		if (empty($cacheCmd)) {
 			$cacheCmd = $GLOBALS['TSFE']->id;
 		}
 
-		Tx_Formhandler_StaticFuncs::debugMessage('cacheCmd', array($cacheCmd));
+		$this->utilityFuncs->debugMessage('cacheCmd', array($cacheCmd));
 
 		$tce = t3lib_div::makeInstance('t3lib_tcemain');
 		$tce->clear_cacheCmd($cacheCmd);

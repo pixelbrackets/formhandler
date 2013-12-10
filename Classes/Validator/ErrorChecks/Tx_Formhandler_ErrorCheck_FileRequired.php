@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileRequired.php 46243 2011-04-05 15:17:49Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileRequired.php 50875 2011-08-10 09:21:19Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -23,25 +23,17 @@
  */
 class Tx_Formhandler_ErrorCheck_FileRequired extends Tx_Formhandler_AbstractErrorCheck {
 
-	/**
-	 * Validates that a file gets uploaded via specified upload field
-	 *
-	 * @param array &$check The TypoScript settings for this error check
-	 * @param string $name The field name
-	 * @param array &$gp The current GET/POST parameters
-	 * @return string The error string
-	 */
-	public function check(&$check,$name,&$gp) {
+	public function check() {
 		$checkFailed = '';
-		$sessionFiles = Tx_Formhandler_Globals::$session->get('files');
+		$sessionFiles = $this->globals->getSession()->get('files');
 		$found = FALSE;
 		foreach ($_FILES as $sthg => &$files) {
-			if (strlen($files['name'][$name]) > 0) {
+			if (strlen($files['name'][$this->formFieldName]) > 0) {
 				$found = TRUE;
 			}
 		}
-		if (!$found && count($sessionFiles[$name]) === 0) {
-			$checkFailed = $this->getCheckFailed($check);
+		if (!$found && count($sessionFiles[$this->formFieldName]) === 0) {
+			$checkFailed = $this->getCheckFailed();
 		}
 		return $checkFailed;
 	}

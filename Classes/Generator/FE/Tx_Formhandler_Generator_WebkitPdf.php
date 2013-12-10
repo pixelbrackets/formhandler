@@ -10,22 +10,25 @@ class Tx_Formhandler_Generator_WebkitPdf extends Tx_Formhandler_AbstractGenerato
 	public function process() {
 		if (t3lib_extMgm::isLoaded('webkitpdf')) {
 			$linkGP = array();
-			if (strlen(Tx_Formhandler_Globals::$formValuesPrefix) > 0) {
-				$linkGP[Tx_Formhandler_Globals::$formValuesPrefix] = $this->gp;
+			if (strlen($this->globals->getFormValuesPrefix()) > 0) {
+				$linkGP[$this->globals->getFormValuesPrefix()] = $this->gp;
 			} else {
 				$linkGP = $this->gp;
 			}
 
-			$url = Tx_Formhandler_StaticFuncs::getHostname() . $this->cObj->getTypolink_URL($GLOBALS['TSFE']->id, $linkGP);
+			$url = $this->utilityFuncs->getHostname() . $this->cObj->getTypolink_URL($GLOBALS['TSFE']->id, $linkGP);
+			if($this->url) {
+				$url = $this->url;
+			}
 			$config = $this->readWebkitPdfConf();
 			$config['fileOnly'] = 1;
-			$config['urls.']['1'] = $url;
+			$config['urls']['1'] = $url;
 
 			if (!class_exists('tx_webkitpdf_pi1')) {
 				require_once(t3lib_extMgm::extPath('webkitpdf') . 'pi1/class.tx_webkitpdf_pi1.php');
 			}
 			$generator = t3lib_div::makeInstance('tx_webkitpdf_pi1');
-			$generator->cObj = Tx_Formhandler_Globals::$cObj;
+			$generator->cObj = $this->globals->getCObj();
 
 			return $generator->main('', $config);
 		}
@@ -59,11 +62,11 @@ class Tx_Formhandler_Generator_WebkitPdf extends Tx_Formhandler_AbstractGenerato
 			$params = t3lib_div::array_merge_recursive_overrule($params, $componentParams);
 		}
 		$text = $this->getLinkText();
-		$url = Tx_Formhandler_StaticFuncs::getHostname() . $this->cObj->getTypolink_URL($GLOBALS['TSFE']->id, $params);
+		$this->url = $this->utilityFuncs->getHostname() . $this->cObj->getTypolink_URL($GLOBALS['TSFE']->id, $params);
 		$params = array(
 			'tx_webkitpdf_pi1' => array(
 				'urls' => array(
-					$url
+					$this->url
 				)
 			),
 			'no_cache' => 1
@@ -72,7 +75,7 @@ class Tx_Formhandler_Generator_WebkitPdf extends Tx_Formhandler_AbstractGenerato
 	}
 
 	protected function getComponentLinkParams($linkGP) {
-		$prefix = Tx_Formhandler_Globals::$formValuesPrefix;
+		$prefix = $this->globals->getFormValuesPrefix();
 		$tempParams = array(
 			'action' => 'show'
 		);
@@ -87,7 +90,7 @@ class Tx_Formhandler_Generator_WebkitPdf extends Tx_Formhandler_AbstractGenerato
 
 	protected function getLinkText() {
 		$config = $this->readWebkitPdfConf();
-		$text = Tx_Formhandler_StaticFuncs::getSingle($config, 'linkText');
+		$text = $this->utilityFuncs->getSingle($config, 'linkText');
 		if (strlen($text) === 0) {
 			$text = 'Save as PDF';
 		}

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Mail.php 42315 2011-01-18 16:13:38Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Mail.php 49145 2011-06-27 13:15:48Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -44,7 +44,7 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 
 		//set language file
 		if (!$this->langFiles) {
-			$this->langFiles = Tx_Formhandler_Globals::$langFiles;
+			$this->langFiles = $this->globals->getLangFiles();
 		}
 
 		$componentSettings = $this->getComponentSettings();
@@ -94,7 +94,7 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 		}
 
 		//remove markers that were not substituted
-		$content = Tx_Formhandler_StaticFuncs::removeUnfilledMarkers($this->template);
+		$content = $this->utilityFuncs->removeUnfilledMarkers($this->template);
 		return trim($content);
 	}
 

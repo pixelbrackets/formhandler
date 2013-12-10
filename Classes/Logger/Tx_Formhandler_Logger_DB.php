@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Logger_DB.php 46259 2011-04-06 07:52:14Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Logger_DB.php 49727 2011-07-12 10:10:46Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -31,44 +31,57 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 	public function process() {
 
 		//set params
-		$table = "tx_formhandler_log";
+		$table = 'tx_formhandler_log';
 
-		$fields['ip'] = t3lib_div::getIndpEnv('REMOTE_ADDR');
-		if (isset($this->settings['disableIPlog']) && intval($this->settings['disableIPlog']) == 1) {
-			$fields['ip'] = NULL;
+		if (!isset($this->settings['disableIPlog']) || intval($this->settings['disableIPlog']) !== 1) {
+			$fields['ip'] = t3lib_div::getIndpEnv('REMOTE_ADDR');
 		}
 		$fields['tstamp'] = time();
 		$fields['crdate'] = time();
-		$fields['pid'] = Tx_Formhandler_StaticFuncs::getSingle($this->settings, 'pid');
+		$fields['pid'] = $this->utilityFuncs->getSingle($this->settings, 'pid');
 		if (!$fields['pid']) {
 			$fields['pid'] = $GLOBALS['TSFE']->id;
 		}
 		ksort($this->gp);
 		$keys = array_keys($this->gp);
-		$serialized = serialize($this->gp);
+
+		$logParams = $this->gp;
+		if($this->settings['excludeFields']) {
+			$excludeFields = $this->utilityFuncs->getSingle($this->settings, 'excludeFields');
+			$excludeFields = t3lib_div::trimExplode(',', $excludeFields);
+			foreach($excludeFields as $excludeField) {
+				unset($logParams[$excludeField]);
+			}
+		}
+		$serialized = serialize($logParams);
 		$hash = md5(serialize($keys));
+		$uniqueHash = sha1(sha1($serialized) . $TYPO3_CONF_VARS['SYS']['encryptionKey'] . time() . $this->globals->getRandomID());
 		$fields['params'] = $serialized;
 		$fields['key_hash'] = $hash;
+		$fields['unique_hash'] = $uniqueHash;
 
-		if (intval($this->settings['markAsSpam']) == 1) {
+		if (intval($this->settings['markAsSpam']) === 1) {
 			$fields['is_spam'] = 1;
 		}
 
 		//query the database
-		$res = $GLOBALS['TYPO3_DB']->exec_INSERTquery($table, $fields);
+		$GLOBALS['TYPO3_DB']->exec_INSERTquery($table, $fields);
 		$insertedUID = $GLOBALS['TYPO3_DB']->sql_insert_id();
 		$sessionValues = array (
 			'inserted_uid' => $insertedUID,
 			'inserted_tstamp' => $fields['tstamp'],
-			'key_hash' => $hash
+			'key_hash' => $hash,
+			'unique_hash' => $uniqueHash
 		);
-		Tx_Formhandler_Globals::$session->setMultiple($sessionValues);
+		$this->globals->getSession()->setMultiple($sessionValues);
 		if (!$this->settings['nodebug']) {
-			Tx_Formhandler_StaticFuncs::debugMessage('logging', array($table, implode(',', $fields)));
+			$this->utilityFuncs->debugMessage('logging', array($table, implode(',', $fields)));
 			if (strlen($GLOBALS['TYPO3_DB']->sql_error()) > 0) {
-				Tx_Formhandler_StaticFuncs::debugMessage('error', array($GLOBALS['TYPO3_DB']->sql_error()), 3);
+				$this->utilityFuncs->debugMessage('error', array($GLOBALS['TYPO3_DB']->sql_error()), 3);
 			}
 		}
+		
+		return $this->gp;
 	}
 
 }

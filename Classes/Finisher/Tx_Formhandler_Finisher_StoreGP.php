@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_StoreGP.php 46258 2011-04-06 07:44:26Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_StoreGP.php 49145 2011-06-27 13:15:48Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -69,7 +69,7 @@ class Tx_Formhandler_Finisher_StoreGP extends Tx_Formhandler_AbstractFinisher {
 		foreach ($this->gp as $key => $value) {
 			$newValues[1][$key] = $value;
 		}
-		Tx_Formhandler_Globals::$session->set('values', $newValues);
+		$this->globals->getSession()->set('values', $newValues);
 	}
 
 }

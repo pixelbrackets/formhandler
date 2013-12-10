@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_PregMatch.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_PregMatch.php 50192 2011-07-27 18:42:39Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -23,21 +23,18 @@
  */
 class Tx_Formhandler_ErrorCheck_PregMatch extends Tx_Formhandler_AbstractErrorCheck {
 
-	/**
-	 * Validates that a specified field's value matches a perl regular expression
-	 *
-	 * @param array &$check The TypoScript settings for this error check
-	 * @param string $name The field name
-	 * @param array &$gp The current GET/POST parameters
-	 * @return string The error string
-	 */
-	public function check(&$check, $name, &$gp) {
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+		$this->mandatoryParameters = array('value');
+	}
+
+	public function check() {
 		$checkFailed = '';
 
-		if (isset($gp[$name]) && strlen(trim($gp[$name])) > 0) {
-			$regex = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'value');
-			if ($regex && !preg_match($regex, $gp[$name])) {
-				$checkFailed = $this->getCheckFailed($check);
+		if (isset($this->gp[$this->formFieldName]) && strlen(trim($this->gp[$this->formFieldName])) > 0) {
+			$regex = $this->utilityFuncs->getSingle($this->settings['params'], 'value');
+			if ($regex && !preg_match($regex, $this->gp[$this->formFieldName])) {
+				$checkFailed = $this->getCheckFailed();
 			}
 		}
 		return $checkFailed;

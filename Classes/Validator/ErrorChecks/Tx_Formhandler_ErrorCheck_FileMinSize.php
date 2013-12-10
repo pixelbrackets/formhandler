@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileMinSize.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileMinSize.php 50875 2011-08-10 09:21:19Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -23,24 +23,21 @@
  */
 class Tx_Formhandler_ErrorCheck_FileMinSize extends Tx_Formhandler_AbstractErrorCheck {
 
-	/**
-	 * Validates that an uploaded file has a minimum file size
-	 *
-	 * @param array &$check The TypoScript settings for this error check
-	 * @param string $name The field name
-	 * @param array &$gp The current GET/POST parameters
-	 * @return string The error string
-	 */
-	public function check(&$check, $name, &$gp) {
+	public function init($gp, $settings) {
+		parent::init($gp, $settings);
+		$this->mandatoryParameters = array('minSize');
+	}
+
+	public function check() {
 		$checkFailed = '';
-		$minSize = Tx_Formhandler_StaticFuncs::getSingle($check['params'], 'minSize');
+		$minSize = $this->utilityFuncs->getSingle($this->settings['params'], 'minSize');
 		foreach ($_FILES as $sthg => &$files) {
-			if (strlen($files['name'][$name]) > 0 &&
+			if (strlen($files['name'][$this->formFieldName]) > 0 &&
 				$minSize &&
-				$files['size'][$name] < $minSize) {
+				$files['size'][$this->formFieldName] < $minSize) {
 
 				unset($files);
-				$checkFailed = $this->getCheckFailed($check);
+				$checkFailed = $this->getCheckFailed();
 			}
 		}
 		return $checkFailed;

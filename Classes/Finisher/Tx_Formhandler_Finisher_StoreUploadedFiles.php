@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_StoreUploadedFiles.php 46243 2011-04-05 15:17:49Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_StoreUploadedFiles.php 52414 2011-09-23 09:34:40Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -74,16 +74,16 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 	protected function moveUploadedFiles() {
 
 		$newFolder = $this->settings['finishedUploadFolder'];
-		$newFolder = Tx_Formhandler_StaticFuncs::sanitizePath($newFolder);
-		$uploadPath = Tx_Formhandler_StaticFuncs::getDocumentRoot() . $newFolder;
-		$sessionFiles = Tx_Formhandler_Globals::$session->get('files');
+		$newFolder = $this->utilityFuncs->sanitizePath($newFolder);
+		$uploadPath = $this->utilityFuncs->getDocumentRoot() . $newFolder;
+		$sessionFiles = $this->globals->getSession()->get('files');
 		if (is_array($sessionFiles) && !empty($sessionFiles) && strlen($newFolder) > 0 ) {
 			foreach ($sessionFiles as $field => $files) {
 				$this->gp[$field] = array();
 				foreach ($files as $key => $file) {
 					if ($file['uploaded_path'] != $uploadPath) {
 						$newFilename = $this->getNewFilename($file['uploaded_name']);
-						Tx_Formhandler_StaticFuncs::debugMessage(
+						$this->utilityFuncs->debugMessage(
 							'copy_file', 
 							array(
 								($file['uploaded_path'] . $file['uploaded_name']),
@@ -104,7 +104,7 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 					}
 				}
 			}
-			Tx_Formhandler_Globals::$session->set('files', $sessionFiles);
+			$this->globals->getSession()->set('files', $sessionFiles);
 		}
 	}
 
@@ -139,7 +139,7 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 					if (isset($this->settings['schemeMarkers.'][$markerName.'.']) && !strcmp($options, 'fieldValue')) {
 						$value = $this->gp[$this->settings['schemeMarkers.'][$markerName . '.']['field']];
 					} elseif (isset($this->settings['schemeMarkers.'][$markerName . '.'])) {
-						$value = Tx_Formhandler_StaticFuncs::getSingle($this->settings['schemeMarkers.'], $markerName);
+						$value = $this->utilityFuncs->getSingle($this->settings['schemeMarkers.'], $markerName);
 					}
 					$newFilename = str_replace('[' . $markerName . ']', $value, $newFilename);
 				}
@@ -148,7 +148,7 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 
 		//remove ',' from filename, would be handled as file separator 
 		$newFilename = str_replace(',', '', $newFilename);
-
+		$newFilename = $this->utilityFuncs->doFileNameReplace($newFilename);
 		$newFilename .= $fileext;
 		return $newFilename;
 	}
