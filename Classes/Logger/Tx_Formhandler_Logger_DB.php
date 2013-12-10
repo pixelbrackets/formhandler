@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Logger_DB.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Logger_DB.php 46259 2011-04-06 07:52:14Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -39,7 +39,10 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 		}
 		$fields['tstamp'] = time();
 		$fields['crdate'] = time();
-		$fields['pid'] = $GLOBALS['TSFE']->id;
+		$fields['pid'] = Tx_Formhandler_StaticFuncs::getSingle($this->settings, 'pid');
+		if (!$fields['pid']) {
+			$fields['pid'] = $GLOBALS['TSFE']->id;
+		}
 		ksort($this->gp);
 		$keys = array_keys($this->gp);
 		$serialized = serialize($this->gp);
@@ -54,13 +57,16 @@ class Tx_Formhandler_Logger_DB extends Tx_Formhandler_AbstractLogger {
 		//query the database
 		$res = $GLOBALS['TYPO3_DB']->exec_INSERTquery($table, $fields);
 		$insertedUID = $GLOBALS['TYPO3_DB']->sql_insert_id();
-		Tx_Formhandler_Session::set('inserted_uid', $insertedUID);
-		Tx_Formhandler_Session::set('inserted_tstamp', $fields['tstamp']);
-		Tx_Formhandler_Session::set('key_hash', $hash);
+		$sessionValues = array (
+			'inserted_uid' => $insertedUID,
+			'inserted_tstamp' => $fields['tstamp'],
+			'key_hash' => $hash
+		);
+		Tx_Formhandler_Globals::$session->setMultiple($sessionValues);
 		if (!$this->settings['nodebug']) {
-			Tx_Formhandler_StaticFuncs::debugMessage('logging', $table, implode(',', $fields));
+			Tx_Formhandler_StaticFuncs::debugMessage('logging', array($table, implode(',', $fields)));
 			if (strlen($GLOBALS['TYPO3_DB']->sql_error()) > 0) {
-				Tx_Formhandler_StaticFuncs::debugMessage('error', $GLOBALS['TYPO3_DB']->sql_error());
+				Tx_Formhandler_StaticFuncs::debugMessage('error', array($GLOBALS['TYPO3_DB']->sql_error()), 3);
 			}
 		}
 	}

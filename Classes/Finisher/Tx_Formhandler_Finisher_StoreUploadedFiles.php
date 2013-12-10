@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_StoreUploadedFiles.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_StoreUploadedFiles.php 46243 2011-04-05 15:17:49Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -57,9 +57,8 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 	 *
 	 * TypoScript example:
 	 *
-	 * 1. Set the temporary upload folder and set cleaning
+	 * 1. Set the temporary upload folder
 	 * <code>
-	 * plugin.Tx_Formhandler.settings.files.clearTempFilesOlderThanHours = 24
 	 * plugin.Tx_Formhandler.settings.files.tmpUploadFolder = uploads/formhandler/tmp
 	 * </code>
 	 *
@@ -77,15 +76,22 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 		$newFolder = $this->settings['finishedUploadFolder'];
 		$newFolder = Tx_Formhandler_StaticFuncs::sanitizePath($newFolder);
 		$uploadPath = Tx_Formhandler_StaticFuncs::getDocumentRoot() . $newFolder;
-		$sessionFiles = Tx_Formhandler_Session::get('files');
+		$sessionFiles = Tx_Formhandler_Globals::$session->get('files');
 		if (is_array($sessionFiles) && !empty($sessionFiles) && strlen($newFolder) > 0 ) {
 			foreach ($sessionFiles as $field => $files) {
 				$this->gp[$field] = array();
 				foreach ($files as $key => $file) {
 					if ($file['uploaded_path'] != $uploadPath) {
 						$newFilename = $this->getNewFilename($file['uploaded_name']);
-						Tx_Formhandler_StaticFuncs::debugMessage('copy_file', ($file['uploaded_path'] . $file['uploaded_name']), ($uploadPath . $newFilename));
+						Tx_Formhandler_StaticFuncs::debugMessage(
+							'copy_file', 
+							array(
+								($file['uploaded_path'] . $file['uploaded_name']),
+								($uploadPath . $newFilename)
+							)
+						);
 						copy(($file['uploaded_path'] . $file['uploaded_name']), ($uploadPath . $newFilename));
+						t3lib_div::fixPermissions($uploadPath . $newFilename);
 						unlink(($file['uploaded_path'] . $file['uploaded_name']));
 						$sessionFiles[$field][$key]['uploaded_path'] = $uploadPath;
 						$sessionFiles[$field][$key]['uploaded_name'] = $newFilename;
@@ -98,7 +104,7 @@ class Tx_Formhandler_Finisher_StoreUploadedFiles extends Tx_Formhandler_Abstract
 					}
 				}
 			}
-			Tx_Formhandler_Session::set('files', $sessionFiles);
+			Tx_Formhandler_Globals::$session->set('files', $sessionFiles);
 		}
 	}
 

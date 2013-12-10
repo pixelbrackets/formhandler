@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_IsInDBTable.php 40269 2010-11-16 15:23:54Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_IsInDBTable.php 43837 2011-02-18 15:46:46Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -45,6 +45,8 @@ class Tx_Formhandler_ErrorCheck_IsInDBTable extends Tx_Formhandler_AbstractError
 				$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery($checkField, $checkTable, $where);
 				if ($res && !$GLOBALS['TYPO3_DB']->sql_num_rows($res)) {
 					$checkFailed = $this->getCheckFailed($check);
+				} elseif (!$res) {
+					Tx_Formhandler_StaticFuncs::debugMessage('error', array($GLOBALS['TYPO3_DB']->sql_error()), 3);
 				}
 				$GLOBALS['TYPO3_DB']->sql_free_result($res);
 			}

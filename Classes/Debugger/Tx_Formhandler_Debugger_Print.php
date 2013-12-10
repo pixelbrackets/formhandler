@@ -18,39 +18,35 @@
  * A simple debugger printing the messages on the screen
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
+ * @package	Tx_Formhandler
+ * @subpackage	Debugger
  */
 class Tx_Formhandler_Debugger_Print extends Tx_Formhandler_AbstractDebugger {
 
-	/**
-	 * Prints the messages to the screen
-	 *
-	 * @return void
-	 */
 	public function outputDebugLog() {
 		$out = '';
 
 		foreach($this->debugLog as $section => $logData) {
-			$out .= $this->globals->getCObj()->wrap($section, $this->utilityFuncs->getSingle($this->settings, 'sectionHeaderWrap'));
+			$out .= Tx_Formhandler_Globals::$cObj->wrap($section, $this->settings['sectionHeaderWrap']);
 			$sectionContent = '';
 			foreach($logData as $messageData) {
 				$message = str_replace("\n", '<br />', $messageData['message']);
-				$message = $this->globals->getCObj()->wrap($message, $this->utilityFuncs->getSingle($this->settings['severityWrap.'], $messageData['severity']));
-				$sectionContent .= $this->globals->getCObj()->wrap($message, $this->settings['messageWrap']);
+				$message = Tx_Formhandler_Globals::$cObj->wrap($message, $this->settings['severityWrap.'][$messageData['severity']]);
+				$sectionContent .= Tx_Formhandler_Globals::$cObj->wrap($message, $this->settings['messageWrap']);
 				if($messageData['data']) {
-					$sectionContent .= $this->compatibilityFuncs->viewArray($messageData['data']);
+					if (t3lib_div::int_from_ver(TYPO3_branch) < t3lib_div::int_from_ver('4.5')) {
+						$sectionContent .= t3lib_div::view_array($messageData['data']);
+					} else {
+						$sectionContent .= t3lib_utility_Debug::viewArray($messageData['data']);
+					}
 					$sectionContent .= '<br />';
 				}
 			}
-			$out .= $this->globals->getCObj()->wrap($sectionContent, $this->utilityFuncs->getSingle($this->settings, 'sectionWrap'));
+			$out .= Tx_Formhandler_Globals::$cObj->wrap($sectionContent, $this->settings['sectionWrap']);
 		}
 		print $out;
 	}
 
-	/**
-	 * Sets default config for the debugger.
-	 *
-	 * @return void
-	 */
 	public function validateConfig() {
 		if(!$this->settings['sectionWrap']) {
 			$this->settings['sectionWrap'] = '<div style="border:1px solid #ccc; padding:7px; background:#dedede;">|</div>';

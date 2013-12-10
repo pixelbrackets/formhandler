@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Mail.php 40385 2010-11-17 21:29:02Z metti $
+ * $Id: Tx_Formhandler_Finisher_Mail.php 46261 2011-04-06 08:05:31Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -104,12 +104,19 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		$view->setPredefined($this->predefined);
 		$view->setComponentSettings($this->settings);
 		$templateCode = Tx_Formhandler_Globals::$templateCode;
+		if($this->settings['templateFile']) {
+			$templateCode = Tx_Formhandler_StaticFuncs::readTemplateFile(FALSE, $this->settings);
+		}
+		if($this->settings[$mode]['templateFile']) {
+			$templateCode = Tx_Formhandler_StaticFuncs::readTemplateFile(FALSE, $this->settings[$mode]);
+		}
+
 
 		$view->setTemplate($templateCode, ('EMAIL_' . strtoupper($mode) . '_' . strtoupper($suffix) . Tx_Formhandler_Globals::$templateSuffix));
 		if (!$view->hasTemplate()) {
 			$view->setTemplate($templateCode, ('EMAIL_' . strtoupper($mode) . '_' . strtoupper($suffix)));
 			if (!$view->hasTemplate()) {
-				Tx_Formhandler_StaticFuncs::debugMessage('no_mail_template', $mode, $suffix);
+				Tx_Formhandler_StaticFuncs::debugMessage('no_mail_template', array($mode, $suffix), 2);
 			}
 		}
 
@@ -125,7 +132,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	protected function sendMail($type) {
 		$doSend = TRUE;
 		if (intval($this->settings[$type]['disable']) === 1) {
-			Tx_Formhandler_StaticFuncs::debugMessage('mail_disabled', $type);
+			Tx_Formhandler_StaticFuncs::debugMessage('mail_disabled', array($type));
 			$doSend = FALSE;
 		} 
 
@@ -243,7 +250,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 				if ($tmphandle) {
 					fwrite($tmphandle, $template['html']);
 					fclose($tmphandle);
-					Tx_Formhandler_StaticFuncs::debugMessage('adding_html', $template['html']);
+					Tx_Formhandler_StaticFuncs::debugMessage('adding_html', array(), 1, array($template['html']));
 					$emailObj->addAttachment($tmphtml);
 				}
 			} else {
@@ -260,7 +267,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			}
 		}
 		if ($mailSettings['attachPDF']) {
-			Tx_Formhandler_StaticFuncs::debugMessage('adding_pdf', $mailSettings['attachPDF']);
+			Tx_Formhandler_StaticFuncs::debugMessage('adding_pdf', array(), 1, array($mailSettings['attachPDF']));
 			$emailObj->addAttachment($mailSettings['attachPDF']);
 		}
 
@@ -279,26 +286,24 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		foreach ($mailSettings['to_email'] as $idx => $mailto) {
 			$sent = FALSE;
 			if ($count < $max) {
-				if (strstr($mailto, '@') && !preg_match("/\r/i", $mailto) && !preg_match("/\n/i", $mailto)) {
-					if ($doSend) {
-						$sent = $emailObj->send($mailto);
-					}
+				if (strpos($mailto, '@') && $doSend) {
+					$sent = $emailObj->send($mailto);
 				}
 				$count++;
 			}
 			if ($sent) {
-				Tx_Formhandler_StaticFuncs::debugMessage('mail_sent', $mailto);
+				Tx_Formhandler_StaticFuncs::debugMessage('mail_sent', array($mailto));
 			} else {
-				Tx_Formhandler_StaticFuncs::debugMessage('mail_not_sent',$mailto);
+				Tx_Formhandler_StaticFuncs::debugMessage('mail_not_sent', array($mailto), 2);
 			}
-			Tx_Formhandler_StaticFuncs::debugMessage('mail_subject', $emailObj->getSubject());
-			Tx_Formhandler_StaticFuncs::debugMessage('mail_sender', $emailObj->getSender());
-			Tx_Formhandler_StaticFuncs::debugMessage('mail_replyto', $emailObj->getReplyTo());
-			Tx_Formhandler_StaticFuncs::debugMessage('mail_returnpath', $emailObj->returnPath);
-			Tx_Formhandler_StaticFuncs::debugMessage('mail_cc', implode('<br />', $emailObj->getCc()));
-			Tx_Formhandler_StaticFuncs::debugMessage('mail_bcc', implode('<br />', $emailObj->getBcc()));
-			Tx_Formhandler_StaticFuncs::debugMessage('mail_plain', $template['plain']);
-			Tx_Formhandler_StaticFuncs::debugMessage('mail_html', $template['html']);
+			Tx_Formhandler_StaticFuncs::debugMessage('mail_subject', array($emailObj->getSubject()));
+			Tx_Formhandler_StaticFuncs::debugMessage('mail_sender', array($emailObj->getSender()));
+			Tx_Formhandler_StaticFuncs::debugMessage('mail_replyto', array($emailObj->getReplyTo()));
+			Tx_Formhandler_StaticFuncs::debugMessage('mail_returnpath', array($emailObj->returnPath));
+			Tx_Formhandler_StaticFuncs::debugMessage('mail_cc', array(implode('<br />', $emailObj->getCc())));
+			Tx_Formhandler_StaticFuncs::debugMessage('mail_bcc', array(implode('<br />', $emailObj->getBcc())));
+			Tx_Formhandler_StaticFuncs::debugMessage('mail_plain', array(), 1, array($template['plain']));
+			Tx_Formhandler_StaticFuncs::debugMessage('mail_html', array(), 1, array($template['html']));
 		}
 		if ($tmphtml) {
 			unlink($tmphtml);
@@ -396,7 +401,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		} elseif ($settings[$key]) {
 			$files = t3lib_div::trimExplode(',', $settings[$key]);
 			$parsed = array();
-			$sessionFiles = Tx_Formhandler_Session::get('files');
+			$sessionFiles = Tx_Formhandler_Globals::$session->get('files');
 			foreach ($files as $idx => $file) {
 				if (isset($sessionFiles[$file])) {
 					foreach ($sessionFiles[$file] as $subIdx => $uploadedFile) {
