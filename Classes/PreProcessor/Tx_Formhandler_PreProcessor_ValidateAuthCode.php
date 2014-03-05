@@ -46,7 +46,7 @@ class Tx_Formhandler_PreProcessor_ValidateAuthCode extends Tx_Formhandler_Abstra
 				if(!in_array($table, $existingTables)) {
 					$this->utilityFuncs->throwException('validateauthcode_insufficient_params');
 				}
-
+				
 				//Check if uidField is valid
 				$existingFields = array_keys($GLOBALS['TYPO3_DB']->admin_get_fields($table));
 				if(!in_array($uidField, $existingFields)) {
@@ -63,7 +63,16 @@ class Tx_Formhandler_PreProcessor_ValidateAuthCode extends Tx_Formhandler_Abstra
 				if($this->settings['selectFields']) {
 					$selectFields = $this->utilityFuncs->getSingle($this->settings, 'selectFields');
 				}
-				$query = $GLOBALS['TYPO3_DB']->SELECTquery($selectFields, $table, $uidField . '=' . $uid . ' AND ' . $hiddenField . '=1' . $this->cObj->enableFields($table, 1));
+				$hiddenStatusValue = 1;
+				if(isset($this->settings['hiddenStatusValue'])) {
+					$hiddenStatusValue = $this->utilityFuncs->getSingle($this->settings, 'hiddenStatusValue');
+				}
+				$hiddenStatusValue = $GLOBALS['TYPO3_DB']->fullQuoteStr($hiddenStatusValue, $table);
+				$enableFieldsWhere = '';
+				if(intval($this->utilityFuncs->getSingle($this->settings, 'showDeleted')) !== 1) {
+					$enableFieldsWhere = $this->cObj->enableFields($table, 1);
+				}
+				$query = $GLOBALS['TYPO3_DB']->SELECTquery($selectFields, $table, $uidField . '=' . $uid . ' AND ' . $hiddenField . '=' . $hiddenStatusValue . $enableFieldsWhere);
 				$this->utilityFuncs->debugMessage('sql_request', array($query));
 				$res = $GLOBALS['TYPO3_DB']->sql_query($query);
 				if ($GLOBALS['TYPO3_DB']->sql_error()) {
@@ -83,8 +92,11 @@ class Tx_Formhandler_PreProcessor_ValidateAuthCode extends Tx_Formhandler_Abstra
 				if($localAuthCode !== $authCode) {
 					$this->utilityFuncs->throwException('validateauthcode_invalid_auth_code');
 				}
-
-				$res = $GLOBALS['TYPO3_DB']->exec_UPDATEquery($table, $uidField . '=' . $uid, array($hiddenField => 0));
+				$activeStatusValue = 0;
+				if(isset($this->settings['activeStatusValue'])) {
+					$activeStatusValue = $this->utilityFuncs->getSingle($this->settings, 'activeStatusValue');
+				}
+				$res = $GLOBALS['TYPO3_DB']->exec_UPDATEquery($table, $uidField . '=' . $uid, array($hiddenField => $activeStatusValue));
 				if(!$res) {
 					$this->utilityFuncs->throwException('validateauthcode_update_failed');
 				}

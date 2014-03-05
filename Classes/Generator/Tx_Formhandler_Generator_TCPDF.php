@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_TCPDF.php 63256 2012-06-08 08:09:42Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Generator_TCPDF.php 75510 2013-05-24 13:06:47Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -62,6 +62,7 @@ class Tx_Formhandler_Generator_TCPDF {
 
 		//init pdf object
 		$this->pdf = $this->componentManager->getComponent('Tx_Formhandler_Template_TCPDF');
+		$this->pdf->SetAutoPageBreak(TRUE, PDF_MARGIN_BOTTOM);
 		$addedOneRecord = FALSE;
 
 		//for all records,
@@ -79,7 +80,6 @@ class Tx_Formhandler_Generator_TCPDF {
 			}
 			if ($valid) {
 				$addedOneRecord = TRUE;
-				$this->pdf->AliasNbPages();
 				$this->pdf->AddPage();
 				$this->pdf->SetFont('Helvetica', '', 12);
 				$standardWidth = 100;
@@ -162,7 +162,6 @@ class Tx_Formhandler_Generator_TCPDF {
 
 		//if no valid record was found, render an error message
 		if (!$addedOneRecord) {
-			$this->pdf->AliasNbPages();
 			$this->pdf->AddPage();
 			$this->pdf->SetFont('Helvetica', '', 12);
 			$this->pdf->Cell(300, 100, 'No valid records found! Try to select more fields to export!', 0, 0, 'L');

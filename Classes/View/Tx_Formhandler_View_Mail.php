@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Mail.php 58488 2012-02-25 18:26:23Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Mail.php 75490 2013-05-23 15:21:08Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -51,6 +51,10 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 		if ($componentSettings[$this->currentMailSettings['mode']][$this->currentMailSettings['suffix'] . '.']['arrayValueSeparator']) {
 			$this->settings['arrayValueSeparator'] = $componentSettings[$this->currentMailSettings['mode']][$this->currentMailSettings['suffix'] . '.']['arrayValueSeparator'];
 			$this->settings['arrayValueSeparator.'] = $componentSettings[$this->currentMailSettings['mode']][$this->currentMailSettings['suffix'] . '.']['arrayValueSeparator.'];
+		}
+		$this->disableEncodingFields = array();
+		if($this->settings['disableEncodingFields']) {
+			$this->disableEncodingFields = explode(',', $this->utilityFuncs->getSingle($this->settings, 'disableEncodingFields'));
 		}
 
 		/*

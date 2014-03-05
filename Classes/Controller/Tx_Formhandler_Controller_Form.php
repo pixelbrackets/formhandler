@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Controller_Form.php 69560 2013-01-07 08:42:21Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Controller_Form.php 84097 2014-03-03 11:39:33Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -809,7 +809,11 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 										$uploadedUrl = str_replace('//', '/', $uploadedUrl);
 										$tmp['uploaded_url'] = $uploadedUrl;
 										$tmp['size'] = $files['size'][$field][$idx];
-										$tmp['type'] = $files['type'][$field][$idx];
+										if(is_array($files['type'][$field][$idx])) {
+											$tmp['type'] = $files['type'][$field][$idx];
+										} else {
+											$tmp['type'] = $files['type'][$field];
+										}
 										if (!is_array($tempFiles[$field]) && strlen($field) > 0) {
 											$tempFiles[$field] = array();
 										}
@@ -830,7 +834,6 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 				}
 			}
 		}
-
 		$this->globals->getSession()->set('files', $tempFiles);
 		$this->utilityFuncs->debugMessage('Files:', array(), 1, (array)$tempFiles);
 	}
@@ -1032,15 +1035,19 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 				foreach ($andConditions as $subSubIdx => $andCondition) {
 					if (strstr($andCondition, '!=')) {
 						list($field, $value) = t3lib_div::trimExplode('!=', $andCondition);
+						$value = $this->utilityFuncs->parseOperand($value, $this->gp);
 						$result = ($this->utilityFuncs->getGlobal($field, $this->gp) !== $value);
 					} elseif (strstr($andCondition, '=')) {
 						list($field, $value) = t3lib_div::trimExplode('=', $andCondition);
+						$value = $this->utilityFuncs->parseOperand($value, $this->gp);
 						$result = ($this->utilityFuncs->getGlobal($field, $this->gp) === $value);
 					} elseif (strstr($andCondition, '>')) {
 						list($field, $value) = t3lib_div::trimExplode('>', $andCondition);
+						$value = $this->utilityFuncs->parseOperand($value, $this->gp);
 						$result = ($this->utilityFuncs->getGlobal($field, $this->gp) > $value);
 					} elseif (strstr($andCondition, '<')) {
 						list($field, $value) = t3lib_div::trimExplode('<', $andCondition);
+						$value = $this->utilityFuncs->parseOperand($value, $this->gp);
 						$result = ($this->utilityFuncs->getGlobal($field, $this->gp) < $value);
 					} else {
 						$field = $andCondition;
@@ -1049,21 +1056,20 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 						$rootKey = trim($keys[0]);
 						$value = $this->gp[$rootKey];
 
-						$result = isset($this->gp[$rootKey]);
+						$result = (isset($this->gp[$rootKey]) && !empty($this->gp[$rootKey]));
 						for ($i = 1; $i < $numberOfLevels && isset($value); $i++) {
 							$currentKey = trim($keys[$i]);
 							if (is_object($value)) {
 								$value = $value->$currentKey;
-								$result = isset($value->$currentKey);
+								$result = (isset($value->$currentKey) && !empty($value->$currentKey));
 							} elseif (is_array($value)) {
 								$value = $value[$currentKey];
-								$result = isset($value[$currentKey]);
+								$result = (isset($value[$currentKey]) && !empty($value[$currentKey]));
 							} else {
 								$result = FALSE;
 							}
 						}
 					}
-					
 					$results[] = ($result ? 'TRUE' : 'FALSE');
 				}
 				$orConditions[] = '(' . implode(' && ', $results) . ')';
@@ -1075,12 +1081,12 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			if ($evaluation) {
 				$newSettings = $conditionSettings['isTrue.'];
 				if (is_array($newSettings)) {
-					$this->settings = t3lib_div::array_merge_recursive_overrule($this->settings, $newSettings);
+					$this->settings = $this->utilityFuncs->mergeConfiguration($this->settings, $newSettings);
 				}
 			} else {
 				$newSettings = $conditionSettings['else.'];
 				if (is_array($newSettings)) {
-					$this->settings = t3lib_div::array_merge_recursive_overrule($this->settings, $newSettings);
+					$this->settings = $this->utilityFuncs->mergeConfiguration($this->settings, $newSettings);
 				}
 			}
 		
@@ -1314,7 +1320,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 
 		//merge settings with specific settings for current step
 		if (isset($this->settings[$step . '.']) && is_array($this->settings[$step . '.'])) {
-			$this->settings = t3lib_div::array_merge_recursive_overrule($this->settings, $this->settings[$step . '.']);
+			$this->settings = $this->utilityFuncs->mergeConfiguration($this->settings, $this->settings[$step . '.']);
 		}
 		$this->globals->getSession()->set('settings', $this->settings);
 	}
@@ -1428,22 +1434,30 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	protected function addCSS() {
 		$cssFile = $this->settings['cssFile'];
 		$cssFiles = array();
-		if ($this->settings['cssFile.']) {
+		if (!$this->utilityFuncs->isValidCObject($cssFile) 
+			&& is_array($this->settings['cssFile.']) 
+			&& !isset($this->settings['cssFile.']['media'])) {
+
 			foreach ($this->settings['cssFile.'] as $idx => $file) {
 				if(strpos($idx, '.') === FALSE) {
 					$file = $this->utilityFuncs->getSingle($this->settings['cssFile.'], $idx);
-					$cssFiles[] = $file;
+					$fileOptions = $this->settings['cssFile.'][$idx . '.'];
+					$fileOptions['file'] = $file;
+					$cssFiles[] = $fileOptions;
 				}
 			}
 		} else {
-			$cssFiles[] = $cssFile;
+			$fileOptions = $this->settings['cssFile.'];
+			$fileOptions['file'] = $cssFile;
+			$cssFiles[] = $fileOptions;
 		}
-		foreach ($cssFiles as $idx => $file) {
+		
+		foreach ($cssFiles as $idx => $fileOptions) {
+			$file = $fileOptions['file'];
 			if(strlen(trim($file)) > 0) {
 				$file = $this->utilityFuncs->resolveRelPathFromSiteRoot($file);
 				if(file_exists($file)) {
-					$GLOBALS['TSFE']->additionalHeaderData[$this->configuration->getPackageKeyLowercase()] .=
-						'<link rel="stylesheet" href="' . $file . '" type="text/css" media="screen" />' . "\n";
+					$this->compatibilityFuncs->addCssFile($file, $fileOptions);
 				}
 			}
 		}
@@ -1461,18 +1475,22 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			foreach ($this->settings['jsFile.'] as $idx => $file) {
 				if(strpos($idx, '.') === FALSE) {
 					$file = $this->utilityFuncs->getSingle($this->settings['jsFile.'], $idx);
-					$jsFiles[] = $file;
+					$fileOptions = $this->settings['jsFile.'][$idx . '.'];
+					$fileOptions['file'] = $file;
+					$jsFiles[] = $fileOptions;
 				}
 			}
 		} else {
-			$jsFiles[] = $jsFile;
+			$fileOptions = $this->settings['jsFile.'];
+			$fileOptions['file'] = $jsFile;
+			$jsFiles[] = $fileOptions;
 		}
-		foreach ($jsFiles as $idx => $file) {
+		foreach ($jsFiles as $idx => $fileOptions) {
+			$file = $fileOptions['file'];
 			if(strlen(trim($file)) > 0) {
 				$file = $this->utilityFuncs->resolveRelPathFromSiteRoot($file);
 				if(file_exists($file)) {
-					$GLOBALS['TSFE']->additionalHeaderData[$this->configuration->getPackageKeyLowercase()] .=
-						'<script type="text/javascript" src="' . $file . '"></script>' . "\n";
+					$this->compatibilityFuncs->addJsFile($file, $fileOptions);
 				}
 			}
 		}

@@ -29,20 +29,30 @@ class Tx_Formhandler_Finisher_GenerateAuthCode extends Tx_Formhandler_AbstractFi
 	 */
 	public function process() {
 		$firstInsertInfo = array();
-		if (is_array($this->gp['saveDB'])) {
-			if (isset($this->settings['table'])) {
-				$table = $this->utilityFuncs->getSingle($this->settings, 'table');
-				foreach ($this->gp['saveDB'] as $idx => $insertInfo) {
-					if ($insertInfo['table'] === $table) {
-						$firstInsertInfo = $insertInfo;
-						break;
-					}
-				}
+		if($this->utilityFuncs->getSingle($this->settings, 'uid')) {
+			$uidField = $this->utilityFuncs->getSingle($this->settings, 'uidField');
+			if(!$uidField) {
+				$uidField = 'uid';
 			}
-			if (empty($firstInsertInfo)) {
-				reset($this->gp['saveDB']);
-				$firstInsertInfo = current($this->gp['saveDB']);
-			}
+			$firstInsertInfo = array(
+				'table' => $this->utilityFuncs->getSingle($this->settings, 'table'),
+				'uidField' => $uidField,
+				'uid' => $this->utilityFuncs->getSingle($this->settings, 'uid')
+			);
+ 		} elseif (is_array($this->gp['saveDB'])) {
+ 			if (isset($this->settings['table'])) {
+ 				$table = $this->utilityFuncs->getSingle($this->settings, 'table');
+ 				foreach ($this->gp['saveDB'] as $idx => $insertInfo) {
+ 					if ($insertInfo['table'] === $table) {
+ 						$firstInsertInfo = $insertInfo;
+ 						break;
+ 					}
+ 				}
+ 			}
+ 			if (empty($firstInsertInfo)) {
+ 				reset($this->gp['saveDB']);
+ 				$firstInsertInfo = current($this->gp['saveDB']);
+ 			}
  		}
 		$table = $firstInsertInfo['table'];
 		$uid = $GLOBALS['TYPO3_DB']->fullQuoteStr($firstInsertInfo['uid'], $table);
@@ -81,6 +91,9 @@ class Tx_Formhandler_Finisher_GenerateAuthCode extends Tx_Formhandler_AbstractFi
 				if (!empty($formValuesPrefix)) {
 					$paramsArray = array($formValuesPrefix => $paramsArray);
 				}
+				
+				//Add no_cache parameter to make sure validating the auth code is done everytime.
+				$paramsArray['no_cache'] = 1;
 
 				// create the link, using typolink function, use baseUrl if set, else use t3lib_div::getIndpEnv('TYPO3_SITE_URL')
 				$url = $this->cObj->getTypoLink_URL($authCodePage, $paramsArray);

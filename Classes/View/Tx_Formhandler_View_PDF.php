@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_PDF.php 58488 2012-02-25 18:26:23Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_PDF.php 79504 2013-09-03 08:36:30Z reinhardfuehricht $
  *                                                                       */
 
 /**
@@ -60,6 +60,10 @@ class Tx_Formhandler_View_PDF extends Tx_Formhandler_View_Form {
 	}
 
 	protected function fillValueMarkers() {
+		$this->disableEncodingFields = array();
+		if($this->settings['disableEncodingFields']) {
+			$this->disableEncodingFields = explode(',', $this->utilityFuncs->getSingle($this->settings, 'disableEncodingFields'));
+		}
 		$markers = $this->getValueMarkers($this->gp);
 
 		$markers = $this->sanitizeMarkers($markers);

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_Date.php 70472 2013-01-30 09:51:59Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_Date.php 82019 2013-12-17 10:02:06Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -35,6 +35,7 @@ class Tx_Formhandler_ErrorCheck_Date extends Tx_Formhandler_AbstractErrorCheck {
 
 			// find out separator
 			$pattern = $this->utilityFuncs->getSingle($this->settings['params'], 'pattern');
+			$upperCaseYearPattern = str_replace('y', 'Y', $this->utilityFuncs->normalizeDatePattern($pattern));
 			preg_match('/^[d|m|y]*(.)[d|m|y]*/i', $pattern, $res);
 			$sep = $res[1];
 
@@ -53,6 +54,8 @@ class Tx_Formhandler_ErrorCheck_Date extends Tx_Formhandler_AbstractErrorCheck {
 			} elseif (!checkdate($dateCheck[$pos2], $dateCheck[$pos1], $dateCheck[$pos3])) {
 				$checkFailed = $this->getCheckFailed();
 			} elseif (strlen($dateCheck[$pos3]) !== 4) {
+				$checkFailed = $this->getCheckFailed();
+			} elseif (DateTime::createFromFormat($upperCaseYearPattern, $this->gp[$this->formFieldName]) === FALSE) {
 				$checkFailed = $this->getCheckFailed();
 			}
 		}

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_CSV.php 66171 2012-09-19 15:00:13Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Generator_CSV.php 74632 2013-04-19 07:18:46Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -57,7 +57,7 @@ class Tx_Formhandler_Generator_CSV {
 	 * @see Tx_Formhandler_Controller_Backend::generateCSV()
 	 * @return void
 	 */
-	public function generateModuleCSV($records, $exportParams = array(), $delimiter = ',', $enclosure = '"', $encoding = 'UTF-8') {
+	public function generateModuleCSV($records, $exportParams = array(), $delimiter = ',', $enclosure = '"', $encoding = 'utf-8') {
 
 		$data = array();
 		$dataSorted = array();
@@ -113,10 +113,10 @@ class Tx_Formhandler_Generator_CSV {
 		$csv = new parseCSV();
 		$csv->delimiter = $csv->output_delimiter = $delimiter;
 		$csv->enclosure = $enclosure;
-		$csv->input_encoding = $this->getInputCharset();
-		$csv->output_encoding = $encoding;
+		$csv->input_encoding = strtolower($this->getInputCharset());
+		$csv->output_encoding = strtolower($encoding);
 		$csv->convert_encoding = FALSE;
-		if(strtolower($csv->input_encoding) !== strtolower($csv->output_encoding)) {
+		if($csv->input_encoding !== $csv->output_encoding) {
 			$csv->convert_encoding = TRUE;
 		}
 		$csv->output('formhandler.csv', $data, $exportParams);

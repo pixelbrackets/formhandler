@@ -39,8 +39,7 @@ class Tx_Formhandler_Generator_WebkitPdf extends Tx_Formhandler_AbstractGenerato
 			}
 			$config = $this->readWebkitPdfConf();
 			$config['fileOnly'] = 1;
-			$config['urls']['1'] = $url;
-
+			$config['urls.'] = $url;
 			if (!class_exists('tx_webkitpdf_pi1')) {
 				require_once(t3lib_extMgm::extPath('webkitpdf') . 'pi1/class.tx_webkitpdf_pi1.php');
 			}
@@ -84,7 +83,7 @@ class Tx_Formhandler_Generator_WebkitPdf extends Tx_Formhandler_AbstractGenerato
 		$params = $this->getDefaultLinkParams();
 		$componentParams = $this->getComponentLinkParams($linkGP);
 		if (is_array($componentParams)) {
-			$params = t3lib_div::array_merge_recursive_overrule($params, $componentParams);
+			$params = $this->utilityFuncs->mergeConfiguration($params, $componentParams);
 		}
 		$text = $this->getLinkText();
 		$this->url = $this->utilityFuncs->getHostname() . $this->cObj->getTypolink_URL($GLOBALS['TSFE']->id, $params);

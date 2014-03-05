@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Mail.php 72301 2013-03-06 09:57:27Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Mail.php 80204 2013-09-30 12:51:46Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -177,12 +177,12 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 
 		$cc = $mailSettings['cc_email'];
 		if (!is_array($cc)) {
-			$cc = array($cc);
+			$cc = t3lib_div::trimExplode(',', $cc);
 		}
 
 		$ccName = $mailSettings['cc_name'];
 		if (!is_array($ccName)) {
-			$ccName = array($ccName);
+			$ccName = t3lib_div::trimExplode(',', $ccName);
 		}
 		foreach ($cc as $key => $email) {
 			$name = '';
@@ -196,12 +196,12 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 
 		$bcc = $mailSettings['bcc_email'];
 		if (!is_array($bcc)) {
-			$bcc = array($bcc);
+			$bcc = t3lib_div::trimExplode(',', $bcc);
 		}
 
 		$bccName = $mailSettings['bcc_name'];
 		if (!is_array($bccName)) {
-			$bccName = array($bccName);
+			$bccName = t3lib_div::trimExplode(',', $bccName);
 		}
 		foreach ($bcc as $key => $email) {
 			$name = '';
@@ -256,7 +256,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		}
 
 		if (!is_array($mailSettings['attachment'])) {
-			$mailSettings['attachment'] = array($mailSettings['attachment']);
+			$mailSettings['attachment'] = t3lib_div::trimExplode(',', $mailSettings['attachment']);
 		}
 		foreach ($mailSettings['attachment'] as $idx => $attachment) {
 			if (strlen($attachment) > 0 && @file_exists($attachment)) {
@@ -280,7 +280,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			$max = 2;
 		}
 		if (!is_array($mailSettings['to_email'])) {
-			$mailSettings['to_email'] = array($mailSettings['to_email']);
+			$mailSettings['to_email'] = t3lib_div::trimExplode(',', $mailSettings['to_email']);
 		}
 		reset($mailSettings['to_email']);
 
@@ -324,15 +324,19 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	 * @param string $sep
 	 * @return array
 	 */
-	private function explodeList($list, $sep = ',') {
-		$items = t3lib_div::trimExplode($sep, $list);
-		$splitArray = array();
-		foreach ($items as $idx => $item) {
-			if (isset($this->gp[$item])) {
-				array_push($splitArray, $this->gp[$item]);
-			} else {
-				array_push($splitArray, $item);
+	protected function explodeList($list, $sep = ',') {
+		if(!is_array($list)) {
+			$items = t3lib_div::trimExplode($sep, $list);
+			$splitArray = array();
+			foreach ($items as $idx => $item) {
+				if (isset($this->gp[$item])) {
+					array_push($splitArray, $this->gp[$item]);
+				} else {
+					array_push($splitArray, $item);
+				}
 			}
+		} else {
+			$splitArray = $list;
 		}
 		return $splitArray;
 	}
@@ -343,7 +347,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	 * @param string $value
 	 * @return string
 	 */
-	private function parseSettingValue($value) {
+	protected function parseSettingValue($value) {
 		if (isset($this->gp[$value])) {
 			$parsed = $this->gp[$value];
 		} else {
@@ -361,7 +365,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	 * @param string $key The key to parse in the settings array
 	 * @return string
 	 */
-	private function parseValue($settings,$type,$key) {
+	protected function parseValue($settings,$type,$key) {
 		if (isset($this->emailSettings[$type][$key])) {
 			$parsed = $this->parseSettingValue($this->emailSettings[$type][$key]);
 		} else if (isset($settings[$key . '.']) && is_array($settings[$key . '.'])) {
@@ -382,11 +386,11 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	 * @param string $key The key to parse in the settings array
 	 * @return string|array
 	 */
-	private function parseList($settings, $type, $key) {
+	protected function parseList($settings, $type, $key) {
 		if (isset($this->emailSettings[$type][$key])) {
 			$parsed = $this->explodeList($this->emailSettings[$type][$key]);
 		} elseif (isset($settings[$key . '.']) && is_array($settings[$key . '.'])) {
-			$parsed = $this->utilityFuncs->getSingle($settings, $key);
+			$parsed = $parsed = $this->explodeList($this->utilityFuncs->getSingle($settings, $key));
 		} else {
 			$parsed = $this->explodeList($settings[$key]);
 		}
@@ -401,24 +405,25 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	 * @param string $key The key to parse in the settings array
 	 * @return string
 	 */
-	private function parseFilesList($settings ,$type, $key) {
+	protected function parseFilesList($settings ,$type, $key) {
+		$files = array();
 		if (isset($settings[$key . '.']) && is_array($settings[$key . '.'])) {
-			$parsed = $this->utilityFuncs->getSingle($settings, $key);
-			$parsed = t3lib_div::trimExplode(',', $parsed);
+			$files = $this->utilityFuncs->getSingle($settings, $key);
+			$files = t3lib_div::trimExplode(',', $parsed);
 		} elseif ($settings[$key]) {
 			$files = t3lib_div::trimExplode(',', $settings[$key]);
-			$parsed = array();
-			$sessionFiles = $this->globals->getSession()->get('files');
-			foreach ($files as $idx => $file) {
-				if (isset($sessionFiles[$file])) {
-					foreach ($sessionFiles[$file] as $subIdx => $uploadedFile) {
-						array_push($parsed, $uploadedFile['uploaded_path'] . $uploadedFile['uploaded_name']);
-					}
-				} elseif(file_exists($file)) {
-					array_push($parsed, $file);
-				} elseif(strlen($file) > 0) {
-					$this->utilityFuncs->debugMessage('attachment_not_found', array($file), 2);
+		}
+		$parsed = array();
+		$sessionFiles = $this->globals->getSession()->get('files');
+		foreach ($files as $idx => $file) {
+			if (isset($sessionFiles[$file])) {
+				foreach ($sessionFiles[$file] as $subIdx => $uploadedFile) {
+					array_push($parsed, $uploadedFile['uploaded_path'] . $uploadedFile['uploaded_name']);
 				}
+			} elseif(file_exists($file)) {
+				array_push($parsed, $file);
+			} elseif(strlen($file) > 0) {
+				$this->utilityFuncs->debugMessage('attachment_not_found', array($file), 2);
 			}
 		}
 		return $parsed;
@@ -435,7 +440,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			if (isset($value) && is_array($value)) {
 				$this->fillLangMarkersInSettings($value);
 			} else {
-				$langMarkers = $this->utilityFuncs->getFilledLangMarkers($value, $this->langFile);
+				$langMarkers = $this->utilityFuncs->getFilledLangMarkers($value, $this->globals->getLangFiles());
 				if (!empty($langMarkers)) {
 					$value = $this->cObj->substituteMarkerArray($value, $langMarkers);
 				}
@@ -524,7 +529,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	 * @param array $optionsToParse Array containing all option names to parse.
 	 * @return array The parsed email settings
 	 */
-	private function parseEmailSettingsByType($currentSettings, $type, $optionsToParse = array()) {
+	protected function parseEmailSettingsByType($currentSettings, $type, $optionsToParse = array()) {
 		$typeLower = strtolower($type);
 		$typeUpper = strtoupper($type);
 		$section = 'sEMAIL' . $typeUpper;
@@ -569,7 +574,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 								if ($generatorClass) {
 									$generator = $this->componentManager->getComponent($generatorClass);
 									$generator->init($this->gp, $options['config.']);
-									$generator->getLink();
+									$generator->getLink(array());
 									$file = $generator->process();
 									$emailSettings['attachGeneratedFiles'] .= $file . ',';
 								}

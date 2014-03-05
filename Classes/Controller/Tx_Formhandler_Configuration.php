@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Configuration.php 57892 2012-02-14 18:19:52Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Configuration.php 76743 2013-06-26 08:13:51Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -50,7 +50,7 @@ class Tx_Formhandler_Configuration implements ArrayAccess {
 				$this->utilityFuncs->throwException('missing_config');
 			}
 			if (is_array($this->globals->getOverrideSettings())) {
-				$this->setup = t3lib_div::array_merge_recursive_overrule($this->setup, $this->globals->getOverrideSettings());
+				$this->setup = $this->utilityFuncs->mergeConfiguration($this->setup, $this->globals->getOverrideSettings());
 			}
 		}
 	}
@@ -64,7 +64,7 @@ class Tx_Formhandler_Configuration implements ArrayAccess {
 	public function merge($setup) {
 		if (isset($setup) && is_array($setup)) {
 			$settings = $this->setup['settings.'];
-			$settings = t3lib_div::array_merge_recursive_overrule($settings, $setup);
+			$settings = $this->utilityFuncs->mergeConfiguration($settings, $setup);
 			$this->setup['settings.'] = $settings;
 		}
 	}

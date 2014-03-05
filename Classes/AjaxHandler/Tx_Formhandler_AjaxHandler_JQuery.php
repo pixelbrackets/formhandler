@@ -110,6 +110,15 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 		}
 		$ajaxSubmit = $this->utilityFuncs->getSingle($settings['ajax.']['config.'], 'ajaxSubmit');
 		if(intval($ajaxSubmit) === 1) {
+			$ajaxSubmitCallback = $this->utilityFuncs->getSingle($settings['ajax.']['config.'], 'ajaxSubmitCallback');
+			$ajaxSubmitCallbackJS = '';
+			if(strlen($ajaxSubmitCallback) > 0) {
+				$ajaxSubmitCallbackJS = '
+					if (typeof(' . $ajaxSubmitCallback . ') == \'function\') {
+					' . $ajaxSubmitCallback . '(data, textStatus);
+					}
+				';
+			}
 			$js .= '
 			function submitButtonClick(el) {
 				' . $this->jQueryAlias . '("' . $this->submitButtonSelector . '").attr("disabled", "disabled");
@@ -124,7 +133,7 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 			$url = $this->utilityFuncs->getAjaxUrl($params);
 			$js .= '	
 				var requestURL = "' . $url . '";
-				var postData = form.serialize() + "&" + ' . $this->jQueryAlias . '(this).attr("name") + "=submit";
+				var postData = form.serialize() + "&" + el(this).attr("name") + "=submit";
 				container.find(".loading_ajax-submit").show();
 				jQuery.ajax({
 					type: "post",
@@ -136,22 +145,28 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 							window.location.href = data.redirect;
 						} else {
 							form.closest(".Tx-Formhandler").replaceWith(data.form);
-							' . $this->jQueryAlias . '("' . $this->submitButtonSelector . '").on("click", function() {
+							' . $this->jQueryAlias . '("' . $this->submitButtonSelector . '").on("click", function(e) {
+								e.preventDefault();
 								submitButtonClick(' . $this->jQueryAlias . '(this));
 							});
-							' . $this->jQueryAlias . '("' . $this->formSelector . '").on("submit", function() {
+							' . $this->jQueryAlias . '("' . $this->formSelector . '").on("submit", function(e) {
+								e.preventDefault();
 								return false;
 							});
+							attachValidationEvents();
+							' . $ajaxSubmitCallbackJS . '
 						}
 					}
 				});
 				return false;
 			}
 
-			' . $this->jQueryAlias . '("' . $this->formSelector . '").on("submit", function() {
+			' . $this->jQueryAlias . '("' . $this->formSelector . '").on("submit", function(e) {
+				e.preventDefault();
 				return false;
 			});
-			' . $this->jQueryAlias . '("' . $this->submitButtonSelector . '").on("click", function() {
+			' . $this->jQueryAlias . '("' . $this->submitButtonSelector . '").on("click", function(e) {
+				e.preventDefault();
 				submitButtonClick(' . $this->jQueryAlias . '(this));
 			});';
 		}
@@ -303,8 +318,11 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 		if(strlen($fieldJS) > 0) {
 			$fieldJS = '
 				<script type="text/javascript">
-				' . $this->jQueryAlias . '(function() {
+				function attachValidationEvents() {
 					' . $fieldJS . '
+				}
+				' . $this->jQueryAlias . '(function() {
+					attachValidationEvents();
 				});
 				</script>
 			';
@@ -346,7 +364,9 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 	}
 
 	protected function addJS($js) {
-		if($this->jsPosition === 'footer') {
+		if($this->jsPosition === 'inline') {
+			$GLOBALS['TSFE']->content .= $js;
+		} elseif($this->jsPosition === 'footer') {
 			$GLOBALS['TSFE']->additionalFooterData['Tx_Formhandler_AjaxHandler_Jquery_' . $this->globals->getCObj()->data['uid']] .= $js;
 		} else {
 			$GLOBALS['TSFE']->additionalHeaderData['Tx_Formhandler_AjaxHandler_Jquery_' . $this->globals->getCObj()->data['uid']] .= $js;

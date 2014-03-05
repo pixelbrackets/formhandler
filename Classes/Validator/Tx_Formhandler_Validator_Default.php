@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Validator_Default.php 50760 2011-08-08 13:40:04Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Validator_Default.php 81273 2013-11-06 15:42:55Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -205,13 +205,20 @@ class Tx_Formhandler_Validator_Default extends Tx_Formhandler_AbstractValidator 
 				//foreach error checks
 			foreach($errorChecks as $check) {
 				$classNameFix = ucfirst($check['check']);
-				$errorCheckObject = $this->componentManager->getComponent('Tx_Formhandler_ErrorCheck_' . $classNameFix);
+				if(strpos($classNameFix, 'Tx_') === FALSE) {
+					$errorCheckObject = $this->componentManager->getComponent('Tx_Formhandler_ErrorCheck_' . $classNameFix);
+					$fullClassName = 'Tx_Formhandler_Errorcheck_' . $classNameFix;
+				} else {
+					//Look for the whole error check name, maybe it is a custom check like Tx_SomeExt_ErrorCheck_Something
+					$errorCheckObject = $this->componentManager->getComponent($check['check']);
+					$fullClassName = $check['check'];
+				}
 				if(!$errorCheckObject) {
-					$this->utilityFuncs->debugMessage('check_not_found', array('Tx_Formhandler_ErrorCheck_' . $classNameFix), 2);
+					$this->utilityFuncs->debugMessage('check_not_found', array($fullClassName), 2);
 				}
 				if(empty($this->restrictErrorChecks) || in_array($check['check'], $this->restrictErrorChecks)) {
-					$this->utilityFuncs->debugMessage('calling_class', array('Tx_Formhandler_ErrorCheck_' . $classNameFix));
-					$errorCheckObject->init($this->gp, $check);
+					$this->utilityFuncs->debugMessage('calling_class', array($fullClassName));
+					$errorCheckObject->init($gp, $check);
 					$errorCheckObject->setFormFieldName($fieldName);
 					if($errorCheckObject->validateConfig()) {
 						$checkFailed = $errorCheckObject->check();
@@ -222,7 +229,7 @@ class Tx_Formhandler_Validator_Default extends Tx_Formhandler_AbstractValidator 
 							$errors[$errorFieldName][] = $checkFailed;
 						}
 					} else {
-						$this->utilityFuncs->throwException('Configuration is not valid for class "Tx_Formhandler_ErrorCheck_' . $classNameFix . '"!');
+						$this->utilityFuncs->throwException('Configuration is not valid for class "' . $fullClassName . '"!');
 					}
 				} else {
 					$this->utilityFuncs->debugMessage('check_skipped', array($check['check']));

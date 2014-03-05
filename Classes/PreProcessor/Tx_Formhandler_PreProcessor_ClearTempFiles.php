@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_PreProcessor_ClearTempFiles.php 65719 2012-08-29 09:55:45Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_PreProcessor_ClearTempFiles.php 76774 2013-06-27 08:30:00Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -67,6 +67,7 @@ class Tx_Formhandler_PreProcessor_ClearTempFiles extends Tx_Formhandler_Abstract
 
 			//build absolute path to upload folder
 			$path = $this->utilityFuncs->getDocumentRoot() . $uploadFolder;
+			$path = $this->utilityFuncs->sanitizePath($path);
 
 			//read files in directory
 			$tmpFiles = t3lib_div::getFilesInDir($path);

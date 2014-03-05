@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_UtilityFuncs.php 70471 2013-01-30 09:48:12Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_UtilityFuncs.php 82020 2013-12-17 10:19:52Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -68,7 +68,7 @@ class Tx_Formhandler_UtilityFuncs {
 		if ($prefix) {
 			$gp = $gp[$prefix];
 		}
-		
+
 		/*
 		 * Unset key "saveDB" to prevent conflicts with information set by Finisher_DB
 		 */
@@ -90,10 +90,11 @@ class Tx_Formhandler_UtilityFuncs {
 	/**
 	 * Adds needed prefix to class name if not set in TS
 	 *
+	 * @param string $className
 	 * @return string
 	 */
 	public function prepareClassName($className) {
-		if (substr($className, 0, 3) !== 'Tx_') {
+		if (strstr($className, '\\') === FALSE && substr($className, 0, 3) !== 'Tx_') {
 			$className = 'Tx_Formhandler_' . $className;
 		}
 		return $className;
@@ -222,7 +223,7 @@ class Tx_Formhandler_UtilityFuncs {
 			if (isset($settings['langFile']) && !isset($settings['langFile.'])) {
 				array_push($langFiles, $this->resolveRelPathFromSiteRoot($settings['langFile']));
 			} elseif (isset($settings['langFile']) && isset($settings['langFile.'])) {
-				array_push($langFiles, $this->globals->getSingle($settings, 'langFile'));
+				array_push($langFiles, $this->getSingle($settings, 'langFile'));
 			} elseif (isset($settings['langFile.']) && is_array($settings['langFile.'])) {
 				foreach ($settings['langFile.'] as $key => $langFile) {
 					if (FALSE === strpos($key, '.')) {
@@ -265,7 +266,23 @@ class Tx_Formhandler_UtilityFuncs {
 		if (!isset($arr[$key . '.']['sanitize'])) {
 			$arr[$key . '.']['sanitize'] = 1;
 		}
+		if(!$this->isValidCObject($arr[$key])) {
+			return $arr[$key];
+		}
 		return $this->globals->getCObj()->cObjGetSingle($arr[$key], $arr[$key . '.']);
+	}
+
+	public function isValidCObject($str) {
+		return (
+			$str === 'CASE' || $str === 'CLEARGIF' || $str === 'COA' || $str === 'COA_INT' ||
+			$str === 'COLUMNS' || $str === 'CONTENT' || $str === 'CTABLE' || $str === 'EDITPANEL' ||
+			$str === 'FILE' || $str === 'FILES' || $str === 'FLUIDTEMPLATE' || $str === 'FORM' ||
+			$str === 'HMENU' || $str === 'HRULER' || $str === 'HTML' || $str === 'IMAGE' ||
+			$str === 'IMG_RESOURCE' || $str === 'IMGTEXT' || $str === 'LOAD_REGISTER' || $str === 'MEDIA' ||
+			$str === 'MULTIMEDIA' || $str === 'OTABLE' || $str === 'QTOBJECT' || $str === 'RECORDS' ||
+			$str === 'RESTORE_REGISTER' || $str === 'SEARCHRESULT' || $str === 'SVG' || $str === 'SWFOBJECT' ||
+			$str === 'TEMPLATE' || $str === 'TEXT' || $str === 'USER' || $str === 'USER_INT'
+		);
 	}
 
 	public function getPreparedClassName($settingsArray, $defaultClassName = '') {
@@ -496,6 +513,9 @@ class Tx_Formhandler_UtilityFuncs {
 		}
 		if (substr($path, (strlen($path) - 1)) != '/' && !strstr($path, '.')) {
 			$path = $path . '/';
+		}
+		while(strstr($path, '//')) {
+			$path = str_replace('//', '/', $path);
 		}
 		return $path;
 	}
@@ -839,6 +859,8 @@ class Tx_Formhandler_UtilityFuncs {
 		$TSFE->getConfigArray();
 		$TSFE->includeLibraries($TSFE->tmpl->setup['includeLibs.']);
 		$TSFE->newCObj();
+
+		$this->compatibilityFuncs->includeTCA();
 	}
 	
 	/**
@@ -969,7 +991,7 @@ class Tx_Formhandler_UtilityFuncs {
 	 * @param string $sep The separator character
 	 * @return string The normalized pattern
 	 */
-	public function normalizeDatePattern($pattern, $sep) {
+	public function normalizeDatePattern($pattern, $sep = '') {
 		$pattern = strtoupper($pattern);
 		$pattern = str_replace(
 			array($sep, 'DD', 'D', 'MM', 'M', 'YYYY', 'YY', 'Y'),
@@ -1006,11 +1028,15 @@ class Tx_Formhandler_UtilityFuncs {
 			}
 		}
 
+		if($value === NULL) {
+			$value = '';
+		}
 		return $value;
 	}
 
 	public function wrap($str, $settingsArray, $key) {
 		$wrappedString = $str;
+		$this->globals->getCObj()->setCurrentVal($wrappedString);
 		if(is_array($settingsArray[$key . '.'])) {
 			$wrappedString = $this->globals->getCObj()->stdWrap($str, $settingsArray[$key . '.']);
 		} elseif(strlen($settingsArray[$key]) > 0) {
@@ -1040,6 +1066,39 @@ class Tx_Formhandler_UtilityFuncs {
 			$andWhere = ' AND ' . $andWhere;
 		}
 		return $andWhere;
+	}
+
+	/**
+	 * Interprets a string. If it starts with a { like {field:fieldname}
+	 * it calls TYPO3 getData function and returns its value, otherwise returns the string
+	 *
+	 * @param string $operand The operand to be interpreted
+	 * @param array $values The GET/POST values
+	 * @return string
+	 */
+	public function parseOperand($operand, $values) {
+		$returnValue = '';
+		if ($operand[0] == '{') {
+			$data = trim($operand, '{}');
+			$returnValue = $this->globals->getcObj()->getData($data, $values);
+		} else {
+			$returnValue = $operand;
+		}
+		if($returnValue === NULL) {
+			$returnValue = '';
+		}
+		return $returnValue;
+	}
+
+	/**
+	 * Merges 2 configuration arrays
+	 *
+	 * @param array The base settings
+	 * @param array The settings overriding the base settings.
+	 * @return array The merged settings
+	 */
+	public function mergeConfiguration($settings, $newSettings) {
+		return t3lib_div::array_merge_recursive_overrule($settings, $newSettings);
 	}
 }
 

@@ -11,13 +11,12 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Dispatcher.php 72672 2013-03-12 08:40:33Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Dispatcher.php 79498 2013-09-03 07:45:41Z reinhardfuehricht $
  *                                                                        */
 
 require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Formhandler_Component_Manager.php');
 require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Utils/Tx_Formhandler_Globals.php');
 require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Utils/Tx_Formhandler_UtilityFuncs.php');
-require_once(PATH_tslib.'class.tslib_pibase.php');
 
 /**
  * The Dispatcher instantiates the Component Manager and delegates the process to the given controller.
@@ -70,10 +69,12 @@ class Tx_Formhandler_Dispatcher extends tslib_pibase {
 			$templateFile = $this->pi_getFFvalue($this->cObj->data['pi_flexform'], 'template_file', 'sDEF');
 			$langFile = $this->pi_getFFvalue($this->cObj->data['pi_flexform'], 'lang_file', 'sDEF');
 			$predef = $this->pi_getFFvalue($this->cObj->data['pi_flexform'], 'predefined', 'sDEF');
+			
 			$this->globals->setCObj($this->cObj);
 			if($setup['usePredef']) {
 				$predef = $this->utilityFuncs->getSingle($setup, 'usePredef');
 			}
+			$this->globals->getCObj()->setCurrentVal($predef);
 			$this->globals->setPredef($predef);
 			$this->globals->setOverrideSettings($setup);
 			$this->componentManager = Tx_Formhandler_Component_Manager::getInstance();
@@ -106,8 +107,17 @@ class Tx_Formhandler_Dispatcher extends tslib_pibase {
 
 			$result = $controller->process();
 		} catch(Exception $e) {
-			$result = '<div style="color:red; font-weight: bold">' . $e->getMessage() . '</div>';
+			t3lib_div::sysLog(
+				$e->getFile() . '(' . $e->getLine() . ')' . ' ' . $e->getMessage(),
+				'formhandler',
+				t3lib_div::SYSLOG_SEVERITY_ERROR
+			);
+			$result = $this->utilityFuncs->getTranslatedMessage($this->globals->getLangFiles(), 'fe-exception');
+			if(!$result) {
+				$result = '<div style="color:red; font-weight: bold">' . $this->utilityFuncs->getExceptionMessage('fe-exception') . '</div>';
+			}
 			if ($this->globals->getSession() && $this->globals->getSession()->get('debug')) {
+				$result = '<div style="color:red; font-weight: bold">' . $e->getMessage() . '</div>';
 				$result .= '<div style="color:red; font-weight: bold">File: ' . $e->getFile() . '(' . $e->getLine() . ')</div>';
 				$result .= '<div style="color:red; font-weight: bold">' . $e->getTraceAsString() . '</div>';
 			}
