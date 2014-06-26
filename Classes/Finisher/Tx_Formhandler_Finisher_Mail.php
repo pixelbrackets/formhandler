@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Mail.php 80204 2013-09-30 12:51:46Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Mail.php 85359 2014-05-21 08:08:11Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -144,13 +144,8 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			$template['html'] = $html;
 		}
 
-		//init mailer object
-		$emailClass = $this->utilityFuncs->getPreparedClassName($this->settings['mailer.'], 'Mailer_HtmlMail');
-		$emailObj = $this->componentManager->getComponent($emailClass);
-		$emailObj->init($this->gp, $this->settings['mailer.']['config.']);
-
 		//set e-mail options
-		$emailObj->setSubject($mailSettings['subject']);
+		$this->emailObj->setSubject($mailSettings['subject']);
 
 		$sender = $mailSettings['sender_email'];
 		if (isset($mailSettings['sender_email']) && is_array($mailSettings['sender_email'])) {
@@ -162,7 +157,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			$senderName = implode(',', $mailSettings['sender_name']);
 		}
 
-		$emailObj->setSender($sender, $senderName);
+		$this->emailObj->setSender($sender, $senderName);
 
 		$replyto = $mailSettings['replyto_email'];
 		if (isset($mailSettings['replyto_email']) && is_array($mailSettings['replyto_email'])) {
@@ -173,16 +168,16 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		if (isset($mailSettings['replyto_name']) && is_array($mailSettings['replyto_name'])) {
 			$replytoName = implode(',', $mailSettings['replyto_name']);
 		}
-		$emailObj->setReplyTo($replyto, $replytoName);
+		$this->emailObj->setReplyTo($replyto, $replytoName);
 
 		$cc = $mailSettings['cc_email'];
 		if (!is_array($cc)) {
-			$cc = t3lib_div::trimExplode(',', $cc);
+			$cc = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $cc);
 		}
 
 		$ccName = $mailSettings['cc_name'];
 		if (!is_array($ccName)) {
-			$ccName = t3lib_div::trimExplode(',', $ccName);
+			$ccName = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $ccName);
 		}
 		foreach ($cc as $key => $email) {
 			$name = '';
@@ -190,18 +185,18 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 				$name = $ccName[$key];
 			}
 			if (strlen($email) > 0) {
-				$emailObj->addCc($email, $name);
+				$this->emailObj->addCc($email, $name);
 			}
 		}
 
 		$bcc = $mailSettings['bcc_email'];
 		if (!is_array($bcc)) {
-			$bcc = t3lib_div::trimExplode(',', $bcc);
+			$bcc = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $bcc);
 		}
 
 		$bccName = $mailSettings['bcc_name'];
 		if (!is_array($bccName)) {
-			$bccName = t3lib_div::trimExplode(',', $bccName);
+			$bccName = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $bccName);
 		}
 		foreach ($bcc as $key => $email) {
 			$name = '';
@@ -209,7 +204,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 				$name = $bccName[$key];
 			}
 			if (strlen($email) > 0) {
-				$emailObj->addBcc($email, $name);
+				$this->emailObj->addBcc($email, $name);
 			}
 		}
 
@@ -221,16 +216,16 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			$returnPath = $GLOBALS['TYPO3_CONF_VARS']['MAIL']['defaultMailFromAddress'];
 		}
 
-		$emailObj->setReturnPath($returnPath);
+		$this->emailObj->setReturnPath($returnPath);
 
 		if ($mailSettings['email_header']) {
-			$emailObj->addHeader($mailSettings['header']);
+			$this->emailObj->addHeader($mailSettings['header']);
 		}
 
 		if (strlen(trim($template['plain'])) > 0) {
-			$emailObj->setPlain($template['plain']);
+			$this->emailObj->setPlain($template['plain']);
 		} else {
-			$emailObj->setPlain(NULL);
+			$this->emailObj->setPlain(NULL);
 		}
 
 		if (strlen(trim($template['html'])) > 0) {
@@ -248,28 +243,28 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 					fwrite($tmphandle, $template['html']);
 					fclose($tmphandle);
 					$this->utilityFuncs->debugMessage('adding_html', array(), 1, array($template['html']));
-					$emailObj->addAttachment($tmphtml);
+					$this->emailObj->addAttachment($tmphtml);
 				}
 			} else {
-				$emailObj->setHtml($template['html']);
+				$this->emailObj->setHtml($template['html']);
 			}
 		}
 
 		if (!is_array($mailSettings['attachment'])) {
-			$mailSettings['attachment'] = t3lib_div::trimExplode(',', $mailSettings['attachment']);
+			$mailSettings['attachment'] = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $mailSettings['attachment']);
 		}
 		foreach ($mailSettings['attachment'] as $idx => $attachment) {
 			if (strlen($attachment) > 0 && @file_exists($attachment)) {
-				$emailObj->addAttachment($attachment);
+				$this->emailObj->addAttachment($attachment);
 			} else {
 				$this->utilityFuncs->debugMessage('attachment_not_found', array($attachment), 2);
 			}
 		}
 		if ($mailSettings['attachGeneratedFiles']) {
-			$files = t3lib_div::trimExplode(',', $mailSettings['attachGeneratedFiles']);
+			$files = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $mailSettings['attachGeneratedFiles']);
 			$this->utilityFuncs->debugMessage('adding_generated_files', array(), 1, $files);
 			foreach($files as $file) {
-				$emailObj->addAttachment($file);
+				$this->emailObj->addAttachment($file);
 			}
 		}
 
@@ -280,7 +275,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			$max = 2;
 		}
 		if (!is_array($mailSettings['to_email'])) {
-			$mailSettings['to_email'] = t3lib_div::trimExplode(',', $mailSettings['to_email']);
+			$mailSettings['to_email'] = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $mailSettings['to_email']);
 		}
 		reset($mailSettings['to_email']);
 
@@ -296,21 +291,21 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		}
 		$sent = FALSE;
 		if ($doSend && !empty($recipients)) {
-			$sent = $emailObj->send($recipients);
+			$sent = $this->emailObj->send($recipients);
 		}
 		if ($sent) {
 			$this->utilityFuncs->debugMessage('mail_sent', array(implode(',', $recipients)));
 		} else {
 			$this->utilityFuncs->debugMessage('mail_not_sent', array(implode(',', $recipients)), 2);
 		}
-		$this->utilityFuncs->debugMailContent($emailObj);
+		$this->utilityFuncs->debugMailContent($this->emailObj);
 		if ($tmphtml) {
 			unlink($tmphtml);
 		}
 
 		// delete generated files
 		if ($mailSettings['deleteGeneratedFiles'] && $mailSettings['attachGeneratedFiles']) {
-			$files = t3lib_div::trimExplode(',', $mailSettings['attachGeneratedFiles']);
+			$files = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $mailSettings['attachGeneratedFiles']);
 			foreach($files as $file) {
 				unlink($file);
 			}
@@ -326,7 +321,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	 */
 	protected function explodeList($list, $sep = ',') {
 		if(!is_array($list)) {
-			$items = t3lib_div::trimExplode($sep, $list);
+			$items = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode($sep, $list);
 			$splitArray = array();
 			foreach ($items as $idx => $item) {
 				if (isset($this->gp[$item])) {
@@ -409,9 +404,9 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		$files = array();
 		if (isset($settings[$key . '.']) && is_array($settings[$key . '.'])) {
 			$files = $this->utilityFuncs->getSingle($settings, $key);
-			$files = t3lib_div::trimExplode(',', $parsed);
+			$files = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $files);
 		} elseif ($settings[$key]) {
-			$files = t3lib_div::trimExplode(',', $settings[$key]);
+			$files = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $settings[$key]);
 		}
 		$parsed = array();
 		$sessionFiles = $this->globals->getSession()->get('files');
@@ -422,11 +417,38 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 				}
 			} elseif(file_exists($file)) {
 				array_push($parsed, $file);
+			} elseif(file_exists(\TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('TYPO3_DOCUMENT_ROOT') . '/' . $file)) {
+				array_push($parsed, \TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('TYPO3_DOCUMENT_ROOT') . '/' . $file);
 			} elseif(strlen($file) > 0) {
 				$this->utilityFuncs->debugMessage('attachment_not_found', array($file), 2);
 			}
 		}
 		return $parsed;
+	}
+
+	/**
+	 * Parses a list of file names or field names set in TypoScript to embed in the mail.
+	 *
+	 * @param array $settings The settings array containing the mail settings
+	 * @return array
+	 */
+	protected function parseEmbedFilesList($settings) {
+		$cids = array();
+		foreach ($settings['embedFiles.'] as $key => $embedFileSettings) {
+			if(strpos($key, '.') === FALSE) {
+				$embedFile = $this->utilityFuncs->getSingle($settings['embedFiles.'], $key);
+				if (strlen($embedFile) > 0) {
+					if(!strstr($embedFile, $this->utilityFuncs->getDocumentRoot())) {
+						$embedFile = $this->utilityFuncs->getDocumentRoot() . '/' . $embedFile;
+					}
+					$embedFile = $this->utilityFuncs->sanitizePath($embedFile);
+					$cids[$key] = $this->emailObj->embed($embedFile);
+				} else {
+					$this->utilityFuncs->debugMessage('attachment_not_found', array($embedFile), 2);
+				}
+			}
+		}
+		return $cids;
 	}
 
 	/**
@@ -466,6 +488,13 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	 */
 	public function init($gp, $tsConfig) {
 		$this->gp = $gp;
+		$this->settings = $tsConfig;
+
+		//init mailer object
+		$emailClass = $this->utilityFuncs->getPreparedClassName($this->settings['mailer.'], 'Mailer_HtmlMail');
+		$this->emailObj = $this->componentManager->getComponent($emailClass);
+		$this->emailObj->init($this->gp, $this->settings['mailer.']['config.']);
+
 		$this->settings = $this->parseEmailSettings($tsConfig);
 
 		// Defines default values
@@ -483,6 +512,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		// Unset unnecessary variables.
 		unset($this->settings['admin.']);
 		unset($this->settings['user.']);
+
 	}
 
 	/**
@@ -508,6 +538,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			'to_name',
 			'return_path',
 			'attachment',
+			'embedFiles',
 			'attachGeneratedFiles',
 			'deleteGeneratedFiles',
 			'htmlEmailAsAttachment',
@@ -564,6 +595,10 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 
 					case 'attachment':
 						$emailSettings[$option] = $this->parseFilesList($currentSettings, $type, $option);
+						break;
+					
+					case 'embedFiles':
+						$emailSettings[$option] = $this->parseEmbedFilesList($currentSettings, $type, $option);
 						break;
 
 					case 'attachPDF':

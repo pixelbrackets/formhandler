@@ -17,7 +17,7 @@
 *
 * @author	Reinhard Führicht <rf@typoheads.at>
 */
-require_once(t3lib_extMgm::extPath('formhandler') . 'Resources/PHP/parsecsv.lib.php');
+require_once(\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('formhandler') . 'Resources/PHP/parsecsv.lib.php');
 class Tx_Formhandler_Generator_Csv extends Tx_Formhandler_AbstractGenerator {
 
 	/**
@@ -29,7 +29,7 @@ class Tx_Formhandler_Generator_Csv extends Tx_Formhandler_AbstractGenerator {
 		$params = $this->gp;
 		$exportParams = $this->utilityFuncs->getSingle($this->settings, 'exportParams');
 		if (!is_array($exportParams) && strpos($exportParams, ',') !== FALSE) {
-			$exportParams = t3lib_div::trimExplode(',', $exportParams);
+			$exportParams = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $exportParams);
 		}
 
 		//build data
@@ -66,7 +66,7 @@ class Tx_Formhandler_Generator_Csv extends Tx_Formhandler_AbstractGenerator {
 			$inputEncoding = 'utf-8';
 		}
 		$outputEncoding = $this->utilityFuncs->getSingle($this->settings, 'outputEncoding');
-		if(strlen(trim($inputEncoding)) === 0) {
+		if(strlen(trim($outputEncoding)) === 0) {
 			$outputEncoding = 'utf-8';
 		}
 		$csv->input_encoding = strtolower($inputEncoding);
@@ -96,7 +96,11 @@ class Tx_Formhandler_Generator_Csv extends Tx_Formhandler_AbstractGenerator {
 				return $this->gp;
 			}
 		} else {
-			$csv->output('formhandler.csv', $data, $fields);
+			$fileName = 'formhandler.csv';
+			if($this->settings['outputFileName']) {
+				$fileName = $this->utilityFuncs->getSingle($this->settings, 'outputFileName');
+			}
+			$csv->output($fileName, $data, $fields);
 			die();
 		}
 	}

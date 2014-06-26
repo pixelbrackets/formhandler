@@ -11,12 +11,6 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *                                                                        */
-require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Utils/Tx_Formhandler_CompatibilityFuncs.php');
-$compatibilityFuncs = Tx_Formhandler_CompatibilityFuncs::getInstance();
-if($compatibilityFuncs->convertVersionNumberToInteger(TYPO3_version) < 6002000) {
-	require_once(PATH_t3lib . "class.t3lib_page.php");
-	require_once(PATH_t3lib . "class.t3lib_tsparser_ext.php");
-}
 
 /**
  * Flexform class for Formhandler spcific needs
@@ -39,12 +33,15 @@ class tx_dynaflex_formhandler {
 	function addFields_predefinedJS($config) {
 		$newRecord = 'true';
 		if ($config['row']['pi_flexform'] != '') {
-			$flexData = t3lib_div::xml2array($config['row']['pi_flexform']);
+			$flexData = \TYPO3\CMS\Core\Utility\GeneralUtility::xml2array($config['row']['pi_flexform']);
 			if (isset($flexData['data']['sDEF']['lDEF']['predefined'])) {
 				$newRecord = 'false';
 			}
 		}
-		$uid = key($GLOBALS['SOBE']->editconf['tt_content']);
+		$uid = NULL;
+		if(is_array($GLOBALS['SOBE']->editconf['tt_content'])) {
+			$uid = key($GLOBALS['SOBE']->editconf['tt_content']);
+		}
 		if($uid < 0 || empty($uid) || !strstr($uid,'NEW')) {
 			$uid = $GLOBALS['SOBE']->elementsData[0]['uid'];
 		}
@@ -64,7 +61,7 @@ class tx_dynaflex_formhandler {
 		$js .= "var flexformBoxId = '" . $divId . "'\n";
 		//$js .= "var flexformBoxId = 'DIV.c-tablayer'\n";
 		$js .= "var newRecord = " . $newRecord . "\n";
-		$js .= file_get_contents(t3lib_extMgm::extPath('formhandler') . 'Resources/JS/addFields_predefinedJS.js');
+		$js .= file_get_contents(\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('formhandler') . 'Resources/JS/addFields_predefinedJS.js');
 		$js .= "/*]]>*/\n";
 		$js .= "</script>\n";
 		return $js;
@@ -133,9 +130,9 @@ class tx_dynaflex_formhandler {
 	 * @return array The TypoScript setup
 	 */
 	function loadTS($pageUid) {
-		$sysPageObj = t3lib_div::makeInstance('t3lib_pageSelect');
+		$sysPageObj = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Frontend\Page\PageRepository');
 		$rootLine = $sysPageObj->getRootLine($pageUid);
-		$TSObj = t3lib_div::makeInstance('t3lib_tsparser_ext');
+		$TSObj = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Core\TypoScript\ExtendedTemplateService');
 		$TSObj->tt_track = 0;
 		$TSObj->init();
 		$TSObj->runThroughTemplates($rootLine);

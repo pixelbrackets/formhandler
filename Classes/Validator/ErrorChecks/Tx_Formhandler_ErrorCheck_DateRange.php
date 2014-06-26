@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_DateRange.php 70472 2013-01-30 09:51:59Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_DateRange.php 85284 2014-05-16 08:39:13Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -51,7 +51,7 @@ class Tx_Formhandler_ErrorCheck_DateRange extends Tx_Formhandler_ErrorCheck_Date
 			$check_month = $checkdate[$pos2];
 			$check_year = $checkdate[$pos3];
 			if (strlen($min) > 0) {
-				$min_date = t3lib_div::trimExplode($sep, $min);
+				$min_date = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode($sep, $min);
 				$min_day = $min_date[$pos1];
 				$min_month = $min_date[$pos2];
 				$min_year = $min_date[$pos3];
@@ -64,7 +64,7 @@ class Tx_Formhandler_ErrorCheck_DateRange extends Tx_Formhandler_ErrorCheck_Date
 				}
 			}
 			if (strlen($max) > 0) {
-				$max_date = t3lib_div::trimExplode($sep, $max);
+				$max_date = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode($sep, $max);
 				$max_day = $max_date[$pos1];
 				$max_month = $max_date[$pos2];
 				$max_year = $max_date[$pos3];

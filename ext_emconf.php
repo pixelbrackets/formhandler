@@ -3,7 +3,7 @@
 /***************************************************************
  * Extension Manager/Repository config file for ext "formhandler".
  *
- * Auto generated 19-05-2014 09:33
+ * Auto generated 26-06-2014 06:25
  *
  * Manual updates:
  * Only the data in the array - everything else is removed by next
@@ -14,17 +14,17 @@ $EM_CONF[$_EXTKEY] = array (
 	'title' => 'Formhandler',
 	'description' => 'The swiss army knife for all kinds of mailforms, completely new written using the MVC concept. Result: Flexibility, Flexibility, Flexibility	:-).',
 	'category' => 'plugin',
-	'shy' => true,
-	'version' => '1.7.1',
+	'shy' => false,
+	'version' => '2.0.0',
 	'dependencies' => '',
 	'conflicts' => '',
 	'priority' => '',
 	'loadOrder' => '',
 	'module' => '',
 	'state' => 'stable',
-	'uploadfolder' => true,
-	'createDirs' => '',
-	'modify_tables' => '',
+	'uploadfolder' => false,
+	'createDirs' => NULL,
+	'modify_tables' => NULL,
 	'clearcacheonload' => true,
 	'lockType' => '',
 	'author' => 'Dev-Team Typoheads',
@@ -36,8 +36,8 @@ $EM_CONF[$_EXTKEY] = array (
 	array (
 		'depends' => 
 		array (
-			'php' => '5.2.0-0.0.0',
-			'typo3' => '4.5.0-6.1.99',
+			'php' => '5.3.0-0.0.0',
+			'typo3' => '6.0.0-6.2.99',
 		),
 		'conflicts' => 
 		array (

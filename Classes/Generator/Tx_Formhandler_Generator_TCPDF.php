@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_TCPDF.php 75510 2013-05-24 13:06:47Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Generator_TCPDF.php 85287 2014-05-16 09:33:25Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -58,7 +58,7 @@ class Tx_Formhandler_Generator_TCPDF {
 	 * @see Tx_Formhandler_Controller_Backend::generatePDF()
 	 * @return void
 	 */
-	function generateModulePDF($records, $exportFields = array()) {
+	function generateModulePDF($records, $exportFields = array(), $fileName = 'formhandler.pdf') {
 
 		//init pdf object
 		$this->pdf = $this->componentManager->getComponent('Tx_Formhandler_Template_TCPDF');
@@ -167,7 +167,7 @@ class Tx_Formhandler_Generator_TCPDF {
 			$this->pdf->Cell(300, 100, 'No valid records found! Try to select more fields to export!', 0, 0, 'L');
 		}
 
-		$this->pdf->Output('formhandler.pdf','D');
+		$this->pdf->Output($fileName, 'D');
 		exit;
 	}
 

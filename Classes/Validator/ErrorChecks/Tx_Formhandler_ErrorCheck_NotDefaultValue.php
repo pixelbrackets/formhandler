@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_NotDefaultValue.php 50192 2011-07-27 18:42:39Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_NotDefaultValue.php 85286 2014-05-16 08:58:53Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -34,7 +34,7 @@ class Tx_Formhandler_ErrorCheck_NotDefaultValue extends Tx_Formhandler_AbstractE
 		if (isset($this->gp[$this->formFieldName]) && strlen(trim($this->gp[$this->formFieldName])) > 0) {
 			$defaultValue = $this->utilityFuncs->getSingle($this->settings['params'], 'defaultValue');
 			if (strlen($defaultValue) > 0) {
-				if (!strcmp($defaultValue, $this->gp[$this->formFieldName])) {
+				if (strcmp($defaultValue, $this->gp[$this->formFieldName]) === 0) {
 					$checkFailed = $this->getCheckFailed();
 				}
 			}

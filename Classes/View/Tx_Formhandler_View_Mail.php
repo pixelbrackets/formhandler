@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Mail.php 75490 2013-05-23 15:21:08Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Mail.php 85359 2014-05-21 08:08:11Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -45,6 +45,19 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 	public function pi_wrapInBaseClass($content) {
 		return $content;
 	}
+
+	protected function fillEmbedMarkers($content) {
+		$componentSettings = $this->getComponentSettings();
+		
+		$mailSettings = $componentSettings[$this->currentMailSettings['mode']];
+		if (isset($mailSettings['embedFiles']) && is_array($mailSettings['embedFiles'])) {
+			$markers = array();
+			foreach ($mailSettings['embedFiles'] as $key => $cid) {
+				$markers['###embed_' . $key . '###'] = $cid;
+			}
+			$this->template = $this->cObj->substituteMarkerArray($this->template, $markers);
+		}
+	}
 	
 	protected function fillValueMarkers() {
 		$componentSettings = $this->getComponentSettings();
@@ -76,6 +89,7 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 		//remove remaining VALUE_-markers
 		//needed for nested markers like ###LLL:tx_myextension_table.field1.i.###value_field1###### to avoid wrong marker removal if field1 isn't set
 		$this->template = preg_replace('/###value_.*?###/i', '', $this->template);
+		$this->fillEmbedMarkers();
 	}
 
 	/**
@@ -87,7 +101,7 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 		$componentSettings = $this->getComponentSettings();
 		$checkBinaryCrLf = $componentSettings['checkBinaryCrLf'];
 		if (strlen($checkBinaryCrLf) > 0) {
-			$paramsToCheck = t3lib_div::trimExplode(',', $checkBinaryCrLf);
+			$paramsToCheck = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $checkBinaryCrLf);
 			foreach ($markers as $markerName => &$value) {
 				
 				$fieldName = str_replace(array('value_', 'VALUE_', '###'), '', $markerName);

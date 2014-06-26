@@ -20,20 +20,6 @@
 class Tx_Formhandler_Session_PHP extends Tx_Formhandler_AbstractSession {
 
 	/* (non-PHPdoc)
-	 * @see Classes/Component/Tx_Formhandler_AbstractClass#__construct()
-	*/
-	public function __construct(Tx_Formhandler_Component_Manager $componentManager, 
-								Tx_Formhandler_Configuration $configuration, 
-								Tx_Formhandler_Globals $globals,
-								Tx_Formhandler_UtilityFuncs $utilityFuncs,
-								Tx_Formhandler_CompatibilityFuncs $compatibilityFuncs) {
-
-		parent::__construct($componentManager, $configuration, $globals, $utilityFuncs, $compatibilityFuncs);
-		$this->start();
-
-	}
-
-	/* (non-PHPdoc)
 	 * @see Classes/Session/Tx_Formhandler_AbstractSession#set()
 	*/
 	public function set($key, $value) {

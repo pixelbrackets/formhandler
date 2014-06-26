@@ -85,6 +85,15 @@ class Tx_Formhandler_Finisher_GenerateAuthCode extends Tx_Formhandler_AbstractFi
 
 				//create the parameter-array for the authCode Link
 				$paramsArray = array_merge($firstInsertInfo, array('authCode' => $authCode));
+				
+				if($this->settings['excludeParams']) {
+					$excludeParams = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $this->utilityFuncs->getSingle($this->settings, 'excludeParams'));
+					foreach($excludeParams as $param) {
+						if(isset($paramsArray[$param])) {
+							unset($paramsArray[$param]);
+						}
+					}
+				}
 
 				// If we have set a formValuesPrefix, add it to the parameter-array
 				$formValuesPrefix = $this->globals->getFormValuesPrefix();
@@ -92,14 +101,18 @@ class Tx_Formhandler_Finisher_GenerateAuthCode extends Tx_Formhandler_AbstractFi
 					$paramsArray = array($formValuesPrefix => $paramsArray);
 				}
 				
-				//Add no_cache parameter to make sure validating the auth code is done everytime.
-				$paramsArray['no_cache'] = 1;
+				$linkConf = array(
+					'parameter' => $authCodePage,
+					'additionalParams' => \TYPO3\CMS\Core\Utility\GeneralUtility::implodeArrayForUrl('', $paramsArray),
+					'returnLast' => 'url',
+					'useCacheHash' => 1
+				);
 
-				// create the link, using typolink function, use baseUrl if set, else use t3lib_div::getIndpEnv('TYPO3_SITE_URL')
-				$url = $this->cObj->getTypoLink_URL($authCodePage, $paramsArray);
+				// create the link, using typolink function, use baseUrl if set, else use \TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('TYPO3_SITE_URL')
+				$url = $this->cObj->typoLink_URL($linkConf);
 				$tmpArr = parse_url($url);
 				if (empty($tmpArr['scheme'])) {
-					$url = t3lib_div::getIndpEnv('TYPO3_SITE_URL') . ltrim($url, '/');
+					$url = \TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('TYPO3_SITE_URL') . ltrim($url, '/');
 				}
 				$this->gp['authCodeUrl'] = $url;
 			}
@@ -114,7 +127,7 @@ class Tx_Formhandler_Finisher_GenerateAuthCode extends Tx_Formhandler_AbstractFi
 	 * @return string The auth code
 	 */
 	protected function generateAuthCode($row) {
-		return t3lib_div::hmac(serialize($row), 'formhandler');
+		return \TYPO3\CMS\Core\Utility\GeneralUtility::hmac(serialize($row), 'formhandler');
 	}
 
 }

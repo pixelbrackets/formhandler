@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_DB.php 84139 2014-03-05 10:55:25Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_DB.php 85338 2014-05-19 14:16:16Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -264,7 +264,7 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 						$mapping = $fieldname;
 					}
 
-					$fieldValue = $this->gp[$mapping];
+					$fieldValue = $this->utilityFuncs->getGlobal($mapping, $this->gp);
 
 					//pre process the field value. e.g. to format a date
 					if (isset($options['preProcessing.']) && is_array($options['preProcessing.'])) {
@@ -309,8 +309,8 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 						case 'saltedpassword':
 							$field = $this->utilityFuncs->getSingle($options['special.'], 'field');
 
-							$saltedpasswords = tx_saltedpasswords_div::returnExtConf();
-							$tx_saltedpasswords = t3lib_div::makeInstance($saltedpasswords['saltedPWHashingMethod']);
+							$saltedpasswords = \TYPO3\CMS\Saltedpasswords\Utility\SaltedPasswordsUtility::returnExtConf();
+							$tx_saltedpasswords = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance($saltedpasswords['saltedPWHashingMethod']);
 							$encryptedPassword = $tx_saltedpasswords->getHashedPassword($this->gp[$field]);
 
 							$fieldValue = $encryptedPassword;
@@ -386,7 +386,7 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 							$fieldValue = time();
 							break;
 						case 'ip':
-							$fieldValue = t3lib_div::getIndpEnv('REMOTE_ADDR');
+							$fieldValue = \TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('REMOTE_ADDR');
 							break;
 						case 'inserted_uid':
 							$table = $this->utilityFuncs->getSingle($options['special.'], 'table');
@@ -405,7 +405,7 @@ class Tx_Formhandler_Finisher_DB extends Tx_Formhandler_AbstractFinisher {
 			}
 
 			//post process the field value after formhandler did it's magic.
-			if (is_array($options['postProcessing.'])) {
+			if (isset($options['postProcessing.']) && is_array($options['postProcessing.'])) {
 				if(!isset($options['postProcessing.']['value'])) {
 					$options['postProcessing.']['value'] = $fieldValue;
 				}

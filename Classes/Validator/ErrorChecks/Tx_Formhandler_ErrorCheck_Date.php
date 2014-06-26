@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_Date.php 82019 2013-12-17 10:02:06Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_Date.php 85284 2014-05-16 08:39:13Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -46,7 +46,7 @@ class Tx_Formhandler_ErrorCheck_Date extends Tx_Formhandler_AbstractErrorCheck {
 			$pos1 = strpos($pattern, 'd');
 			$pos2 = strpos($pattern, 'm');
 			$pos3 = strpos($pattern, 'y');
-			$dateCheck = t3lib_div::trimExplode($sep, $this->gp[$this->formFieldName]);
+			$dateCheck = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode($sep, $this->gp[$this->formFieldName]);
 			if (sizeof($dateCheck) !== 3) {
 				$checkFailed = $this->getCheckFailed();
 			} elseif (intval($dateCheck[0]) === 0 || intval($dateCheck[1]) === 0 || intval($dateCheck[2]) === 0) {

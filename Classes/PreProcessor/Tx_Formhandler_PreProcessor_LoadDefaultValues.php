@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_PreProcessor_LoadDefaultValues.php 58497 2012-02-25 19:00:37Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_PreProcessor_LoadDefaultValues.php 85284 2014-05-16 08:39:13Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -103,7 +103,7 @@ class Tx_Formhandler_PreProcessor_LoadDefaultValues extends Tx_Formhandler_Abstr
 					$currentLevelGP[$fieldName] = $this->utilityFuncs->getSingle($fields[$fieldName . '.'], 'defaultValue');
 					if ($fields[$fieldName . '.']['defaultValue.']['separator']) {
 						$separator = $this->utilityFuncs->getSingle($fields[$fieldName . '.']['defaultValue.'], 'separator');
-						$currentLevelGP[$fieldName] = t3lib_div::trimExplode($separator, $currentLevelGP[$fieldName]);
+						$currentLevelGP[$fieldName] = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode($separator, $currentLevelGP[$fieldName]);
 					}
 				}
 			}

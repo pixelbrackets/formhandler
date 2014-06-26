@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_AbstractView.php 75407 2013-05-16 14:27:34Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_AbstractView.php 85290 2014-05-16 09:57:44Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -19,7 +19,7 @@
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
  */
-abstract class Tx_Formhandler_AbstractView extends tslib_pibase {
+abstract class Tx_Formhandler_AbstractView extends TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 
 	/**
 	 * The prefix id

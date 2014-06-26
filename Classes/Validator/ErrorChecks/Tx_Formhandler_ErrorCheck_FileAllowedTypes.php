@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_ErrorCheck_FileAllowedTypes.php 68656 2012-12-10 15:23:29Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_ErrorCheck_FileAllowedTypes.php 85284 2014-05-16 08:39:13Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -38,7 +38,7 @@ class Tx_Formhandler_ErrorCheck_FileAllowedTypes extends Tx_Formhandler_Abstract
 			foreach($files['name'][$this->formFieldName] as $fileName) {
 				if (strlen($fileName) > 0) {
 					if ($allowed) {
-						$types = t3lib_div::trimExplode(',', $allowed);
+						$types = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $allowed);
 						$fileext = substr($fileName, strrpos($fileName, '.') + 1);
 						$fileext = strtolower($fileext);
 						if (!in_array($fileext, $types)) {

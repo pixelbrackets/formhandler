@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_PreProcessor_ClearTempFiles.php 76774 2013-06-27 08:30:00Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_PreProcessor_ClearTempFiles.php 85284 2014-05-16 08:39:13Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -70,7 +70,7 @@ class Tx_Formhandler_PreProcessor_ClearTempFiles extends Tx_Formhandler_Abstract
 			$path = $this->utilityFuncs->sanitizePath($path);
 
 			//read files in directory
-			$tmpFiles = t3lib_div::getFilesInDir($path);
+			$tmpFiles = \TYPO3\CMS\Core\Utility\GeneralUtility::getFilesInDir($path);
 
 			$this->utilityFuncs->debugMessage('cleaning_temp_files', array($path));
 

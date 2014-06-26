@@ -121,9 +121,9 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 			}
 			$js .= '
 			function submitButtonClick(el) {
-				' . $this->jQueryAlias . '("' . $this->submitButtonSelector . '").attr("disabled", "disabled");
 				var container = el.closest(".Tx-Formhandler");
 				var form = el.closest("FORM");
+				el.attr("disabled", "disabled");
 			';
 
 			$params = array(
@@ -197,9 +197,9 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 
 		$loadingImg = $this->utilityFuncs->getSingle($settings['ajax.']['config.'], 'loading');
 		if(strlen($loadingImg) === 0) {
-			$loadingImg = t3lib_extMgm::extRelPath('formhandler') . 'Resources/Images/ajax-loader.gif';
+			$loadingImg = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extRelPath('formhandler') . 'Resources/Images/ajax-loader.gif';
 			$loadingImg = str_replace('../', '', $loadingImg);
-			$loadingImg = '<img src="' . $loadingImg . '"/>';
+			$loadingImg = '<img src="' . $loadingImg . '" alt="loading" />';
 		}
 
 		$autoDisableSubmitButton = $this->utilityFuncs->getSingle($settings['ajax.']['config.'], 'autoDisableSubmitButton');
@@ -211,14 +211,23 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 		if(intval($ajaxSubmit) === 1) {
 			$ajaxSubmitLoader = $this->utilityFuncs->getSingle($settings['ajax.']['config.'], 'ajaxSubmitLoader');
 			if(strlen($ajaxSubmitLoader) === 0) {
-				$loadingImg = t3lib_extMgm::extRelPath('formhandler') . 'Resources/Images/ajax-loader.gif';
-				$loadingImg = '<img src="' . $loadingImg . '"/>';
+				$loadingImg = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extRelPath('formhandler') . 'Resources/Images/ajax-loader.gif';
+				$loadingImg = '<img src="' . $loadingImg . '" alt="loading" />';
 				$loadingImg = str_replace('../', '', $loadingImg);
 				$ajaxSubmitLoader = '<span class="loading_ajax-submit">' . $loadingImg . '</span>';
 			}
 			$markers['###loading_ajax-submit###'] = $ajaxSubmitLoader;
 		}
 
+		$ajaxValidationCallback = $this->utilityFuncs->getSingle($settings['ajax.']['config.'], 'ajaxValidationCallback');
+		$ajaxValidationCallbackJS = '';
+		if(strlen($ajaxValidationCallback) > 0) {
+			$ajaxValidationCallbackJS = '
+			if (typeof(' . $ajaxValidationCallback . ') == \'function\') {
+			' . $ajaxValidationCallback . '(field, result, isFieldValid);
+		}
+		';
+		}
 		if (is_array($settings['validators.']) && intval($this->utilityFuncs->getSingle($settings['validators.'],'disable')) !== 1) {
 			$fieldJS = '';
 			foreach ($settings['validators.'] as $key => $validatorSettings) {
@@ -283,14 +292,16 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 							result.load(url, function() {
 								loading.hide();
 								result.show();
-						';
-						if(intval($autoDisableSubmitButton) === 1) {
-							$fieldJS .= '
+								isFieldValid = false;
 								if(result.find("SPAN.error").length > 0) {
 									result.data("isValid", false);
 								} else {
+									isFieldValid = true;
 									result.data("isValid", true);
 								}
+						';
+						if(intval($autoDisableSubmitButton) === 1) {
+							$fieldJS .= '
 								var valid = true;
 								' . $this->jQueryAlias . '("' . $this->formSelector . ' .formhandler-ajax-validation-result").each(function() {
 									if(!' . $this->jQueryAlias . '(this).data("isValid")) {
@@ -307,7 +318,7 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 								}
 							';
 						}
-						$fieldJS .= '
+						$fieldJS .= $ajaxValidationCallbackJS . '
 								});
 							});
 						';
@@ -347,12 +358,17 @@ class Tx_Formhandler_AjaxHandler_Jquery extends Tx_Formhandler_AbstractAjaxHandl
 		$url = $this->utilityFuncs->getAjaxUrl($params);
 		$js = '
 			<script type="text/javascript">
-				' . $this->jQueryAlias . '(function() {
+				function attachFileRemovalEvents' . $field . '() {
 					' . $this->jQueryAlias . '("' . $this->formSelector . ' a.formhandler_removelink_' . $field . '").click(function() {
 						var url = ' . $this->jQueryAlias . '(this).attr("href");
-						' . $this->jQueryAlias . '("' . $this->formSelector . ' #Tx_Formhandler_UploadedFiles_' . $field . '").load(url + "#Tx_Formhandler_UploadedFiles_' . $field . '");
+						' . $this->jQueryAlias . '("' . $this->formSelector . ' #Tx_Formhandler_UploadedFiles_' . $field . '").load(url + "#Tx_Formhandler_UploadedFiles_' . $field . '", function() {
+							attachFileRemovalEvents' . $field . '();
+						});
 						return false;
 					});
+				}
+				' . $this->jQueryAlias . '(function() {
+					attachFileRemovalEvents' . $field . '();
 				});
 			</script>
 		';

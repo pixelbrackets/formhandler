@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_PDF.php 79504 2013-09-03 08:36:30Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_PDF.php 85284 2014-05-16 08:39:13Z reinhardfuehricht $
  *                                                                       */
 
 /**
@@ -46,7 +46,7 @@ class Tx_Formhandler_View_PDF extends Tx_Formhandler_View_Form {
 		$componentSettings = $this->getComponentSettings();
 		$checkBinaryCrLf = $componentSettings['checkBinaryCrLf'];
 		if (strlen($checkBinaryCrLf) > 0) {
-			$paramsToCheck = t3lib_div::trimExplode(',', $checkBinaryCrLf);
+			$paramsToCheck = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $checkBinaryCrLf);
 			foreach ($markers as $markerName => &$value) {
 				$fieldName = str_replace(array('value_', 'VALUE_', '###'), '', $markerName);
 				if(in_array($fieldName, $paramsToCheck)) {

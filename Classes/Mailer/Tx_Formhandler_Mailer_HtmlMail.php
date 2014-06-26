@@ -33,12 +33,11 @@ class Tx_Formhandler_Mailer_HtmlMail extends Tx_Formhandler_AbstractMailer imple
 	public function __construct(Tx_Formhandler_Component_Manager $componentManager, 
 								Tx_Formhandler_Configuration $configuration, 
 								Tx_Formhandler_Globals $globals, 
-								Tx_Formhandler_UtilityFuncs $utilityFuncs,
-								Tx_Formhandler_CompatibilityFuncs $compatibilityFuncs) {
+								Tx_Formhandler_UtilityFuncs $utilityFuncs) {
 	
-		parent::__construct($componentManager, $configuration, $globals, $utilityFuncs, $compatibilityFuncs);
-		require_once(t3lib_extMgm::extPath('formhandler') . 'Resources/PHP/class.formhandler_htmlmail.php');
-		$this->emailObj = t3lib_div::makeInstance('formhandler_htmlmail');
+		parent::__construct($componentManager, $configuration, $globals, $utilityFuncs);
+		require_once(\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('formhandler') . 'Resources/PHP/class.formhandler_htmlmail.php');
+		$this->emailObj = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('formhandler_htmlmail');
 		$this->emailObj->start();
 	}
 
@@ -186,6 +185,9 @@ class Tx_Formhandler_Mailer_HtmlMail extends Tx_Formhandler_AbstractMailer imple
 		return $this->emailObj->returnPath;
 	}
 
+	public function embed($image) {
+		throw new Exception('This mailer doesn\'t support mebedding images. Please use Mailer_TYPO3Mailer.');
+	}
 }
 
 ?>

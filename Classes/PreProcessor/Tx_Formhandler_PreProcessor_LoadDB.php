@@ -57,6 +57,12 @@ class Tx_Formhandler_PreProcessor_LoadDB extends Tx_Formhandler_AbstractPreProce
 	protected $data;
 
 	/**
+	 * @var Array $files as associative array.
+	 * @access protected
+	 */
+	protected $files;
+
+	/**
 	 * Main method called by the controller
 	 * 
 	 * @return Array GP
@@ -134,7 +140,7 @@ class Tx_Formhandler_PreProcessor_LoadDB extends Tx_Formhandler_AbstractPreProce
 			}
 			if ($settings[$fieldname . '.']['separator']) {
 				$separator = $settings[$fieldname . '.']['separator'];
-				$value = t3lib_div::trimExplode($separator, $value);
+				$value = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode($separator, $value);
 			}
 		}
 
@@ -145,28 +151,28 @@ class Tx_Formhandler_PreProcessor_LoadDB extends Tx_Formhandler_AbstractPreProce
 		}
 		
 		if(isset($settings[$fieldname . '.']['type']) && $this->utilityFuncs->getSingle($settings[$fieldname . '.'], 'type') === 'upload') {
-			if(!$files) {
-				$files = array();
+			if(!$this->files) {
+				$this->files = array();
 			}
-			$files[$fieldname] = array();
+			$this->files[$fieldname] = array();
 			if(!empty($value)) {
 				$uploadPath = $this->utilityFuncs->getTempUploadFolder($fieldname);
 				$filesArray = $value;
 				if(!is_array($filesArray)) {
-					$filesArray = t3lib_div::trimExplode(',', $value);
+					$filesArray = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $value);
 				}
 
 				foreach($filesArray as $k => $uploadFile) {
 					if(strpos($uploadFile, '/') !== FALSE) {
 						$file = PATH_site . $uploadFile;
-						$uploadedUrl = t3lib_div::getIndpEnv('TYPO3_SITE_URL') . $uploadFile;
+						$uploadedUrl = \TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('TYPO3_SITE_URL') . $uploadFile;
 					} else {
 						$file = PATH_site . $uploadPath . $uploadFile;
-						$uploadedUrl = t3lib_div::getIndpEnv('TYPO3_SITE_URL') . $uploadPath . $uploadFile;
+						$uploadedUrl = \TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('TYPO3_SITE_URL') . $uploadPath . $uploadFile;
 					}
-					
+
 					$uploadedUrl = str_replace('//', '/', $uploadedUrl);
-					$files[$fieldname][] = array (
+					$this->files[$fieldname][] = array (
 						'name' => $uploadFile,
 						'uploaded_name' => $uploadFile,
 						'uploaded_path' => PATH_site . $uploadPath,
@@ -175,7 +181,7 @@ class Tx_Formhandler_PreProcessor_LoadDB extends Tx_Formhandler_AbstractPreProce
 						'size' => filesize($file)
 					);
 				}
-				$this->globals->getSession()->set('files', $files);
+				$this->globals->getSession()->set('files', $this->files);
 			}
 		}
 		return $value;
@@ -189,23 +195,14 @@ class Tx_Formhandler_PreProcessor_LoadDB extends Tx_Formhandler_AbstractPreProce
 	 * @param int $step
 	 */
 	protected function loadDB($settings) {
-		$selectFields = $this->utilityFuncs->getSingle($settings, 'selectFields');
-		if(strlen($selectFields) === 0) {
-			$selectFields = '*';
-		}
 
-		$sql = $GLOBALS['TYPO3_DB']->SELECTquery(
-			$selectFields,
-			$this->utilityFuncs->getSingle($settings, 'table'),
-			$this->utilityFuncs->getSingle($settings, 'where'),
-			$this->utilityFuncs->getSingle($settings, 'groupBy'),
-			$this->utilityFuncs->getSingle($settings, 'orderBy'),
-			$this->utilityFuncs->getSingle($settings, 'limit')
-		);
-
+		$store_lastBuiltQuery = $GLOBALS['TYPO3_DB']->store_lastBuiltQuery;
+		$GLOBALS['TYPO3_DB']->store_lastBuiltQuery = true;
+		$res = $this->exec_getQuery($this->utilityFuncs->getSingle($settings, 'table'), $settings);
+		$sql = $GLOBALS['TYPO3_DB']->debug_lastBuiltQuery;
 		$this->utilityFuncs->debugMessage($sql);
 
-		$res = $GLOBALS['TYPO3_DB']->sql_query($sql);
+		$GLOBALS['TYPO3_DB']->store_lastBuiltQuery = $store_lastBuiltQuery;
 		$rowCount = $GLOBALS['TYPO3_DB']->sql_num_rows($res);
 		if ($rowCount === 1) {
 			$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
@@ -215,6 +212,31 @@ class Tx_Formhandler_PreProcessor_LoadDB extends Tx_Formhandler_AbstractPreProce
 			$this->utilityFuncs->debugMessage('sql_too_many_rows', array($rowCount), 3);
 		}
 		return array();
+	}
+
+	/* (non-PHPdoc)
+	 * @see tslib_content::exec_getQuery
+	*/
+	protected function exec_getQuery($table, $conf) {
+
+		//map the old TypoScript setting "limit" to "begin" and "max".
+		$limit = $this->utilityFuncs->getSingle($conf, 'limit');
+		if(strlen($limit) > 0) {
+			$parts = t3lib_div::trimExplode(',', $limit);
+			if(count($parts) === 2) {
+				$conf['begin'] = $parts[0];
+				$conf['max'] = $parts[1];
+			} else {
+				$conf['max'] = $parts[0];
+			}
+		}
+		$queryParts = $this->globals->getCObj()->getQuery($table, $conf, TRUE);
+
+		//if pidInList is not set in TypoScript remove it from the where clause.
+		if(!isset($conf['pidInList']) || strlen($conf['pidInList']) === 0) {
+			$queryParts['WHERE'] = preg_replace('/([^ ]+\.pid IN \([^ ]+\) AND )/i', '', $queryParts['WHERE']);
+		}
+		return $GLOBALS['TYPO3_DB']->exec_SELECT_queryArray($queryParts);
 	}
 }
 

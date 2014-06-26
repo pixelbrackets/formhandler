@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Generator_CSV.php 74632 2013-04-19 07:18:46Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Generator_CSV.php 85287 2014-05-16 09:33:25Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -20,7 +20,7 @@
  * @author	Reinhard Führicht <rf@typoheads.at>
  * @uses export2CSV in csv.lib.php
  */
-require_once(t3lib_extMgm::extPath('formhandler') . 'Resources/PHP/parsecsv.lib.php');
+require_once(\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('formhandler') . 'Resources/PHP/parsecsv.lib.php');
 class Tx_Formhandler_Generator_CSV {
 
 	/**
@@ -57,7 +57,7 @@ class Tx_Formhandler_Generator_CSV {
 	 * @see Tx_Formhandler_Controller_Backend::generateCSV()
 	 * @return void
 	 */
-	public function generateModuleCSV($records, $exportParams = array(), $delimiter = ',', $enclosure = '"', $encoding = 'utf-8') {
+	public function generateModuleCSV($records, $exportParams = array(), $delimiter = ',', $enclosure = '"', $encoding = 'utf-8', $fileName = 'formhandler.csv') {
 
 		$data = array();
 		$dataSorted = array();
@@ -119,7 +119,7 @@ class Tx_Formhandler_Generator_CSV {
 		if($csv->input_encoding !== $csv->output_encoding) {
 			$csv->convert_encoding = TRUE;
 		}
-		$csv->output('formhandler.csv', $data, $exportParams);
+		$csv->output($fileName, $data, $exportParams);
 		die();
 	}
 

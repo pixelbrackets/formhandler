@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Interceptor_ParseValues.php 58506 2012-02-25 19:47:26Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Interceptor_ParseValues.php 85284 2014-05-16 08:39:13Z reinhardfuehricht $
  *                                                                       
  */
 
@@ -31,7 +31,7 @@ class Tx_Formhandler_Interceptor_ParseValues extends Tx_Formhandler_AbstractInte
 
 		//parse as float
 		$parseFloatFields = $this->utilityFuncs->getSingle($this->settings, 'parseFloatFields');
-		$fields = t3lib_div::trimExplode(',', $parseFloatFields, TRUE);
+		$fields = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $parseFloatFields, TRUE);
 		$this->parseFloats($fields);
 		
 		return $this->gp;

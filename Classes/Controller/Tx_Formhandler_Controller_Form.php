@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Controller_Form.php 84097 2014-03-03 11:39:33Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Controller_Form.php 85349 2014-05-20 12:35:46Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -135,9 +135,9 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$this->storeFileNamesInGP();
 		$this->processFileRemoval();
 
-		$action = t3lib_div::_GP('action');
+		$action = \TYPO3\CMS\Core\Utility\GeneralUtility::_GP('action');
 		if ($this->globals->getFormValuesPrefix()) {
-			$temp = t3lib_div::_GP($this->globals->getFormValuesPrefix());
+			$temp = \TYPO3\CMS\Core\Utility\GeneralUtility::_GP($this->globals->getFormValuesPrefix());
 			$action = $temp['action'];
 		}
 		if ($action) {
@@ -177,7 +177,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$content = '';
 		$gp = $_GET;
 		if ($this->globals->getFormValuesPrefix()) {
-			$gp = t3lib_div::_GP($this->globals->getFormValuesPrefix());
+			$gp = \TYPO3\CMS\Core\Utility\GeneralUtility::_GP($this->globals->getFormValuesPrefix());
 		}
 		if (is_array($this->settings['finishers.'])) {
 			$finisherConf = array();
@@ -276,7 +276,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 			$currentGP = $this->utilityFuncs->getMergedGP();
 			if ($this->settings['checkBoxFields']) {
 				$checkBoxFields = $this->utilityFuncs->getSingle($this->settings, 'checkBoxFields');
-				$fields = t3lib_div::trimExplode(',', $checkBoxFields);
+				$fields = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $checkBoxFields);
 				foreach ($fields as $idx => $field) {
 					if(isset($this->gp[$field]) && !isset($currentGP[$field])) {
 						unset($this->gp[$field]);
@@ -315,7 +315,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 
 							$validator = $this->componentManager->getComponent($className);
 							if ($this->currentStep === $this->lastStep) {
-								$userSetting = t3lib_div::trimExplode(',', $this->utilityFuncs->getSingle($tsConfig['config.'], 'restrictErrorChecks'));
+								$userSetting = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $this->utilityFuncs->getSingle($tsConfig['config.'], 'restrictErrorChecks'));
 								$autoSetting = array(
 									'fileAllowedTypes',
 									'fileRequired',
@@ -331,6 +331,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 							}
 							$tsConfig['config.'] = $this->addDefaultComponentConfig($tsConfig['config.']);
 							$validator->init($this->gp, $tsConfig['config.']);
+							$validator->validateConfig();
 							$res = $validator->validate($this->errors);
 							array_push($valid, $res);
 						}
@@ -797,7 +798,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 											$files['tmp_name'][$field] = array($files['tmp_name'][$field]);
 										}
 										move_uploaded_file($files['tmp_name'][$field][$idx], $uploadPath . $uploadedFileName);
-										t3lib_div::fixPermissions($uploadPath . $uploadedFileName);
+										\TYPO3\CMS\Core\Utility\GeneralUtility::fixPermissions($uploadPath . $uploadedFileName);
 										$files['uploaded_name'][$field][$idx] = $uploadedFileName;
 	
 										//set values for session
@@ -805,7 +806,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 										$tmp['uploaded_name'] = $uploadedFileName;
 										$tmp['uploaded_path'] = $uploadPath;
 										$tmp['uploaded_folder'] = $uploadFolder;
-										$uploadedUrl = t3lib_div::getIndpEnv('TYPO3_SITE_URL') . $uploadFolder . $uploadedFileName;
+										$uploadedUrl = \TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('TYPO3_SITE_URL') . $uploadFolder . $uploadedFileName;
 										$uploadedUrl = str_replace('//', '/', $uploadedUrl);
 										$tmp['uploaded_url'] = $uploadedUrl;
 										$tmp['size'] = $files['size'][$field][$idx];
@@ -855,7 +856,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$data = $this->globals->getSession()->get('values');
 		
 		$checkBoxFields = $this->utilityFuncs->getSingle($this->settings, 'checkBoxFields');
-		$checkBoxFields = t3lib_div::trimExplode(',', $checkBoxFields);
+		$checkBoxFields = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $checkBoxFields);
 
 		//set the variables in session
 		if ($this->lastStep !== $this->currentStep) {
@@ -1034,19 +1035,19 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 				$results = array();
 				foreach ($andConditions as $subSubIdx => $andCondition) {
 					if (strstr($andCondition, '!=')) {
-						list($field, $value) = t3lib_div::trimExplode('!=', $andCondition);
+						list($field, $value) = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode('!=', $andCondition);
 						$value = $this->utilityFuncs->parseOperand($value, $this->gp);
 						$result = ($this->utilityFuncs->getGlobal($field, $this->gp) !== $value);
 					} elseif (strstr($andCondition, '=')) {
-						list($field, $value) = t3lib_div::trimExplode('=', $andCondition);
+						list($field, $value) = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode('=', $andCondition);
 						$value = $this->utilityFuncs->parseOperand($value, $this->gp);
 						$result = ($this->utilityFuncs->getGlobal($field, $this->gp) === $value);
 					} elseif (strstr($andCondition, '>')) {
-						list($field, $value) = t3lib_div::trimExplode('>', $andCondition);
+						list($field, $value) = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode('>', $andCondition);
 						$value = $this->utilityFuncs->parseOperand($value, $this->gp);
 						$result = ($this->utilityFuncs->getGlobal($field, $this->gp) > $value);
 					} elseif (strstr($andCondition, '<')) {
-						list($field, $value) = t3lib_div::trimExplode('<', $andCondition);
+						list($field, $value) = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode('<', $andCondition);
 						$value = $this->utilityFuncs->parseOperand($value, $this->gp);
 						$result = ($this->utilityFuncs->getGlobal($field, $this->gp) < $value);
 					} else {
@@ -1149,11 +1150,12 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		$sessionClass = $this->utilityFuncs->getPreparedClassName($this->settings['session.'], 'Session_PHP');
 		$session = $this->componentManager->getComponent($sessionClass);
 		$session->init($this->gp, $this->settings['session.']['config.']);
+		$session->start();
 		$this->globals->setSession($session);
 
-		$action = t3lib_div::_GP('action');
+		$action = \TYPO3\CMS\Core\Utility\GeneralUtility::_GP('action');
 		if ($this->globals->getFormValuesPrefix()) {
-			$temp = t3lib_div::_GP($this->globals->getFormValuesPrefix());
+			$temp = \TYPO3\CMS\Core\Utility\GeneralUtility::_GP($this->globals->getFormValuesPrefix());
 			$action = $temp['action'];
 		}
 		if($this->globals->getSession()->get('finished') && !$action) {
@@ -1220,6 +1222,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 
 		$this->addCSS();
 		$this->addJS();
+		$this->addJSFooter();
 
 		$this->utilityFuncs->debugMessage('current_session_params', array(), 1, (array)$this->globals->getSession()->get('values'));
 		$this->view = $this->componentManager->getComponent($viewClass);
@@ -1432,32 +1435,23 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	 * @return void
 	 */
 	protected function addCSS() {
-		$cssFile = $this->settings['cssFile'];
-		$cssFiles = array();
-		if (!$this->utilityFuncs->isValidCObject($cssFile) 
-			&& is_array($this->settings['cssFile.']) 
-			&& !isset($this->settings['cssFile.']['media'])) {
-
-			foreach ($this->settings['cssFile.'] as $idx => $file) {
-				if(strpos($idx, '.') === FALSE) {
-					$file = $this->utilityFuncs->getSingle($this->settings['cssFile.'], $idx);
-					$fileOptions = $this->settings['cssFile.'][$idx . '.'];
-					$fileOptions['file'] = $file;
-					$cssFiles[] = $fileOptions;
-				}
-			}
-		} else {
-			$fileOptions = $this->settings['cssFile.'];
-			$fileOptions['file'] = $cssFile;
-			$cssFiles[] = $fileOptions;
-		}
-		
+		$cssFiles = $this->utilityFuncs->parseResourceFiles($this->settings, 'cssFile');
 		foreach ($cssFiles as $idx => $fileOptions) {
 			$file = $fileOptions['file'];
 			if(strlen(trim($file)) > 0) {
 				$file = $this->utilityFuncs->resolveRelPathFromSiteRoot($file);
 				if(file_exists($file)) {
-					$this->compatibilityFuncs->addCssFile($file, $fileOptions);
+					$pageRenderer = $GLOBALS['TSFE']->getPageRenderer();
+					$pageRenderer->addCssFile(
+						$file,
+						$fileOptions['alternate'] ? 'alternate stylesheet' : 'stylesheet',
+						$fileOptions['media'] ? $fileOptions['media'] : 'all',
+						$fileOptions['title'] ? $fileOptions['title'] : '',
+						empty($fileOptions['disableCompression']),
+						$fileOptions['forceOnTop'] ? TRUE : FALSE,
+						$fileOptions['allWrap'],
+						$fileOptions['excludeFromConcatenation'] ? TRUE : FALSE
+					);
 				}
 			}
 		}
@@ -1469,28 +1463,47 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 	 * @return void
 	 */
 	protected function addJS() {
-		$jsFile = $this->settings['jsFile'];
-		$jsFiles = array();
-		if ($this->settings['jsFile.']) {
-			foreach ($this->settings['jsFile.'] as $idx => $file) {
-				if(strpos($idx, '.') === FALSE) {
-					$file = $this->utilityFuncs->getSingle($this->settings['jsFile.'], $idx);
-					$fileOptions = $this->settings['jsFile.'][$idx . '.'];
-					$fileOptions['file'] = $file;
-					$jsFiles[] = $fileOptions;
-				}
-			}
-		} else {
-			$fileOptions = $this->settings['jsFile.'];
-			$fileOptions['file'] = $jsFile;
-			$jsFiles[] = $fileOptions;
-		}
+		$jsFiles = $this->utilityFuncs->parseResourceFiles($this->settings, 'jsFile');
 		foreach ($jsFiles as $idx => $fileOptions) {
 			$file = $fileOptions['file'];
 			if(strlen(trim($file)) > 0) {
 				$file = $this->utilityFuncs->resolveRelPathFromSiteRoot($file);
 				if(file_exists($file)) {
-					$this->compatibilityFuncs->addJsFile($file, $fileOptions);
+					$pageRenderer = $GLOBALS['TSFE']->getPageRenderer();
+					$pageRenderer->addJsFile(
+						$file,
+						$fileOptions['type'] ? $fileOptions['type'] : 'text/javascript',
+						empty($fileOptions['disableCompression']),
+						$fileOptions['forceOnTop'] ? TRUE : FALSE,
+						$fileOptions['allWrap'],
+						$fileOptions['excludeFromConcatenation'] ? TRUE : FALSE
+					);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Read JavaScript file(s) set in TypoScript. If set add to footer data
+	 *
+	 * @return void
+	 */
+	protected function addJSFooter() {
+		$jsFiles = $this->utilityFuncs->parseResourceFiles($this->settings, 'jsFileFooter');
+		foreach ($jsFiles as $idx => $fileOptions) {
+			$file = $fileOptions['file'];
+			if(strlen(trim($file)) > 0) {
+				$file = $this->utilityFuncs->resolveRelPathFromSiteRoot($file);
+				if(file_exists($file)) {
+					$pageRenderer = $GLOBALS['TSFE']->getPageRenderer();
+					$pageRenderer->addJsFile(
+						$file,
+						$fileOptions['type'] ? $fileOptions['type'] : 'text/javascript',
+						empty($fileOptions['disableCompression']),
+						$fileOptions['forceOnTop'] ? TRUE : FALSE,
+						$fileOptions['allWrap'],
+						$fileOptions['excludeFromConcatenation'] ? TRUE : FALSE
+					);
 				}
 			}
 		}
@@ -1526,7 +1539,7 @@ class Tx_Formhandler_Controller_Form extends Tx_Formhandler_AbstractController {
 		//check for checkbox fields using the values in $newGP
 		if ($this->settings['checkBoxFields']) {
 			$checkBoxFields = $this->utilityFuncs->getSingle($this->settings, 'checkBoxFields');
-			$fields = t3lib_div::trimExplode(',', $checkBoxFields);
+			$fields = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $checkBoxFields);
 			foreach ($fields as $idx => $field) {
 				if (!isset($newGP[$field]) && isset($this->gp[$field]) && $this->lastStep < $this->currentStep) {
 					$this->gp[$field] = $newGP[$field] = array();

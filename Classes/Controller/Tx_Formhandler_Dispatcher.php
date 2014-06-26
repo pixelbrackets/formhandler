@@ -11,19 +11,19 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Dispatcher.php 79498 2013-09-03 07:45:41Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Dispatcher.php 85290 2014-05-16 09:57:44Z reinhardfuehricht $
  *                                                                        */
 
-require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Component/Tx_Formhandler_Component_Manager.php');
-require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Utils/Tx_Formhandler_Globals.php');
-require_once(t3lib_extMgm::extPath('formhandler') . 'Classes/Utils/Tx_Formhandler_UtilityFuncs.php');
+require_once(\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('formhandler') . 'Classes/Component/Tx_Formhandler_Component_Manager.php');
+require_once(\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('formhandler') . 'Classes/Utils/Tx_Formhandler_Globals.php');
+require_once(\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath('formhandler') . 'Classes/Utils/Tx_Formhandler_UtilityFuncs.php');
 
 /**
  * The Dispatcher instantiates the Component Manager and delegates the process to the given controller.
  *
  * @author	Reinhard Führicht <rf@typoheads.at>
  */
-class Tx_Formhandler_Dispatcher extends tslib_pibase {
+class Tx_Formhandler_Dispatcher extends TYPO3\CMS\Frontend\Plugin\AbstractPlugin {
 
 	/**
 	 * Compontent Manager
@@ -107,10 +107,10 @@ class Tx_Formhandler_Dispatcher extends tslib_pibase {
 
 			$result = $controller->process();
 		} catch(Exception $e) {
-			t3lib_div::sysLog(
+			\TYPO3\CMS\Core\Utility\GeneralUtility::sysLog(
 				$e->getFile() . '(' . $e->getLine() . ')' . ' ' . $e->getMessage(),
 				'formhandler',
-				t3lib_div::SYSLOG_SEVERITY_ERROR
+				\TYPO3\CMS\Core\Utility\GeneralUtility::SYSLOG_SEVERITY_ERROR
 			);
 			$result = $this->utilityFuncs->getTranslatedMessage($this->globals->getLangFiles(), 'fe-exception');
 			if(!$result) {
