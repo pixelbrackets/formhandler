@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_View_Mail.php 85359 2014-05-21 08:08:11Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_View_Mail.php 85390 2014-05-26 14:43:06Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -46,9 +46,8 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 		return $content;
 	}
 
-	protected function fillEmbedMarkers($content) {
+	protected function fillEmbedMarkers() {
 		$componentSettings = $this->getComponentSettings();
-		
 		$mailSettings = $componentSettings[$this->currentMailSettings['mode']];
 		if (isset($mailSettings['embedFiles']) && is_array($mailSettings['embedFiles'])) {
 			$markers = array();
@@ -58,7 +57,7 @@ class Tx_Formhandler_View_Mail extends Tx_Formhandler_View_Form {
 			$this->template = $this->cObj->substituteMarkerArray($this->template, $markers);
 		}
 	}
-	
+
 	protected function fillValueMarkers() {
 		$componentSettings = $this->getComponentSettings();
 		if ($componentSettings[$this->currentMailSettings['mode']][$this->currentMailSettings['suffix'] . '.']['arrayValueSeparator']) {

@@ -11,7 +11,7 @@
  * TABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General      *
  * Public License for more details.                                       *
  *
- * $Id: Tx_Formhandler_Finisher_Mail.php 85359 2014-05-21 08:08:11Z reinhardfuehricht $
+ * $Id: Tx_Formhandler_Finisher_Mail.php 85763 2014-06-27 09:23:41Z reinhardfuehricht $
  *                                                                        */
 
 /**
@@ -76,12 +76,45 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	public function process() {
 
 		//send emails
+		$this->initMailer('admin');
 		$this->sendMail('admin');
+		$this->initMailer('user');
 		$this->sendMail('user');
 
 		return $this->gp;
 	}
 
+	protected function initMailer($type) {
+		//init mailer object
+		$globalSettings = $this->globals->getSettings();
+		if(is_array($this->settings['mailer.'])) {
+			$emailClass = $this->utilityFuncs->getPreparedClassName($this->settings['mailer.'], 'Mailer_HtmlMail');
+		} elseif(is_array($globalSettings['mailer.'])) {
+			$emailClass = $this->utilityFuncs->getPreparedClassName($globalSettings['mailer.'], 'Mailer_HtmlMail');
+		} else {
+			$emailClass = 'Tx_Formhandler_Mailer_HtmlMail';
+		}
+
+		$this->emailObj = $this->componentManager->getComponent($emailClass);
+		$this->emailObj->init($this->gp, $this->settings['mailer.']['config.']);
+
+		$this->settings = $this->parseEmailSettings($this->settings, $type);
+
+		// Defines default values
+		$defaultOptions = array(
+			'templateFile' => 'template_file',
+			'langFile' => 'lang_file',
+		);
+		foreach ($defaultOptions as $key => $option) {
+			$fileName = $this->utilityFuncs->pi_getFFvalue($this->cObj->data['pi_flexform'], $option);
+			if ($fileName) {
+				$this->settings[$key] = $fileName;
+			}
+		}
+
+		// Unset unnecessary variables.
+		unset($this->settings[$type . '.']);
+	}
 	/**
 	 * Returns the final template code for given mode and suffix with substituted markers.
 	 *
@@ -434,17 +467,19 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	 */
 	protected function parseEmbedFilesList($settings) {
 		$cids = array();
-		foreach ($settings['embedFiles.'] as $key => $embedFileSettings) {
-			if(strpos($key, '.') === FALSE) {
-				$embedFile = $this->utilityFuncs->getSingle($settings['embedFiles.'], $key);
-				if (strlen($embedFile) > 0) {
-					if(!strstr($embedFile, $this->utilityFuncs->getDocumentRoot())) {
-						$embedFile = $this->utilityFuncs->getDocumentRoot() . '/' . $embedFile;
+		if (isset($settings['embedFiles.']) && is_array($settings['embedFiles.'])) {
+			foreach ($settings['embedFiles.'] as $key => $embedFileSettings) {
+				if(strpos($key, '.') === FALSE) {
+					$embedFile = $this->utilityFuncs->getSingle($settings['embedFiles.'], $key);
+					if (strlen($embedFile) > 0) {
+						if(!strstr($embedFile, $this->utilityFuncs->getDocumentRoot())) {
+							$embedFile = $this->utilityFuncs->getDocumentRoot() . '/' . $embedFile;
+						}
+						$embedFile = $this->utilityFuncs->sanitizePath($embedFile);
+						$cids[$key] = $this->emailObj->embed($embedFile);
+					} else {
+						$this->utilityFuncs->debugMessage('attachment_not_found', array($embedFile), 2);
 					}
-					$embedFile = $this->utilityFuncs->sanitizePath($embedFile);
-					$cids[$key] = $this->emailObj->embed($embedFile);
-				} else {
-					$this->utilityFuncs->debugMessage('attachment_not_found', array($embedFile), 2);
 				}
 			}
 		}
@@ -490,29 +525,6 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 		$this->gp = $gp;
 		$this->settings = $tsConfig;
 
-		//init mailer object
-		$emailClass = $this->utilityFuncs->getPreparedClassName($this->settings['mailer.'], 'Mailer_HtmlMail');
-		$this->emailObj = $this->componentManager->getComponent($emailClass);
-		$this->emailObj->init($this->gp, $this->settings['mailer.']['config.']);
-
-		$this->settings = $this->parseEmailSettings($tsConfig);
-
-		// Defines default values
-		$defaultOptions = array(
-			'templateFile' => 'template_file',
-			'langFile' => 'lang_file',
-		);
-		foreach ($defaultOptions as $key => $option) {
-			$fileName = $this->utilityFuncs->pi_getFFvalue($this->cObj->data['pi_flexform'], $option);
-			if ($fileName) {
-				$this->settings[$key] = $fileName;
-			}
-		}
-
-		// Unset unnecessary variables.
-		unset($this->settings['admin.']);
-		unset($this->settings['user.']);
-
 	}
 
 	/**
@@ -521,7 +533,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 	 * @param array The TypoScript configuration
 	 * @return array The parsed email settings
 	 */
-	protected function parseEmailSettings($tsConfig) {
+	protected function parseEmailSettings($tsConfig, $type) {
 		$emailSettings = $tsConfig;
 		$options = array (
 			'filePrefix',
@@ -546,8 +558,7 @@ class Tx_Formhandler_Finisher_Mail extends Tx_Formhandler_AbstractFinisher {
 			'html.'
 		);
 
-		$emailSettings['admin'] = $this->parseEmailSettingsByType($emailSettings['admin.'], 'admin', $options);
-		$emailSettings['user'] = $this->parseEmailSettingsByType($emailSettings['user.'], 'user', $options);
+		$emailSettings[$type] = $this->parseEmailSettingsByType($emailSettings[$type . '.'], $type, $options);
 
 		return $emailSettings;
 	}
